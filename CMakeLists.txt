@@ -7,6 +7,7 @@ project(
 
 
 set(SOURCES
+    include/d3dx12.h
     include/headers.h
     include/mathlib.h
     apps/main.cpp
