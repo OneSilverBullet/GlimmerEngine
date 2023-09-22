@@ -116,7 +116,7 @@ HWND CreateWindow(const wchar_t* windowClassName, HINSTANCE hInstance,
 	RECT windowRect = { 0, 0, static_cast<long>(width), static_cast<long>(height) };
 	::AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
 	int windowWidth = windowRect.right - windowRect.left;
-	int windowHeight = windowRect.top - windowRect.bottom;
+	int windowHeight = windowRect.bottom - windowRect.top;
 
 	int windowX = std::max<int>(0, (screenWidth - windowWidth));
 	int windowY = std::max<int>(0, (screenHeight - windowHeight));
