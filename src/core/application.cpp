@@ -3,7 +3,7 @@
 #include "window.h"
 #include "game.h"
 #include "commandqueue.h"
-
+#include "events.h"
 #include <unordered_map>
 
 
@@ -23,6 +23,14 @@ static Application* g_application = nullptr;
 static WindowMap g_windowMap;
 static WindowNameMap g_windowNameMap;
 
+static void RemoveWindow(HWND hWnd) {
+	if (g_windowMap.find(hWnd) != g_windowMap.end()) {
+		WindowPtr windowptr = g_windowMap[hWnd];
+		g_windowNameMap.erase(windowptr->GetWindowName());
+		g_windowMap.erase(hWnd);
+	}
+
+}
 
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -300,6 +308,174 @@ UINT Application::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE ty
 	return m_device->GetDescriptorHandleIncrementSize(type);
 }
 
+//anaylisis the mouse button type
+MouseButtonEventArgs::MouseButton DecodeMouseButton(UINT messageID) {
+	MouseButtonEventArgs::MouseButton mouseButton = MouseButtonEventArgs::None;
+	switch (messageID) {
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+	{
+		mouseButton = MouseButtonEventArgs::Left;
+		break;
+	}
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONDBLCLK:
+	case WM_RBUTTONUP:
+	{
+		mouseButton = MouseButtonEventArgs::Right;
+		break;
+	}
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONDBLCLK:
+	case WM_MBUTTONUP:
+	{
+		mouseButton = MouseButtonEventArgs::Middel;
+		break;
+	}
+	}
+	return mouseButton;
+}
 
+
+//Windows Message Procedure
+static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+	WindowPtr windowPtr = g_windowMap[hwnd];	
+	
+	if (windowPtr) {
+		switch (message) {
+			//rendering
+		case WM_PAINT: {
+			UpdateEventArgs updateEventArgs(0.0f, 0.0f);
+			windowPtr->OnUpdate(updateEventArgs);
+			RenderEventArgs renderEventArgs(0.0f, 0.0f);
+			windowPtr->OnRender(renderEventArgs);
+		}
+		break;
+		case WM_SYSKEYDOWN:
+		case WM_KEYDOWN:
+		{
+			MSG charmsg;
+			unsigned  int c = 0;
+			if (PeekMessage(&charmsg, hwnd, 0, 0, PM_NOREMOVE) && charmsg.message == WM_CHAR) {
+				GetMessage(&charmsg, hwnd, 0, 0);
+				c = static_cast<unsigned int>(charmsg.wParam);
+			}
+
+			bool alt = (::GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+			bool control = (::GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+			bool shift = (::GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
+			KeyCode::Key key = (KeyCode::Key)wParam;
+
+			KeyEventArgs keyEventArgs(key, c, KeyEventArgs::Pressed, alt, control, shift);
+			windowPtr->OnKeyPressed(keyEventArgs);
+		}
+		break;
+		case WM_SYSKEYUP:
+		case WM_KEYUP:
+		{
+			bool alt = (::GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
+			bool control = (::GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+			bool shift = (::GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
+			KeyCode::Key key = (KeyCode::Key)wParam;
+			unsigned int c = 0;
+			unsigned int scanCode = (lParam & 0x00FF0000) >> 16;
+
+			unsigned char keyboardState[256];
+			GetKeyboardState(keyboardState);
+			wchar_t translatedCharacters[4];
+			if (int result = ToUnicodeEx(static_cast<UINT>(wParam), scanCode,
+				keyboardState, translatedCharacters, 4, 0, NULL) > 0) {
+				c = translatedCharacters[0];
+			}
+			KeyEventArgs keyEventArgs(key, c, KeyEventArgs::Released, alt, control, shift);
+			windowPtr->OnKeyReleased(keyEventArgs);
+		}
+		break;
+		case WM_SYSCHAR:
+			break;
+		case WM_MOUSEMOVE:{
+			bool lButton = (wParam & MK_LBUTTON) != 0;
+			bool rButton = (wParam & MK_RBUTTON) != 0;
+			bool mButton = (wParam & MK_MBUTTON) != 0;
+			bool shift = (wParam & MK_SHIFT) != 0;
+			bool control = (wParam & MK_CONTROL) != 0;
+			int x = static_cast<int>(static_cast<short>(LOWORD(lParam)));
+			int y = static_cast<int>(static_cast<short>(HIWORD(lParam)));
+			MouseMotionEventArgs mouseMotionEventArgs(lButton, mButton, rButton, control, shift, x, y);
+			windowPtr->OnMouseMoved(mouseMotionEventArgs);
+		}
+		break;
+		case WM_LBUTTONDOWN:
+		case WM_MBUTTONDOWN:
+		case WM_RBUTTONDOWN:
+		{
+			bool lButton = (wParam & MK_LBUTTON) != 0;
+			bool rButton = (wParam & MK_RBUTTON) != 0;
+			bool mButton = (wParam & MK_MBUTTON) != 0;
+			bool shift = (wParam & MK_SHIFT) != 0;
+			bool control = (wParam & MK_CONTROL) != 0;
+			int x = static_cast<int>(static_cast<short>(LOWORD(lParam)));
+			int y = static_cast<int>(static_cast<short>(HIWORD(lParam)));
+			MouseButtonEventArgs mouseButtonEventArgs(DecodeMouseButton(message), MouseButtonEventArgs::Pressed, lButton, mButton, rButton, control, shift, x, y);
+			windowPtr->OnMouseButtonPressed(mouseButtonEventArgs);
+		}
+		break;
+		case WM_LBUTTONUP:
+		case WM_MBUTTONUP:
+		case WM_RBUTTONUP:
+		{
+			bool lButton = (wParam & MK_LBUTTON) != 0;
+			bool rButton = (wParam & MK_RBUTTON) != 0;
+			bool mButton = (wParam & MK_MBUTTON) != 0;
+			bool shift = (wParam & MK_SHIFT) != 0;
+			bool control = (wParam & MK_CONTROL) != 0;
+			int x = static_cast<int>(static_cast<short>(LOWORD(lParam)));
+			int y = static_cast<int>(static_cast<short>(HIWORD(lParam)));
+			MouseButtonEventArgs mouseButtonEventArgs(DecodeMouseButton(message), MouseButtonEventArgs::Released, lButton, mButton, rButton, control, shift, x, y);
+			windowPtr->OnMouseButtonPressed(mouseButtonEventArgs);
+		}
+		break;
+		case WM_MOUSEWHEEL:
+		{
+			float zDelta = static_cast<int>(static_cast<short>HIWORD(wParam)) / (float)WHEEL_DELTA;
+			short keyStates = (short)LOWORD(wParam);
+			bool lButton = (wParam & MK_LBUTTON) != 0;
+			bool rButton = (wParam & MK_RBUTTON) != 0;
+			bool mButton = (wParam & MK_MBUTTON) != 0;
+			bool shift = (wParam & MK_SHIFT) != 0;
+			bool control = (wParam & MK_CONTROL) != 0;
+			int x = static_cast<int>(static_cast<short>(LOWORD(lParam)));
+			int y = static_cast<int>(static_cast<short>(HIWORD(lParam)));
+			POINT clientToScreenPoint{ x, y };
+			ScreenToClient(hwnd, &clientToScreenPoint);
+			MouseWheelEventArgs mouseWheelEventArgs(zDelta, 
+				lButton, mButton, rButton, control, shift, x, y);
+			windowPtr->OnMouseWheel(mouseWheelEventArgs);
+		}
+		break;
+		case WM_SIZE:
+		{
+			int x = static_cast<int>(static_cast<short>(LOWORD(lParam)));
+			int y = static_cast<int>(static_cast<short>(HIWORD(lParam)));
+
+			ResizeEventArgs resizeEventArgs(x, y);
+			windowPtr->OnResize(resizeEventArgs);
+		}
+		break;
+		case WM_DESTROY: {
+			RemoveWindow(hwnd);
+			::PostQuitMessage(0);
+			break;
+		}
+		default:
+			return ::DefWindowProcW(hwnd, message, wParam, lParam);
+		}
+	}
+	else {
+		return ::DefWindowProcW(hwnd, message, wParam, lParam);
+	}
+	return 0;
+}
 
 

@@ -374,44 +374,6 @@ void Resize(uint32_t width, uint32_t height) {
 	}
 }
 
-void SetFullScreen(bool fullScreen)
-{
-	if (g_fullScreen != fullScreen) {
-		g_fullScreen = fullScreen;
-
-		if (g_fullScreen) {
-			::GetWindowRect(g_hwnd, &g_windowRect);
-			UINT windowStyle = WS_OVERLAPPEDWINDOW & ~(WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
-			::SetWindowLongW(g_hwnd, GWL_STYLE, windowStyle);
-
-			//Query the nearest window
-			HMONITOR hMonitor = ::MonitorFromWindow(g_hwnd, MONITOR_DEFAULTTONEAREST);
-			MONITORINFOEX monitorInfo = {};
-			monitorInfo.cbSize = sizeof(MONITORINFOEX);
-			::GetMonitorInfo(hMonitor, &monitorInfo);
-
-			//Set the FULL WINDOW
-			::SetWindowPos(g_hwnd, HWND_TOP,
-				monitorInfo.rcMonitor.left,
-				monitorInfo.rcMonitor.top,
-				monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
-				monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
-				SWP_FRAMECHANGED | SWP_NOACTIVATE);
-			::ShowWindow(g_hwnd, SW_MAXIMIZE);
-		}
-		else
-		{
-			::SetWindowLong(g_hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
-			::SetWindowPos(g_hwnd, HWND_NOTOPMOST,
-				g_windowRect.left,
-				g_windowRect.right,
-				g_windowRect.right - g_windowRect.left,
-				g_windowRect.bottom - g_windowRect.top,
-				SWP_FRAMECHANGED | SWP_NOACTIVATE);
-			::ShowWindow(g_hwnd, SW_NORMAL);
-		}
-	}
-}
 
 //Windows Message Procedure
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
