@@ -85,26 +85,7 @@ bool CheckTearingSupport() {
 }
 
 
-//Regist Window
-void RegisterWindowClass(HINSTANCE hInst, const wchar_t* windowClassName) {
 
-	WNDCLASSEXW windowClass = {};
-	windowClass.cbSize = sizeof(WNDCLASSEX);
-	windowClass.style = CS_HREDRAW | CS_VREDRAW;
-	windowClass.lpfnWndProc = &WndProc;
-	windowClass.cbClsExtra = 0;
-	windowClass.cbWndExtra = 0;
-	windowClass.hInstance = hInst;
-	windowClass.hIcon = ::LoadIcon(hInst, NULL);
-	windowClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
-	windowClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-	windowClass.lpszMenuName = NULL;
-	windowClass.lpszClassName = windowClassName;
-	windowClass.hIconSm = ::LoadIcon(hInst, NULL);
-
-	static ATOM atom = ::RegisterClassExW(&windowClass);
-	assert(atom > 0);
-}
 
 //Create Window
 HWND CreateWindow(const wchar_t* windowClassName, HINSTANCE hInstance,
@@ -139,80 +120,6 @@ HWND CreateWindow(const wchar_t* windowClassName, HINSTANCE hInstance,
 	return hWnd;
 }
 
-
-//Query DirectX12 Adapter 
-ComPtr<IDXGIAdapter4> GetAdapter(bool useWarp)
-{
-	ComPtr<IDXGIFactory4> dxgiFactory;
-	UINT createFactoryFlags = 0;
-
-#if defined(_DEBUG)
-	createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
-#endif
-
-	// Create DXGI Factory
-	ThrowIfFailed(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory)));
-
-	ComPtr<IDXGIAdapter1> dxgiAdapater1;
-	ComPtr<IDXGIAdapter4> dxgiAdapater4;
-
-	if (useWarp)
-	{
-		ThrowIfFailed(dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&dxgiAdapater1)));
-		ThrowIfFailed(dxgiAdapater1.As(&dxgiAdapater4));
-	}
-	else
-	{
-		SIZE_T maxDedicatedVideoMeory = 0;
-		for (UINT i = 0; dxgiFactory->EnumAdapters1(i, &dxgiAdapater1) != DXGI_ERROR_NOT_FOUND; i++) {
-			DXGI_ADAPTER_DESC1 dxgiAdapterDesc1;
-			dxgiAdapater1->GetDesc1(&dxgiAdapterDesc1);
-
-			if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) &&
-				SUCCEEDED(D3D12CreateDevice(dxgiAdapater1.Get(), D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)) &&
-				dxgiAdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMeory) { 
-				maxDedicatedVideoMeory = dxgiAdapterDesc1.DedicatedVideoMemory;
-				ThrowIfFailed(dxgiAdapater1.As(&dxgiAdapater4));
-			}
-		}
-	}
-	return dxgiAdapater4;
-}
-
-
-//Create Device
-ComPtr<ID3D12Device2> CreateDevice(ComPtr<IDXGIAdapter4> adapter) {
-	ComPtr<ID3D12Device2> device;
-	ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device)));
-
-#if defined(_DEBUG)
-	ComPtr<ID3D12InfoQueue> pInfoQueue;
-	if (SUCCEEDED(device.As(&pInfoQueue))) {
-		pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-		pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-		pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
-
-		D3D12_MESSAGE_SEVERITY severities[] = {
-			D3D12_MESSAGE_SEVERITY_INFO
-		};
-
-		D3D12_MESSAGE_ID denyIds[] = {
-			D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,
-			D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
-			D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
-		};
-
-		D3D12_INFO_QUEUE_FILTER newFilter = {};
-		newFilter.DenyList.NumSeverities = _countof(severities);
-		newFilter.DenyList.pSeverityList = severities;
-		newFilter.DenyList.NumIDs = _countof(denyIds);
-		newFilter.DenyList.pIDList = denyIds;
-		ThrowIfFailed(pInfoQueue->PushStorageFilter(&newFilter));
-	}
-#endif
-
-	return device;
-}
 
 //Create Command Queue
 ComPtr<ID3D12CommandQueue> CreateCommandQueue(ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type) {

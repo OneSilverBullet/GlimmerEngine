@@ -11,6 +11,10 @@ using namespace Microsoft::WRL;
 
 class Window
 {
+public:
+
+protected:
+	Window(HWND windowInstance, std::wstring windowName, int clientWidth, int clientHeight, bool vSync);
 
 
 };
