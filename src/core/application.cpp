@@ -97,6 +97,7 @@ Application::Application(HINSTANCE hInst)
 
 	//Initialize DX12 Objects
 	m_dxgiAdapter = GetAdapter(false);
+
 	if (m_dxgiAdapter) {
 		m_device = CreateDevice(m_dxgiAdapter);
 	}
@@ -138,7 +139,7 @@ ComPtr<IDXGIAdapter4> Application::GetAdapter(bool bUseWarp) {
 			DXGI_ADAPTER_DESC1 dxgiAdapterDesc1;
 			dxgiAdapater1->GetDesc1(&dxgiAdapterDesc1);
 
-			if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) &&
+			if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
 				SUCCEEDED(D3D12CreateDevice(dxgiAdapater1.Get(), D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)) &&
 				dxgiAdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMeory) {
 				maxDedicatedVideoMeory = dxgiAdapterDesc1.DedicatedVideoMemory;
@@ -196,11 +197,16 @@ bool Application::CheckTearingSupport() {
 			}
 		}
 	}
+	m_tearingSupported = allowTearing;
 	return allowTearing == TRUE;
 }
 
+bool Application::IsTearingSupported() const {
+	return m_tearingSupported;
+}
+
 std::shared_ptr<Window> Application::CreateRenderWindow(const std::wstring& windowName,
-	int clientWidth, int clientHeight, bool vSync = true) {
+	int clientWidth, int clientHeight, bool vSync) {
 
 	if (g_windowNameMap.find(windowName) != g_windowNameMap.end()) {
 		return g_windowNameMap[windowName];
@@ -229,15 +235,20 @@ std::shared_ptr<Window> Application::CreateRenderWindow(const std::wstring& wind
 
 	g_windowMap[hWnd] = pWindow;
 	g_windowNameMap[windowName] = pWindow;
+
+	return pWindow;
 }
 
 
 void Application::DestroyWindow(const std::wstring& windowName) {
-
+	WindowPtr windowptr = g_windowNameMap[windowName];
+	DestroyWindow(windowptr);
 }
 
 void Application::DestroyWindow(std::shared_ptr<Window> window) {
-	
+	if (window) {
+		window->Destroy();
+	}
 }
 
 std::shared_ptr<Window> Application::GetWindowByName(const std::wstring& windowName) {
@@ -274,7 +285,7 @@ ComPtr<ID3D12Device2> Application::GetDevice() const {
 	return m_device;
 }
 
-std::shared_ptr<CommandQueue> Application::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT) {
+std::shared_ptr<CommandQueue> Application::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) {
 	if (type == D3D12_COMMAND_LIST_TYPE_COMPUTE)
 		return m_computeCommandQueue;
 	else if (type == D3D12_COMMAND_LIST_TYPE_COPY)
@@ -382,7 +393,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 			unsigned int scanCode = (lParam & 0x00FF0000) >> 16;
 
 			unsigned char keyboardState[256];
-			GetKeyboardState(keyboardState);
+			bool keyres = GetKeyboardState(keyboardState);
 			wchar_t translatedCharacters[4];
 			if (int result = ToUnicodeEx(static_cast<UINT>(wParam), scanCode,
 				keyboardState, translatedCharacters, 4, 0, NULL) > 0) {
@@ -402,7 +413,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 			bool control = (wParam & MK_CONTROL) != 0;
 			int x = static_cast<int>(static_cast<short>(LOWORD(lParam)));
 			int y = static_cast<int>(static_cast<short>(HIWORD(lParam)));
-			MouseMotionEventArgs mouseMotionEventArgs(lButton, mButton, rButton, control, shift, x, y);
+			MouseMotionEventArgs mouseMotionEventArgs(lButton, mButton, rButton, control, shift, x, y, x, y);
 			windowPtr->OnMouseMoved(mouseMotionEventArgs);
 		}
 		break;

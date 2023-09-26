@@ -255,7 +255,7 @@ class MouseMotionEventArgs : public EventArgs
 {
 public:
     typedef EventArgs base;
-    MouseMotionEventArgs(bool leftButton, bool middleButton, bool rightButton, bool control, bool shift, int x, int y)
+    MouseMotionEventArgs(bool leftButton, bool middleButton, bool rightButton, bool control, bool shift, int x, int y, int relX, int relY)
         : LeftButton(leftButton)
         , MiddleButton(middleButton)
         , RightButton(rightButton)
@@ -263,6 +263,8 @@ public:
         , Shift(shift)
         , X(x)
         , Y(y)
+        , RelX(relX)
+        , RelY(relY)
     {}
 
     bool LeftButton;    

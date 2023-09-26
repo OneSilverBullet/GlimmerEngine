@@ -8,7 +8,7 @@ class Window;
 class Game : public std::enable_shared_from_this<Game> {
 
 public:
-	Game();
+	Game(const std::wstring& name, int width, int height, bool vsync);
 	virtual ~Game();
 	int GetClientWidth() const;
 	int GetClientHeight() const;
@@ -27,6 +27,7 @@ protected:
 	virtual void OnKeyReleased(KeyEventArgs& args);
 	virtual void OnMouseMoved(MouseMotionEventArgs& args);
 	virtual void OnMouseButtonPressed(MouseButtonEventArgs& args);
+	virtual void OnMouseButtonReleased(MouseButtonEventArgs& args);
 	virtual void OnMouseWheel(MouseWheelEventArgs& args);
 	virtual void OnResize(ResizeEventArgs& args);
 	virtual void OnWindowDestroy();
@@ -34,7 +35,7 @@ protected:
 	std::shared_ptr<Window> m_window;
 
 private:
-	std::string name;
+	std::wstring m_name;
 	int m_clientWidth;
 	int m_clientHeight;
 	bool m_vsync;

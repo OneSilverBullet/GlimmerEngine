@@ -1,12 +1,16 @@
 #include "game.h"
 #include "headers.h"
+#include "application.h"
+#include "window.h"
 
-Game::Game() {
+Game::Game(const std::wstring& name, int width, int height, bool vsync):
+	m_name(name), m_clientWidth(width), m_clientHeight(height), m_vsync(vsync)
+{
 
 }
 
 Game::~Game() {
-
+	assert(!m_window && "Use Game::Destroy() before destruction.");
 }
 
 int Game::GetClientWidth() const { return m_clientWidth; }
@@ -23,11 +27,16 @@ bool Game::Initialize() {
 	}
 
 	//Create the window from the application
+	m_window = Application::GetInstance().CreateRenderWindow(m_name, m_clientWidth, m_clientHeight, m_vsync);
+	m_window->RegisterCallbacks(shared_from_this());
+	m_window->Show();
 
+	return true;
 }
 
 void Game::Destroy(void) {
-	//Create the window from the application
+	Application::GetInstance().DestroyWindow(m_window);
+	m_window.reset();
 }
 
 
@@ -52,6 +61,10 @@ void Game::OnMouseMoved(MouseMotionEventArgs& args) {
 }
 
 void Game::OnMouseButtonPressed(MouseButtonEventArgs& args) {
+
+}
+
+void Game::OnMouseButtonReleased(MouseButtonEventArgs& args) {
 
 }
 

@@ -5,7 +5,6 @@
 #include "application.h"
 
 
-
 Window::Window(HWND windowInstance, std::wstring windowName,
 	int clientWidth, int clientHeight, bool vSync) :
 	m_hWnd(windowInstance), m_windowName(windowName),
@@ -125,39 +124,84 @@ void Window::RegisterCallbacks(std::shared_ptr<Game> pGame) {
 }
 
 void Window::OnUpdate(UpdateEventArgs& e) {
-
+	auto pGame = m_pGame.lock();
+	if (pGame) {
+		pGame->OnUpdate(e);
+	}
 }
 
 void Window::OnRender(RenderEventArgs& e) {
-
+	auto pGame = m_pGame.lock();
+	if (pGame) {
+		pGame->OnRender(e);
+	}
 }
 
 void Window::OnKeyPressed(KeyEventArgs& e) {
-
+	auto pGame = m_pGame.lock();
+	if (pGame) {
+		pGame->OnKeyPressed(e);
+	}
 }
 
 void Window::OnKeyReleased(KeyEventArgs& e) {
-
+	auto pGame = m_pGame.lock();
+	if (pGame) {
+		pGame->OnKeyReleased(e);
+	}
 }
 
 void Window::OnMouseMoved(MouseMotionEventArgs& e) {
-
+	auto pGame = m_pGame.lock();
+	if (pGame) {
+		pGame->OnMouseMoved(e);
+	}
 }
 
 void Window::OnMouseButtonPressed(MouseButtonEventArgs& e) {
-
+	auto pGame = m_pGame.lock();
+	if (pGame) {
+		pGame->OnMouseButtonPressed(e);
+	}
 }
 
 void Window::OnMouseButtonReleased(MouseButtonEventArgs& e) {
-
+	auto pGame = m_pGame.lock();
+	if (pGame) {
+		pGame->OnMouseButtonReleased(e);
+	}
 }
 
 void Window::OnMouseWheel(MouseWheelEventArgs& e) {
-
+	auto pGame = m_pGame.lock();
+	if (pGame) {
+		pGame->OnMouseWheel(e);
+	}
 }
 
 void Window::OnResize(ResizeEventArgs& e) {
+	if (m_clientWidth != e.Width || m_clientHeight != e.Height) {
+		m_clientWidth = 1u < e.Width ? e.Width : 1u;
+		m_clientHeight = 1u < e.Height ? e.Height : 1u;
 
+		Application::GetInstance().Flush();
+
+
+		for (int i = 0; i < BufferCount; ++i) {
+			m_backbuffers[i].Reset();
+		}
+
+		//Update Swap chain
+		DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+		ThrowIfFailed(m_dxgiSwapChain->GetDesc(&swapChainDesc));
+		ThrowIfFailed(m_dxgiSwapChain->ResizeBuffers(BufferCount, m_clientWidth, m_clientHeight,
+			swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
+
+		m_currentBackBufferIndex = m_dxgiSwapChain->GetCurrentBackBufferIndex();
+
+		//Update the resources 
+		UpdateRenderTargetViews();
+	}
 }
 
 ComPtr<IDXGISwapChain4> Window::CreateSwapChain() {

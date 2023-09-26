@@ -19,6 +19,8 @@ FILE(GLOB SRCS_GLIMMER_CORE
    src/core/window.cpp
    src/core/application.h
    src/core/application.cpp
+   src/core/clientgame.h
+   src/core/clientgame.cpp
 )
 
 
@@ -26,7 +28,7 @@ set(SRCS_MAIN
    src/main.cpp
 )
 
-add_executable(Glimmer ${SRCS_MAIN} ${SRCS_GLIMMER_CORE})
+add_executable(Glimmer WIN32 ${SRCS_MAIN} ${SRCS_GLIMMER_CORE})
 
 source_group("source" FILES ${SRCS_MAIN})
 source_group("source\\core" FILES ${SRCS_GLIMMER_CORE})
@@ -35,4 +37,15 @@ target_include_directories(Glimmer
     PUBLIC
         ${PROJECT_SOURCE_DIR}/src/core
 )
+
+target_link_libraries(Glimmer 
+   d3d12.lib 
+   dxgi.lib 
+   d3dcompiler.lib
+   Shlwapi.lib
+   dxguid.lib
+)
+
+
+
 
