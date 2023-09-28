@@ -20,17 +20,9 @@ using WindowMap = std::unordered_map<HWND, WindowPtr>;
 using WindowNameMap = std::unordered_map<std::wstring, WindowPtr>;
 
 static Application* g_application = nullptr;
-static WindowMap g_windowMap;
-static WindowNameMap g_windowNameMap;
+static WindowPtr g_windowPtr = nullptr;
 
-static void RemoveWindow(HWND hWnd) {
-	if (g_windowMap.find(hWnd) != g_windowMap.end()) {
-		WindowPtr windowptr = g_windowMap[hWnd];
-		g_windowNameMap.erase(windowptr->GetWindowName());
-		g_windowMap.erase(hWnd);
-	}
 
-}
 
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -72,7 +64,7 @@ void Application::Initialize(HINSTANCE hInst) {
 void Application::Release() {
 	
 	if (g_application != nullptr) {
-		assert(g_windowNameMap.empty() && g_windowMap.empty());
+		assert(g_windowPtr == nullptr);
 		delete g_application;
 		g_application = nullptr;
 	}
@@ -208,10 +200,6 @@ bool Application::IsTearingSupported() const {
 std::shared_ptr<Window> Application::CreateRenderWindow(const std::wstring& windowName,
 	int clientWidth, int clientHeight, bool vSync) {
 
-	if (g_windowNameMap.find(windowName) != g_windowNameMap.end()) {
-		return g_windowNameMap[windowName];
-	}
-
 	int screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
 	int screenHeight = ::GetSystemMetrics(SM_CYSCREEN);
 	RECT windowRect = { 0, 0, static_cast<long>(clientWidth), static_cast<long>(clientHeight) };
@@ -233,26 +221,25 @@ std::shared_ptr<Window> Application::CreateRenderWindow(const std::wstring& wind
 	std::shared_ptr<WindowInstance> pWindow = std::make_shared<WindowInstance>(hWnd, 
 		windowName, clientWidth, clientHeight, vSync);
 
-	g_windowMap[hWnd] = pWindow;
-	g_windowNameMap[windowName] = pWindow;
+	g_windowPtr = pWindow;
 
 	return pWindow;
 }
 
 
 void Application::DestroyWindow(const std::wstring& windowName) {
-	WindowPtr windowptr = g_windowNameMap[windowName];
-	DestroyWindow(windowptr);
+	DestroyWindow(g_windowPtr);
 }
 
 void Application::DestroyWindow(std::shared_ptr<Window> window) {
 	if (window) {
 		window->Destroy();
+		g_windowPtr = nullptr;
 	}
 }
 
-std::shared_ptr<Window> Application::GetWindowByName(const std::wstring& windowName) {
-	return g_windowNameMap[windowName];
+std::shared_ptr<Window> Application::GetWindowByName() {
+	return g_windowPtr;
 }
 
 int Application::Run(std::shared_ptr<Game> gameInstance) {
@@ -265,6 +252,13 @@ int Application::Run(std::shared_ptr<Game> gameInstance) {
 		if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 			::TranslateMessage(&msg);
 			::DispatchMessage(&msg);
+		}
+		else
+		{
+			UpdateEventArgs updateEventArgs(0.0f, 0.0f);
+			g_windowPtr->OnUpdate(updateEventArgs);
+			RenderEventArgs renderEventArgs(0.0f, 0.0f);
+			g_windowPtr->OnRender(renderEventArgs);
 		}
 	}
 
@@ -351,18 +345,9 @@ MouseButtonEventArgs::MouseButton DecodeMouseButton(UINT messageID) {
 
 //Windows Message Procedure
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-	WindowPtr windowPtr = g_windowMap[hwnd];	
-	
-	if (windowPtr) {
+
+	if (g_windowPtr) {
 		switch (message) {
-			//rendering
-		case WM_PAINT: {
-			UpdateEventArgs updateEventArgs(0.0f, 0.0f);
-			windowPtr->OnUpdate(updateEventArgs);
-			RenderEventArgs renderEventArgs(0.0f, 0.0f);
-			windowPtr->OnRender(renderEventArgs);
-		}
-		break;
 		case WM_SYSKEYDOWN:
 		case WM_KEYDOWN:
 		{
@@ -379,7 +364,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 			KeyCode::Key key = (KeyCode::Key)wParam;
 
 			KeyEventArgs keyEventArgs(key, c, KeyEventArgs::Pressed, alt, control, shift);
-			windowPtr->OnKeyPressed(keyEventArgs);
+			g_windowPtr->OnKeyPressed(keyEventArgs);
 		}
 		break;
 		case WM_SYSKEYUP:
@@ -400,7 +385,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 				c = translatedCharacters[0];
 			}
 			KeyEventArgs keyEventArgs(key, c, KeyEventArgs::Released, alt, control, shift);
-			windowPtr->OnKeyReleased(keyEventArgs);
+			g_windowPtr->OnKeyReleased(keyEventArgs);
 		}
 		break;
 		case WM_SYSCHAR:
@@ -414,7 +399,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 			int x = static_cast<int>(static_cast<short>(LOWORD(lParam)));
 			int y = static_cast<int>(static_cast<short>(HIWORD(lParam)));
 			MouseMotionEventArgs mouseMotionEventArgs(lButton, mButton, rButton, control, shift, x, y, x, y);
-			windowPtr->OnMouseMoved(mouseMotionEventArgs);
+			g_windowPtr->OnMouseMoved(mouseMotionEventArgs);
 		}
 		break;
 		case WM_LBUTTONDOWN:
@@ -429,7 +414,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 			int x = static_cast<int>(static_cast<short>(LOWORD(lParam)));
 			int y = static_cast<int>(static_cast<short>(HIWORD(lParam)));
 			MouseButtonEventArgs mouseButtonEventArgs(DecodeMouseButton(message), MouseButtonEventArgs::Pressed, lButton, mButton, rButton, control, shift, x, y);
-			windowPtr->OnMouseButtonPressed(mouseButtonEventArgs);
+			g_windowPtr->OnMouseButtonPressed(mouseButtonEventArgs);
 		}
 		break;
 		case WM_LBUTTONUP:
@@ -444,7 +429,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 			int x = static_cast<int>(static_cast<short>(LOWORD(lParam)));
 			int y = static_cast<int>(static_cast<short>(HIWORD(lParam)));
 			MouseButtonEventArgs mouseButtonEventArgs(DecodeMouseButton(message), MouseButtonEventArgs::Released, lButton, mButton, rButton, control, shift, x, y);
-			windowPtr->OnMouseButtonPressed(mouseButtonEventArgs);
+			g_windowPtr->OnMouseButtonPressed(mouseButtonEventArgs);
 		}
 		break;
 		case WM_MOUSEWHEEL:
@@ -462,7 +447,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 			ScreenToClient(hwnd, &clientToScreenPoint);
 			MouseWheelEventArgs mouseWheelEventArgs(zDelta, 
 				lButton, mButton, rButton, control, shift, x, y);
-			windowPtr->OnMouseWheel(mouseWheelEventArgs);
+			g_windowPtr->OnMouseWheel(mouseWheelEventArgs);
 		}
 		break;
 		case WM_SIZE:
@@ -471,11 +456,10 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
 			int y = static_cast<int>(static_cast<short>(HIWORD(lParam)));
 
 			ResizeEventArgs resizeEventArgs(x, y);
-			windowPtr->OnResize(resizeEventArgs);
+			g_windowPtr->OnResize(resizeEventArgs);
 		}
 		break;
 		case WM_DESTROY: {
-			RemoveWindow(hwnd);
 			::PostQuitMessage(0);
 			break;
 		}

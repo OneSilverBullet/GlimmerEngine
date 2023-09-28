@@ -113,6 +113,7 @@ void Window::ToggleFullscreen() {
 //show and hide
 void Window::Show() {
 	::ShowWindow(m_hWnd, SW_SHOW);
+	::UpdateWindow(m_hWnd);
 }
 
 void Window::Hide() {

@@ -24,7 +24,7 @@ public:
 	std::shared_ptr<Window> CreateRenderWindow(const std::wstring& windowName, int clientWidth, int clientHeight, bool vSync = true);
 	void DestroyWindow(const std::wstring& windowName);
 	void DestroyWindow(std::shared_ptr<Window> window);
-	std::shared_ptr<Window> GetWindowByName(const std::wstring& windowName);
+	std::shared_ptr<Window> GetWindowByName();
 	
 	int Run(std::shared_ptr<Game> gameInstance);
 	void Quit(int exitCode = 0);

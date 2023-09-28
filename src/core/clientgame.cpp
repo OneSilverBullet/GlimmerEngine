@@ -27,8 +27,9 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 
     
     auto commandQueue = Application::GetInstance().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-    auto commandListtmp = commandQueue->GetCommandList();
+    auto commandList = commandQueue->GetCommandList();
     
+
     UINT currentBackBufferIndex = m_window->GetCurrentBackBufferIndex();
     auto backbuffer = m_window->GetCurrentBackBuffer();
     auto rtv = m_window->GetCurrentRenderTargetView();
@@ -43,11 +44,13 @@ void ClientGame::OnRender(RenderEventArgs& e) {
             backbuffer.Get(),
             D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-        commandListtmp->ResourceBarrier(1, &barrier);
+        commandList->ResourceBarrier(1, &barrier);
 
-        FLOAT clearColor[4] = { 0.4f, 0.6f, 0.9f, 1.0f };
+        float green = 0.6f;
 
-        commandListtmp->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+        FLOAT clearColor[4] = { 0.4f, green, 0.9f, 1.0f };
+
+        commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
     }
 
     // Present
@@ -55,12 +58,12 @@ void ClientGame::OnRender(RenderEventArgs& e) {
         CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
             backbuffer.Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-        commandListtmp->ResourceBarrier(1, &barrier);
+        commandList->ResourceBarrier(1, &barrier);
 
-        ThrowIfFailed(commandListtmp->Close());
+        ThrowIfFailed(commandList->Close());
 
 
-       UINT64 fenceValue = commandQueue->ExecuteCommandList(commandListtmp);
+       UINT64 fenceValue = commandQueue->ExecuteCommandList(commandList);
 
 
        currentBackBufferIndex = m_window->Present();
