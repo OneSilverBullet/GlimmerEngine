@@ -7,6 +7,22 @@ project(
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+
+set( SHADER_FILES
+    shaders/default.hlsl
+)
+
+set_source_files_properties( shaders/default.hlsl PROPERTIES 
+    VS_SHADER_TYPE Vertex
+    VS_SHADER_MODEL 5.1
+)
+
+set_source_files_properties( shaders/default.hlsl PROPERTIES 
+    VS_SHADER_TYPE Pixel
+    VS_SHADER_MODEL 5.1
+)
+
+
 FILE(GLOB SRCS_GLIMMER_CORE
    src/core/commandqueue.h
    src/core/commandqueue.cpp
@@ -28,10 +44,11 @@ set(SRCS_MAIN
    src/main.cpp
 )
 
-add_executable(Glimmer WIN32 ${SRCS_MAIN} ${SRCS_GLIMMER_CORE})
+add_executable(Glimmer WIN32 ${SRCS_MAIN} ${SRCS_GLIMMER_CORE} ${SHADER_FILES})
 
 source_group("source" FILES ${SRCS_MAIN})
 source_group("source\\core" FILES ${SRCS_GLIMMER_CORE})
+source_group( "resources\\shaders" FILES ${SHADER_FILES} )
 
 target_include_directories(Glimmer
     PUBLIC
