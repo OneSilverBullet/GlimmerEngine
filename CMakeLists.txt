@@ -14,11 +14,13 @@ set( SHADER_FILES
 
 set_source_files_properties( shaders/default.hlsl PROPERTIES 
     VS_SHADER_TYPE Vertex
+    VS_SHADER_ENTRYPOINT VSMain
     VS_SHADER_MODEL 5.1
 )
 
 set_source_files_properties( shaders/default.hlsl PROPERTIES 
     VS_SHADER_TYPE Pixel
+    VS_SHADER_ENTRYPOINT PSMain
     VS_SHADER_MODEL 5.1
 )
 

@@ -3,7 +3,7 @@
 #include "headers.h"
 #include "application.h"
 #include "commandqueue.h"
-
+#include "d3dx12.h"
 #include <DirectXMath.h>
 
 using namespace DirectX;
@@ -41,6 +41,18 @@ constexpr const T& clamp(const T& v, const T& lo, const T& hi)
 	return v < lo ? lo : hi < v ? hi : v;
 }
 
+struct PipelineStateStream
+{
+    CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE p_rootSignature;
+    CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT p_inputLayout;
+    CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY p_primitiveTopologyType;
+    CD3DX12_PIPELINE_STATE_STREAM_VS p_vs;
+    CD3DX12_PIPELINE_STATE_STREAM_PS p_ps;
+    CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT p_dsvFormat;
+    CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS p_rtvFormats;
+};
+
+
 ClientGame::ClientGame(const std::wstring& name, int width, int height, bool vSync): 
 	super(name, width, height, vSync)	
 {
@@ -52,6 +64,96 @@ ClientGame::ClientGame(const std::wstring& name, int width, int height, bool vSy
 }
 
 bool ClientGame::LoadContent() {
+    auto device = Application::GetInstance().GetDevice();
+    auto commandQueue = Application::GetInstance().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+    auto commandList = commandQueue->GetCommandList();
+    //Upload vertex buffer data
+    ComPtr<ID3D12Resource> intermediateVertexBuffer;
+    UpdateBufferResource(commandList.Get(),
+        &m_vertexBuffer, &intermediateVertexBuffer,
+        _countof(g_Vertices), sizeof(VertexPosColor), g_Vertices);
+    m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
+    m_vertexBufferView.SizeInBytes = sizeof(g_Vertices);
+    m_vertexBufferView.StrideInBytes = sizeof(VertexPosColor);
+
+    //Upload index buffer data
+    ComPtr<ID3D12Resource> intermediateIndexBuffer;
+    UpdateBufferResource(commandList.Get(), 
+        &m_indexBuffer, &intermediateIndexBuffer,
+        		_countof(g_Indicies), sizeof(WORD), g_Indicies);
+    m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
+    m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
+    m_indexBufferView.SizeInBytes = sizeof(g_Indicies);
+
+    //Create the depth descriptor heap
+    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+    dsvHeapDesc.NumDescriptors = 1;
+    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    ThrowIfFailed(device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
+
+    //Load Shader
+    ComPtr<ID3DBlob> shaderBlob;
+    ThrowIfFailed(D3DReadFileToBlob(L"default.cso", &shaderBlob));
+
+
+    D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
+        {"POSITION",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        {"COLOR",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+    };
+
+    //Create root signature
+    D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
+    featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+    if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData)))) {
+		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+	}
+
+    D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlag = 
+        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+
+    CD3DX12_ROOT_PARAMETER1 rootParameters[1];
+    rootParameters[0].InitAsConstants(sizeof(XMMATRIX) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+
+    CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDescription;
+    rootSignatureDescription.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlag);
+
+    ComPtr<ID3DBlob> rootSignatureBlob;
+    ComPtr<ID3DBlob> errorBlob;
+    ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDescription,
+        		featureData.HighestVersion, &rootSignatureBlob, &errorBlob));
+
+    ThrowIfFailed(device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(),
+        				rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
+
+    //Create RTV
+    D3D12_RT_FORMAT_ARRAY rtvFormats = {};
+    rtvFormats.NumRenderTargets = 1;
+    rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+    PipelineStateStream pipelineStateStream;
+    pipelineStateStream.p_rootSignature = m_rootSignature.Get();
+    pipelineStateStream.p_inputLayout = { inputLayout, _countof(inputLayout) };
+    pipelineStateStream.p_primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    pipelineStateStream.p_vs = CD3DX12_SHADER_BYTECODE(shaderBlob.Get());
+    pipelineStateStream.p_ps = CD3DX12_SHADER_BYTECODE(shaderBlob.Get());
+    pipelineStateStream.p_dsvFormat = DXGI_FORMAT_D32_FLOAT;
+    pipelineStateStream.p_rtvFormats = rtvFormats;
+
+    D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
+		sizeof(pipelineStateStream), &pipelineStateStream
+	};
+    ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_pso)));
+
+    auto fenceValue = commandQueue->ExecuteCommandList(commandList);
+    commandQueue->WaiteForFenceValue(fenceValue);
+    m_contentLoaded = true;
+
+    Res(GetClientWidth(), GetClientHeight());
 
 	return true;
 }
@@ -136,6 +238,44 @@ void ClientGame::OnWindowDestroy() {
 	Application::GetInstance().Quit();
 }
 
+void ClientGame::UpdateBufferResource(
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
+    ID3D12Resource** pDestinationResource, //destination resource
+    ID3D12Resource** pIntermediateResource, //intermediate resource
+    size_t numElements, size_t elementSize, const void* bufferData,
+    D3D12_RESOURCE_FLAGS flags) {
+
+    auto device = Application::GetInstance().GetDevice();
+    size_t bufferSize = numElements * elementSize;
+
+    // Create a committed resource for the GPU resource in a default heap.
+    ThrowIfFailed(device->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
+			D3D12_HEAP_FLAG_NONE, // no flags
+			&CD3DX12_RESOURCE_DESC::Buffer(bufferSize, flags), // resource description for a buffer
+			D3D12_RESOURCE_STATE_COPY_DEST, // we will start this heap in the copy destination state since we will copy data
+			nullptr, // optimized clear value must be null for this type of resource. used for render targets and depth/stencil buffers
+			IID_PPV_ARGS(pDestinationResource)));
+
+    if (bufferData != nullptr) {
+        ThrowIfFailed(device->CreateCommittedResource(
+            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
+            D3D12_HEAP_FLAG_NONE, // no flags
+            &CD3DX12_RESOURCE_DESC::Buffer(bufferSize), // resource description for a buffer
+            D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap
+            nullptr,
+            IID_PPV_ARGS(pIntermediateResource)));
+        
+        //Upload the buffer data to the GPU
+        D3D12_SUBRESOURCE_DATA subresourceData = {};
+        subresourceData.pData = bufferData;
+        subresourceData.RowPitch = bufferSize;
+        subresourceData.SlicePitch = subresourceData.RowPitch;
+        UpdateSubresources(commandList.Get(), 
+            *pDestinationResource, *pIntermediateResource,
+            0, 0, 1, &subresourceData);
+    }
+}
 
 void ClientGame::TransitionResource(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
     Microsoft::WRL::ComPtr<ID3D12Resource> resource,
@@ -154,10 +294,44 @@ void ClientGame::ClearRTV(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> com
 }
 
 void ClientGame::ClearDepth(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 1.0f) {
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth) {
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
 }
 
+void ClientGame::ResizeDepthBuffer(int width, int height) {
+    if (m_contentLoaded) {
+        Application::GetInstance().Flush();
+        width = std::max(1, width);
+        height = std::max(1, height);
+        auto device = Application::GetInstance().GetDevice();
+
+        D3D12_CLEAR_VALUE optimizedClearValue = {};
+        optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+        optimizedClearValue.DepthStencil = { 1.0f, 0 };
+
+        ThrowIfFailed(device->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
+			D3D12_HEAP_FLAG_NONE, // no flags
+			&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height,
+                				1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), // resource description for a depth buffer
+			D3D12_RESOURCE_STATE_DEPTH_WRITE, // we will start this heap in the generic read state as a copy destination
+			&optimizedClearValue, // the optimized clear value for depth buffers
+			IID_PPV_ARGS(&m_depthBuffer)));
+    
+
+        D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
+		dsv.Format = DXGI_FORMAT_D32_FLOAT;
+		dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+		dsv.Texture2D.MipSlice = 0;
+		dsv.Flags = D3D12_DSV_FLAG_NONE;
+
+		device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+        
+    }
+}
+
 void ClientGame::ResizeBuffer(int width, int height) {
+
+
 
 }

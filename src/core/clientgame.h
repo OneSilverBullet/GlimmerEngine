@@ -26,6 +26,12 @@ protected:
 	virtual void OnWindowDestroy() override;
 private:
 
+	void UpdateBufferResource(
+				Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
+				ID3D12Resource** pDestinationResource, ID3D12Resource** pIntermediateResource,
+				size_t numElements, size_t elementSize, const void* bufferData,
+				D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
+
 	void TransitionResource(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
 		Microsoft::WRL::ComPtr<ID3D12Resource> resource,
 		D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
@@ -35,6 +41,9 @@ private:
 
 	void ClearDepth(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
 		D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 1.0f);
+
+	void ResizeDepthBuffer(int width, int height);
+
 
 	void ResizeBuffer(int width, int height);
 
@@ -55,7 +64,6 @@ private:
 	float m_fov;
 	float m_aspectRatio;
 
-	float m_fov;
 
 	DirectX::XMMATRIX m_worldMatrix;
 	DirectX::XMMATRIX m_viewMatrix;
