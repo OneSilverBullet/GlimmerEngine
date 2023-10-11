@@ -9,16 +9,17 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
 set( SHADER_FILES
-    shaders/default.hlsl
+    shaders/default_pixel.hlsl
+    shaders/base_vertex.hlsl
 )
 
-set_source_files_properties( shaders/default.hlsl PROPERTIES 
+set_source_files_properties( shaders/base_vertex.hlsl PROPERTIES 
     VS_SHADER_TYPE Vertex
     VS_SHADER_ENTRYPOINT VSMain
     VS_SHADER_MODEL 5.1
 )
 
-set_source_files_properties( shaders/default.hlsl PROPERTIES 
+set_source_files_properties( shaders/default_pixel.hlsl PROPERTIES 
     VS_SHADER_TYPE Pixel
     VS_SHADER_ENTRYPOINT PSMain
     VS_SHADER_MODEL 5.1

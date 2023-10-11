@@ -41,7 +41,23 @@ void Game::Destroy(void) {
 
 
 void Game::OnUpdate(UpdateEventArgs& args) {
+	static uint64_t frameCount = 0;
+	static double totaltime = 0.0f;
 
+	totaltime += args.ElapsedTime;
+	frameCount++;
+
+
+	if (totaltime > 1.0f) {
+		double fps = frameCount / totaltime;
+
+		char buffer[512];
+		sprintf_s(buffer, "FPS: %f\n", fps);
+		OutputDebugStringA(buffer);
+
+		frameCount = 0;
+		totaltime = 0.0f;
+	}
 }
 
 void Game::OnRender(RenderEventArgs& args) {

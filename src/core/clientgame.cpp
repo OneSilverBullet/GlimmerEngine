@@ -5,6 +5,9 @@
 #include "commandqueue.h"
 #include "d3dx12.h"
 #include <DirectXMath.h>
+#include <fstream>
+#include <iostream>
+#include <string>
 
 using namespace DirectX;
 
@@ -93,13 +96,15 @@ bool ClientGame::LoadContent() {
     ThrowIfFailed(device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
 
     //Load Shader
-    ComPtr<ID3DBlob> shaderBlob;
-    ThrowIfFailed(D3DReadFileToBlob(L"default.cso", &shaderBlob));
+    ComPtr<ID3DBlob> vertexShaderBlob;
+    ThrowIfFailed(D3DReadFileToBlob(L"base_vertex.cso", &vertexShaderBlob));
+    ComPtr<ID3DBlob> pixelShaderBlob;
+    ThrowIfFailed(D3DReadFileToBlob(L"default_pixel.cso", &pixelShaderBlob));
 
 
     D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-        {"POSITION",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        {"COLOR",  0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+        {"POSITION",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        {"COLOR_IN",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
     };
 
     //Create root signature
@@ -139,8 +144,8 @@ bool ClientGame::LoadContent() {
     pipelineStateStream.p_rootSignature = m_rootSignature.Get();
     pipelineStateStream.p_inputLayout = { inputLayout, _countof(inputLayout) };
     pipelineStateStream.p_primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    pipelineStateStream.p_vs = CD3DX12_SHADER_BYTECODE(shaderBlob.Get());
-    pipelineStateStream.p_ps = CD3DX12_SHADER_BYTECODE(shaderBlob.Get());
+    pipelineStateStream.p_vs = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
+    pipelineStateStream.p_ps = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
     pipelineStateStream.p_dsvFormat = DXGI_FORMAT_D32_FLOAT;
     pipelineStateStream.p_rtvFormats = rtvFormats;
 
@@ -149,11 +154,12 @@ bool ClientGame::LoadContent() {
 	};
     ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_pso)));
 
+    ThrowIfFailed(commandList->Close());
     auto fenceValue = commandQueue->ExecuteCommandList(commandList);
     commandQueue->WaiteForFenceValue(fenceValue);
     m_contentLoaded = true;
 
-    Res(GetClientWidth(), GetClientHeight());
+    ResizeDepthBuffer(GetClientWidth(), GetClientHeight());
 
 	return true;
 }
@@ -165,16 +171,13 @@ void ClientGame::UnloadContent() {
 void ClientGame::OnRender(RenderEventArgs& e) {
     super::OnRender(e);
 
-
-    
     auto commandQueue = Application::GetInstance().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     auto commandList = commandQueue->GetCommandList();
     
-
     UINT currentBackBufferIndex = m_window->GetCurrentBackBufferIndex();
     auto backbuffer = m_window->GetCurrentBackBuffer();
     auto rtv = m_window->GetCurrentRenderTargetView();
-
+    auto dsv = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
   
 
     ComPtr<ID3D12Resource> currentBackbuffer = m_window->GetCurrentBackBuffer();
@@ -184,11 +187,44 @@ void ClientGame::OnRender(RenderEventArgs& e) {
         TransitionResource(commandList, currentBackbuffer,
 			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-        float green = 0.6f;
+        FLOAT clearColor[4] = { 0.4f, 0.6f, 0.9f, 1.0f };
 
-        FLOAT clearColor[4] = { 0.4f, green, 0.9f, 1.0f };
+        ClearRTV(commandList, rtv, clearColor);
+        ClearDepth(commandList, dsv);
+    }
 
-        commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+    //Assemble the rendering components
+    {
+        commandList->SetPipelineState(m_pso.Get());
+        commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+        //Assemble Geometry
+        commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+        commandList->IASetIndexBuffer(&m_indexBufferView);
+
+        //Setup Rasterizer State
+        commandList->RSSetViewports(1, &m_viewport);
+        commandList->RSSetScissorRects(1, &m_scissorRect);
+        
+        //Bind Render target
+        commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+
+        //Update Constant buffer
+        XMMATRIX mvpMatrix = XMMatrixMultiply(XMMatrixMultiply(m_worldMatrix, m_viewMatrix), m_projMatrix);
+        commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
+
+        XMFLOAT4X4 mvp;
+        XMStoreFloat4x4(&mvp, mvpMatrix);
+        std::ofstream fout;
+        fout.open("mvp.txt");
+        fout << std::to_string(mvp._11) << " " << std::to_string(mvp._12) << " " << std::to_string(mvp._13) << " " << std::to_string(mvp._14) << std::endl
+            << std::to_string(mvp._21) << " " << std::to_string(mvp._22) << " " << std::to_string(mvp._23) << " " << std::to_string(mvp._24) << std::endl
+            << std::to_string(mvp._31) << " " << std::to_string(mvp._32) << " " << std::to_string(mvp._33) << " " << std::to_string(mvp._34) << std::endl
+            << std::to_string(mvp._41) << " " << std::to_string(mvp._42) << " " << std::to_string(mvp._43) << " " << std::to_string(mvp._44) << std::endl;
+
+
+        commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
     }
 
     // Present
@@ -209,6 +245,22 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 }
 
 void ClientGame::OnUpdate(UpdateEventArgs& e) {
+    super::OnUpdate(e);
+
+    //Update the model matrix
+    float angle = static_cast<float>(e.TotalTime * 90.0f);
+    const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
+    m_worldMatrix = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
+
+    //Update the view matrix
+    const XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);
+    const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
+    const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
+    m_viewMatrix = XMMatrixLookAtLH(eyePosition, focusPoint, upDirection);
+
+    //update project matrix
+    float aspectRatio = GetClientWidth()/ static_cast<float>(GetClientHeight());
+    m_projMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_fov), aspectRatio, 0.1f, 100.0f);
 
 }
 
@@ -231,6 +283,12 @@ void ClientGame::OnMouseWheel(MouseWheelEventArgs& e) {
 }
 
 void ClientGame::OnResize(ResizeEventArgs& e) {
+    if (e.Width != GetClientWidth() || e.Height != GetClientHeight()) {
+        super::OnResize(e);
+        m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(e.Width), static_cast<float>(e.Height));
+        ResizeDepthBuffer(e.Width, e.Height);
+    }
+
 
 }
 
@@ -318,20 +376,14 @@ void ClientGame::ResizeDepthBuffer(int width, int height) {
 			&optimizedClearValue, // the optimized clear value for depth buffers
 			IID_PPV_ARGS(&m_depthBuffer)));
     
-
+        // 
         D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
 		dsv.Format = DXGI_FORMAT_D32_FLOAT;
 		dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
 		dsv.Texture2D.MipSlice = 0;
 		dsv.Flags = D3D12_DSV_FLAG_NONE;
 
-		device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
-        
+		device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, 
+            m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
     }
-}
-
-void ClientGame::ResizeBuffer(int width, int height) {
-
-
-
 }

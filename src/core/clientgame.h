@@ -45,8 +45,6 @@ private:
 	void ResizeDepthBuffer(int width, int height);
 
 
-	void ResizeBuffer(int width, int height);
-
 	ComPtr<ID3D12Resource> m_vertexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 	ComPtr<ID3D12Resource> m_indexBuffer;
@@ -63,7 +61,6 @@ private:
 
 	float m_fov;
 	float m_aspectRatio;
-
 
 	DirectX::XMMATRIX m_worldMatrix;
 	DirectX::XMMATRIX m_viewMatrix;
