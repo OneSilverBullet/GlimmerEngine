@@ -11,6 +11,7 @@
 class Window;
 class CommandQueue;
 class Game;
+class EngineTimer;
 
 using namespace Microsoft::WRL;
 
@@ -51,6 +52,7 @@ private:
 
 	HINSTANCE m_hInst;
 
+	EngineTimer* m_timer = nullptr;
 
 	ComPtr<IDXGIAdapter4> m_dxgiAdapter;
 	ComPtr<ID3D12Device2> m_device;

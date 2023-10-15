@@ -3,6 +3,7 @@
 #include "window.h"
 #include <DirectXMath.h>
 
+class RootSignature;
 
 class ClientGame : public Game
 {
@@ -24,8 +25,8 @@ protected:
 	virtual void OnMouseWheel(MouseWheelEventArgs& e) override;
 	virtual void OnResize(ResizeEventArgs& e) override;
 	virtual void OnWindowDestroy() override;
-private:
 
+private:
 	void UpdateBufferResource(
 				Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
 				ID3D12Resource** pDestinationResource, ID3D12Resource** pIntermediateResource,
@@ -53,7 +54,8 @@ private:
 	ComPtr<ID3D12Resource> m_depthBuffer; //samilar with the back buffer
 	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 
-	ComPtr<ID3D12RootSignature> m_rootSignature;
+
+	RootSignature* m_rootSignature = nullptr;
 	ComPtr<ID3D12PipelineState> m_pso;
 
 	D3D12_VIEWPORT m_viewport;

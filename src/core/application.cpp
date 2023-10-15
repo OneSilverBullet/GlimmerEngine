@@ -4,6 +4,8 @@
 #include "game.h"
 #include "commandqueue.h"
 #include "events.h"
+#include "timer.h"
+#include "graphicscore.h"
 #include <unordered_map>
 
 
@@ -21,8 +23,6 @@ using WindowNameMap = std::unordered_map<std::wstring, WindowPtr>;
 
 static Application* g_application = nullptr;
 static WindowPtr g_windowPtr = nullptr;
-
-
 
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -99,6 +99,9 @@ Application::Application(HINSTANCE hInst)
 		m_copyCommandQueue = std::make_shared<CommandQueue>(m_device, D3D12_COMMAND_LIST_TYPE_COPY);
 		m_tearingSupported = CheckTearingSupport();
 	}
+
+	//Initialize Timer
+	m_timer = new EngineTimer();
 }
 
 Application::~Application(){
@@ -146,6 +149,7 @@ ComPtr<ID3D12Device2> Application::CreateDevice(ComPtr<IDXGIAdapter4> adapter) {
 	ComPtr<ID3D12Device2> device;
 	ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device)));
 
+	
 #if defined(_DEBUG)
 	ComPtr<ID3D12InfoQueue> pInfoQueue;
 	if (SUCCEEDED(device.As(&pInfoQueue))) {
@@ -248,6 +252,8 @@ int Application::Run(std::shared_ptr<Game> gameInstance) {
 
 	MSG msg = { 0 };
 
+
+
 	while (msg.message != WM_QUIT) {
 		if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 			::TranslateMessage(&msg);
@@ -255,7 +261,8 @@ int Application::Run(std::shared_ptr<Game> gameInstance) {
 		}
 		else
 		{
-			UpdateEventArgs updateEventArgs(0.0f, 0.0f);
+			double totalTime = m_timer->TotalTime();
+			UpdateEventArgs updateEventArgs(0.0f, totalTime);
 			g_windowPtr->OnUpdate(updateEventArgs);
 			RenderEventArgs renderEventArgs(0.0f, 0.0f);
 			g_windowPtr->OnRender(renderEventArgs);

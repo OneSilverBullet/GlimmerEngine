@@ -3,6 +3,7 @@
 #include "headers.h"
 #include "application.h"
 #include "commandqueue.h"
+#include "rootsignature.h"
 #include "d3dx12.h"
 #include <DirectXMath.h>
 #include <fstream>
@@ -121,19 +122,10 @@ bool ClientGame::LoadContent() {
         D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
-    CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-    rootParameters[0].InitAsConstants(sizeof(XMMATRIX) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-
-    CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDescription;
-    rootSignatureDescription.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlag);
-
-    ComPtr<ID3DBlob> rootSignatureBlob;
-    ComPtr<ID3DBlob> errorBlob;
-    ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDescription,
-        		featureData.HighestVersion, &rootSignatureBlob, &errorBlob));
-
-    ThrowIfFailed(device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(),
-        				rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
+    
+    m_rootSignature = new RootSignature(1, 0);
+    (*m_rootSignature)[0].InitAsConstant32(0, sizeof(XMMATRIX) / 4, D3D12_SHADER_VISIBILITY_VERTEX);
+    m_rootSignature->Finalize(L"", rootSignatureFlag);
 
     //Create RTV
     D3D12_RT_FORMAT_ARRAY rtvFormats = {};
@@ -141,7 +133,7 @@ bool ClientGame::LoadContent() {
     rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 
     PipelineStateStream pipelineStateStream;
-    pipelineStateStream.p_rootSignature = m_rootSignature.Get();
+    pipelineStateStream.p_rootSignature = m_rootSignature->GetSignature(); 
     pipelineStateStream.p_inputLayout = { inputLayout, _countof(inputLayout) };
     pipelineStateStream.p_primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     pipelineStateStream.p_vs = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
@@ -196,7 +188,7 @@ void ClientGame::OnRender(RenderEventArgs& e) {
     //Assemble the rendering components
     {
         commandList->SetPipelineState(m_pso.Get());
-        commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+        commandList->SetGraphicsRootSignature(m_rootSignature->GetSignature());
 
         //Assemble Geometry
         commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
