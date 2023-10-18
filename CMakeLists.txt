@@ -38,6 +38,8 @@ FILE(GLOB SRCS_GLIMMER_CORE
    src/core/graphicscore.h
    src/core/rootsignature.h
    src/core/rootsignature.cpp
+   src/core/pso.h
+   src/core/pso.cpp
    src/core/window.h
    src/core/window.cpp
    src/core/application.h
