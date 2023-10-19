@@ -4,6 +4,7 @@
 #include <DirectXMath.h>
 
 class RootSignature;
+class GraphicsPSO;
 
 class ClientGame : public Game
 {
@@ -56,7 +57,7 @@ private:
 
 
 	RootSignature* m_rootSignature = nullptr;
-	ComPtr<ID3D12PipelineState> m_pso;
+	GraphicsPSO* m_pso = nullptr;
 
 	D3D12_VIEWPORT m_viewport;
 	D3D12_RECT m_scissorRect;

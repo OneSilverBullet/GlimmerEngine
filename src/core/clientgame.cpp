@@ -4,6 +4,7 @@
 #include "application.h"
 #include "commandqueue.h"
 #include "rootsignature.h"
+#include "pso.h"
 #include "d3dx12.h"
 #include <DirectXMath.h>
 #include <fstream>
@@ -102,12 +103,6 @@ bool ClientGame::LoadContent() {
     ComPtr<ID3DBlob> pixelShaderBlob;
     ThrowIfFailed(D3DReadFileToBlob(L"default_pixel.cso", &pixelShaderBlob));
 
-
-    D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-        {"POSITION",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        {"COLOR_IN",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
-    };
-
     //Create root signature
     D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
     featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
@@ -122,7 +117,6 @@ bool ClientGame::LoadContent() {
         D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
-    
     m_rootSignature = new RootSignature(1, 0);
     (*m_rootSignature)[0].InitAsConstant32(0, sizeof(XMMATRIX) / 4, D3D12_SHADER_VISIBILITY_VERTEX);
     m_rootSignature->Finalize(L"", rootSignatureFlag);
@@ -132,19 +126,40 @@ bool ClientGame::LoadContent() {
     rtvFormats.NumRenderTargets = 1;
     rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-    PipelineStateStream pipelineStateStream;
-    pipelineStateStream.p_rootSignature = m_rootSignature->GetSignature(); 
-    pipelineStateStream.p_inputLayout = { inputLayout, _countof(inputLayout) };
-    pipelineStateStream.p_primitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    pipelineStateStream.p_vs = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
-    pipelineStateStream.p_ps = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
-    pipelineStateStream.p_dsvFormat = DXGI_FORMAT_D32_FLOAT;
-    pipelineStateStream.p_rtvFormats = rtvFormats;
+    //Create input layout
+    D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
+        {"POSITION",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+        {"COLOR_IN",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+    };
 
-    D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
-		sizeof(pipelineStateStream), &pipelineStateStream
-	};
-    ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_pso)));
+    //Create Rasterizer State
+    D3D12_RASTERIZER_DESC rasterizerDesc = {};
+    rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+    rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+    rasterizerDesc.FrontCounterClockwise = FALSE;
+    rasterizerDesc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+    rasterizerDesc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+    rasterizerDesc.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+    rasterizerDesc.DepthClipEnable = TRUE;
+
+    //Create Blend State
+    D3D12_BLEND_DESC blendDesc = {};
+    blendDesc.RenderTarget[0].BlendEnable = FALSE;
+    blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+
+    //Create PSO
+    m_pso = new GraphicsPSO();
+    m_pso->SetNodeMask(0);
+    m_pso->SetRasterizerState(rasterizerDesc);
+    m_pso->SetBlendState(blendDesc);
+    m_pso->SetRootSignature(m_rootSignature);
+    m_pso->SetInputLayout(_countof(inputLayout), inputLayout);
+    m_pso->SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
+    m_pso->SetRenderTargetFormats(1, &rtvFormats.RTFormats[0], DXGI_FORMAT_D32_FLOAT);
+    m_pso->SetVertexShader(vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize());
+    m_pso->SetPixelShader(pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize());
+    m_pso->Finalize();
 
     ThrowIfFailed(commandList->Close());
     auto fenceValue = commandQueue->ExecuteCommandList(commandList);
@@ -187,7 +202,7 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 
     //Assemble the rendering components
     {
-        commandList->SetPipelineState(m_pso.Get());
+        commandList->SetPipelineState(m_pso->GetPSO());
         commandList->SetGraphicsRootSignature(m_rootSignature->GetSignature());
 
         //Assemble Geometry

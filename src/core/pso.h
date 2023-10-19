@@ -9,25 +9,27 @@ class PSO
 public:
 	PSO(const wchar_t* name): m_name(name),m_rootSignature(nullptr), m_pso(nullptr){}
 
-	void SetRootSignature(const RootSignature* rootSignature) { m_rootSignature = rootSignature; }
+	void SetRootSignature(RootSignature* rootSignature) { m_rootSignature = rootSignature; }
 	const RootSignature* GetRootSignature() const { return m_rootSignature; }
 
+	ID3D12PipelineState* GetPSO() const { return m_pso; }
 protected:
 	const wchar_t* m_name = nullptr;
-	const RootSignature* m_rootSignature = nullptr;
+	RootSignature* m_rootSignature = nullptr;
 	ID3D12PipelineState* m_pso = nullptr;
 };
 
 //The PSO for rendering
-class GraphcisPSO : public PSO
+class GraphicsPSO : public PSO
 {
 public:
-	GraphcisPSO(const wchar_t* name = L"render_pso");
+	GraphicsPSO(const wchar_t* name = L"render_pso");
 
 	//Set the parameters in Graphics PSO
 	void SetBlendState(const D3D12_BLEND_DESC& blendDesc);
 	void SetRasterizerState(const D3D12_RASTERIZER_DESC& rasterizerDesc);
 	void SetDepthStencilState(const D3D12_DEPTH_STENCIL_DESC& depthStencilDesc);
+	void SetNodeMask(UINT nodeMask);
     void SetSampleMask(UINT sampleMask);
 	void SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType);
 	void SetDepthStencilFormat(DXGI_FORMAT DSVFormat, UINT massCount = 1, UINT massQuality = 0);
