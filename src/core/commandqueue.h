@@ -3,19 +3,25 @@
 #include <wrl.h>
 #include <queue>
 #include <cstdint>
+#include "commandallocatorpool.h"
 
 using namespace Microsoft::WRL;
 
 /*
 * The Encapsualted CommandQueue
 */
-
 class CommandQueue
 {
 public:
 
 	CommandQueue(ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type);
 	virtual ~CommandQueue();
+
+	void Initialize(ID3D12Device* device);
+	void Release();
+
+
+
 
 	// Get an available command list from the command queue.
 	ComPtr<ID3D12GraphicsCommandList2> GetCommandList();
@@ -43,7 +49,7 @@ private:
 
 	using  CommandAllocatorQueue = std::queue<CommandAllocatorEntry>;
 	using  CommandListQueue = std::queue<ComPtr<ID3D12GraphicsCommandList2>>;
-
+	  
 	D3D12_COMMAND_LIST_TYPE m_commandListType;
 	ComPtr<ID3D12Device2> m_device;
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
@@ -53,4 +59,15 @@ private:
 
 	CommandAllocatorQueue m_commandAllocatorQueue;
 	CommandListQueue m_commandListQueue;
+
+
+
+
+	CommandAllocatorPool m_commandAllocatorPool;
 };
+
+
+
+
+
+

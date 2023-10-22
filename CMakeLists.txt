@@ -46,6 +46,8 @@ FILE(GLOB SRCS_GLIMMER_CORE
    src/core/application.cpp
    src/core/clientgame.h
    src/core/clientgame.cpp
+   src/core/commandallocatorpool.h
+   src/core/commandallocatorpool.cpp
 )
 
 
