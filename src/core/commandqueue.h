@@ -14,55 +14,43 @@ class CommandQueue
 {
 public:
 
-	CommandQueue(ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type);
+	CommandQueue(D3D12_COMMAND_LIST_TYPE type);
 	virtual ~CommandQueue();
 
 	void Initialize(ID3D12Device* device);
 	void Release();
 
+	inline bool IsReady()const { return m_pFence != nullptr; }
 
 
+	uint64_t ExecuteCommandList(ID3D12GraphicsCommandList2* commandList);
 
-	// Get an available command list from the command queue.
-	ComPtr<ID3D12GraphicsCommandList2> GetCommandList();
+	uint64_t IncrementFence();
+	bool IsFenceComplete(uint64_t fenceValue);
+	void StallForFence(uint64_t fenceValue);
+	void StallForProducer(CommandQueue& producer);
+	void WaitForFence(uint64_t fenceValue);
+	void WaitForIdle(){ WaitForFence(IncrementFence());}
 
-	//Execute a command list and recturn a fence value when the command list has finished executing.
-	uint64_t ExecuteCommandList(ComPtr<ID3D12GraphicsCommandList2> commandList);
-
-	uint64_t Signal();
-	bool IsFenceComplete(uint64_t fenceValue) const;
-	void WaiteForFenceValue(uint64_t fenceValue);
-	void Flush();
-
-	ComPtr<ID3D12CommandQueue> GetCommandQueue() const;
+	ID3D12CommandQueue* GetCommandQueue() const { return m_commandQueuePtr; }
+	uint64_t GetNextFenceValue() const { return m_nextFenceValue; }
 
 protected:
-	ComPtr<ID3D12CommandAllocator> CreateCommandAllocator();
-	ComPtr<ID3D12GraphicsCommandList2> CreateCommandList(ComPtr<ID3D12CommandAllocator> allocator);
+	ID3D12CommandAllocator* RequestAllocator();
+	void DiscardCommandAllocator(uint64_t fenceValueForReset, ID3D12CommandAllocator* allocatorForDiscard);
 
 private:
-	struct CommandAllocatorEntry
-	{
-		uint64_t fenceValue;
-		ComPtr<ID3D12CommandAllocator> commandAllocator;
-	};
+	ID3D12CommandQueue* m_commandQueuePtr;
 
-	using  CommandAllocatorQueue = std::queue<CommandAllocatorEntry>;
-	using  CommandListQueue = std::queue<ComPtr<ID3D12GraphicsCommandList2>>;
-	  
-	D3D12_COMMAND_LIST_TYPE m_commandListType;
-	ComPtr<ID3D12Device2> m_device;
-	ComPtr<ID3D12CommandQueue> m_commandQueue;
-	ComPtr<ID3D12Fence> m_fence;
+	const D3D12_COMMAND_LIST_TYPE m_commandListType;
+
+	std::mutex m_fenceMutex;
+	std::mutex m_eventMutex;
+
+	ID3D12Fence* m_pFence;
+	uint64_t m_lastCompletedFenceValue;
+	uint64_t m_nextFenceValue;
 	HANDLE m_fenceEvent;
-	uint64_t m_fenceValue;
-
-	CommandAllocatorQueue m_commandAllocatorQueue;
-	CommandListQueue m_commandListQueue;
-
-
-
-
 	CommandAllocatorPool m_commandAllocatorPool;
 };
 
