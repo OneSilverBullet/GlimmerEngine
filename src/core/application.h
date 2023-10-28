@@ -32,9 +32,6 @@ public:
 
 	ComPtr<ID3D12Device2> GetDevice() const;
 
-	std::shared_ptr<CommandQueue> GetCommandQueue(D3D12_COMMAND_LIST_TYPE type = D3D12_COMMAND_LIST_TYPE_DIRECT);
-	void Flush();
-
 	ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeap(UINT numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
 	UINT GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const;
 
@@ -56,10 +53,6 @@ private:
 
 	ComPtr<IDXGIAdapter4> m_dxgiAdapter;
 	ComPtr<ID3D12Device2> m_device;
-
-	std::shared_ptr<CommandQueue> m_directCommandQueue;
-	std::shared_ptr<CommandQueue> m_computeCommandQueue;
-	std::shared_ptr<CommandQueue> m_copyCommandQueue;
 
 	bool m_tearingSupported;
 };

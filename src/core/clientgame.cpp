@@ -69,13 +69,22 @@ ClientGame::ClientGame(const std::wstring& name, int width, int height, bool vSy
 
 }
 
+ClientGame::~ClientGame() {
+    UnloadContent();
+}
+
 bool ClientGame::LoadContent() {
     auto device = Application::GetInstance().GetDevice();
-    auto commandQueue = Application::GetInstance().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-    auto commandList = commandQueue->GetCommandList();
+
+    CommandQueue& commandQueue = GRAPHICS_CORE::g_commandManager.GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+    //load content, the first time to initialize the command list
+    ID3D12CommandAllocator* commandAllocator = nullptr;
+    GRAPHICS_CORE::g_commandManager.CreateNewCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT, &m_commandList, &commandAllocator);
+
     //Upload vertex buffer data
     ComPtr<ID3D12Resource> intermediateVertexBuffer;
-    UpdateBufferResource(commandList.Get(),
+    UpdateBufferResource(m_commandList,
         &m_vertexBuffer, &intermediateVertexBuffer,
         _countof(g_Vertices), sizeof(VertexPosColor), g_Vertices);
     m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
@@ -84,7 +93,7 @@ bool ClientGame::LoadContent() {
 
     //Upload index buffer data
     ComPtr<ID3D12Resource> intermediateIndexBuffer;
-    UpdateBufferResource(commandList.Get(), 
+    UpdateBufferResource(m_commandList,
         &m_indexBuffer, &intermediateIndexBuffer,
         		_countof(g_Indicies), sizeof(WORD), g_Indicies);
     m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
@@ -162,25 +171,30 @@ bool ClientGame::LoadContent() {
     m_pso->SetPixelShader(pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize());
     m_pso->Finalize();
 
-    ThrowIfFailed(commandList->Close());
-    auto fenceValue = commandQueue->ExecuteCommandList(commandList);
-    commandQueue->WaiteForFenceValue(fenceValue);
+    ThrowIfFailed(m_commandList->Close());
+    auto fenceValue = commandQueue.ExecuteCommandList((ID3D12GraphicsCommandList2*)m_commandList);
+    commandQueue.WaitForFence(fenceValue);
     m_contentLoaded = true;
-
     ResizeDepthBuffer(GetClientWidth(), GetClientHeight());
 
+    //reload the allocator
+    GRAPHICS_CORE::g_commandManager.ReallocateCommandAllocator(fenceValue, commandAllocator);
 	return true;
 }
 
 void ClientGame::UnloadContent() {
-
+    if (m_commandList != nullptr) {
+        m_commandList->Release();
+    }
 }
 
 void ClientGame::OnRender(RenderEventArgs& e) {
     super::OnRender(e);
 
-    auto commandQueue = Application::GetInstance().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-    auto commandList = commandQueue->GetCommandList();
+    CommandQueue& commandQueue = GRAPHICS_CORE::g_commandManager.GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    ID3D12CommandAllocator* commandAllocator = nullptr;
+    GRAPHICS_CORE::g_commandManager.ResetCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT, &m_commandList, &commandAllocator);
+
     
     UINT currentBackBufferIndex = m_window->GetCurrentBackBufferIndex();
     auto backbuffer = m_window->GetCurrentBackBuffer();
@@ -192,35 +206,35 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 
     // Clear the render target.
     {
-        TransitionResource(commandList, currentBackbuffer,
+        TransitionResource(m_commandList, currentBackbuffer,
 			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         FLOAT clearColor[4] = { 0.4f, 0.6f, 0.9f, 1.0f };
 
-        ClearRTV(commandList, rtv, clearColor);
-        ClearDepth(commandList, dsv);
+        ClearRTV(m_commandList, rtv, clearColor);
+        ClearDepth(m_commandList, dsv);
     }
 
     //Assemble the rendering components
     {
-        commandList->SetPipelineState(m_pso->GetPSO());
-        commandList->SetGraphicsRootSignature(m_rootSignature->GetSignature());
+        m_commandList->SetPipelineState(m_pso->GetPSO());
+        m_commandList->SetGraphicsRootSignature(m_rootSignature->GetSignature());
 
         //Assemble Geometry
-        commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-        commandList->IASetIndexBuffer(&m_indexBufferView);
+        m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+        m_commandList->IASetIndexBuffer(&m_indexBufferView);
 
         //Setup Rasterizer State
-        commandList->RSSetViewports(1, &m_viewport);
-        commandList->RSSetScissorRects(1, &m_scissorRect);
+        m_commandList->RSSetViewports(1, &m_viewport);
+        m_commandList->RSSetScissorRects(1, &m_scissorRect);
         
         //Bind Render target
-        commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+        m_commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
 
         //Update Constant buffer
         XMMATRIX mvpMatrix = XMMatrixMultiply(XMMatrixMultiply(m_worldMatrix, m_viewMatrix), m_projMatrix);
-        commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
+        m_commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
 
         XMFLOAT4X4 mvp;
         XMStoreFloat4x4(&mvp, mvpMatrix);
@@ -232,23 +246,21 @@ void ClientGame::OnRender(RenderEventArgs& e) {
             << std::to_string(mvp._41) << " " << std::to_string(mvp._42) << " " << std::to_string(mvp._43) << " " << std::to_string(mvp._44) << std::endl;
 
 
-        commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
+        m_commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
     }
 
     // Present
     {
-        TransitionResource(commandList, currentBackbuffer,
+        TransitionResource(m_commandList, currentBackbuffer,
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
-        ThrowIfFailed(commandList->Close());
+        ThrowIfFailed(m_commandList->Close());
+        uint64_t fenceValue = commandQueue.ExecuteCommandList((ID3D12GraphicsCommandList2*)m_commandList);
+        currentBackBufferIndex = m_window->Present();
+        commandQueue.WaitForFence(fenceValue);
 
-
-       UINT64 fenceValue = commandQueue->ExecuteCommandList(commandList);
-
-
-       currentBackBufferIndex = m_window->Present();
-
-       commandQueue->WaiteForFenceValue(fenceValue);
+        //reallocate allocator
+        GRAPHICS_CORE::g_commandManager.ReallocateCommandAllocator(fenceValue, commandAllocator);
     }
 }
 
@@ -296,8 +308,6 @@ void ClientGame::OnResize(ResizeEventArgs& e) {
         m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(e.Width), static_cast<float>(e.Height));
         ResizeDepthBuffer(e.Width, e.Height);
     }
-
-
 }
 
 void ClientGame::OnWindowDestroy() {
@@ -364,9 +374,29 @@ void ClientGame::ClearDepth(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> c
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
 }
 
+void ClientGame::TransitionResource(ID3D12GraphicsCommandList* commandList,
+    Microsoft::WRL::ComPtr<ID3D12Resource> resource,
+    D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState) {
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        resource.Get(),
+        beforeState, afterState);
+    commandList->ResourceBarrier(1, &barrier);
+}
+
+
+void ClientGame::ClearRTV(ID3D12GraphicsCommandList* commandList,
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor) {
+    commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+}
+
+void ClientGame::ClearDepth(ID3D12GraphicsCommandList* commandList,
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth) {
+    commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
+}
+
 void ClientGame::ResizeDepthBuffer(int width, int height) {
     if (m_contentLoaded) {
-        Application::GetInstance().Flush();
+        GRAPHICS_CORE::g_commandManager.Flush();
         width = std::max(1, width);
         height = std::max(1, height);
         auto device = Application::GetInstance().GetDevice();

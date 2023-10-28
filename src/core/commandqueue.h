@@ -4,7 +4,6 @@
 #include <queue>
 #include <cstdint>
 #include "commandallocatorpool.h"
-#include "commandmanager.h"
 
 using namespace Microsoft::WRL;
 

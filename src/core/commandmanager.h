@@ -40,8 +40,19 @@ public:
 		ID3D12GraphicsCommandList** ppCommandList,
 		ID3D12CommandAllocator** ppAllocator);
 
+	void ResetCommandList(
+		D3D12_COMMAND_LIST_TYPE type,
+		ID3D12GraphicsCommandList** ppCommandList,
+		ID3D12CommandAllocator** ppAllocator);
+
+
+	void ReallocateCommandAllocator(uint64_t fenceValue, ID3D12CommandAllocator* pAllocator);
+
 	//create a new fence value according to the queue type
 	uint64_t CreateFenceValue(D3D12_COMMAND_LIST_TYPE type, uint64_t origin);
+
+	//get the fence value's command list type
+	D3D12_COMMAND_LIST_TYPE GetCommandListTypeFromFenceValue(uint64_t fenceValue);
 
 	//waits for a fence value to be reached
 	bool IsFenceComplete(uint64_t fenceValue);
@@ -55,6 +66,11 @@ public:
 		m_computeQueue.Flush();
 		m_copyQueue.Flush();
 	}
+
+protected:
+	void RequestCommandAllocactor(D3D12_COMMAND_LIST_TYPE type,
+		ID3D12CommandAllocator** ppAllocator);
+
 
 private:
 	ID3D12Device* m_device;

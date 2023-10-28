@@ -1,6 +1,7 @@
 #include "window.h"
 #include "headers.h"
 #include "commandqueue.h"
+#include "graphicscore.h"
 #include "game.h"
 #include "application.h"
 
@@ -185,8 +186,7 @@ void Window::OnResize(ResizeEventArgs& e) {
 		m_clientWidth = 1u < e.Width ? e.Width : 1u;
 		m_clientHeight = 1u < e.Height ? e.Height : 1u;
 
-		Application::GetInstance().Flush();
-
+		GRAPHICS_CORE::g_commandManager.Flush();
 
 		for (int i = 0; i < BufferCount; ++i) {
 			m_backbuffers[i].Reset();
@@ -229,8 +229,8 @@ ComPtr<IDXGISwapChain4> Window::CreateSwapChain() {
 	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 	swapChainDesc.Flags = m_isTearingSupported ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 
-	ID3D12CommandQueue* commandQueue = app.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT)->GetCommandQueue().Get();
 
+	ID3D12CommandQueue* commandQueue = GRAPHICS_CORE::g_commandManager.GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT).GetCommandQueue();
 
 	ComPtr<IDXGISwapChain1> swapChain1;
 	ThrowIfFailed(dxgiFactory4->CreateSwapChainForHwnd(commandQueue, m_hWnd,

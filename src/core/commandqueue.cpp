@@ -66,7 +66,7 @@ uint64_t CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* commandLis
 	m_commandQueuePtr->ExecuteCommandLists(1, (ID3D12CommandList* const*)&commandList);
 	//create marke
 	m_commandQueuePtr->Signal(m_pFence, m_nextFenceValue);
-
+	//increase the fence value
 	return m_nextFenceValue++;
 }
 

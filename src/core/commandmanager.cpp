@@ -36,8 +36,32 @@ void CommandManager::Release()
 	m_copyQueue.Release();
 }
 
+void CommandManager::ReallocateCommandAllocator(uint64_t fenceValue, ID3D12CommandAllocator* pAllocator) {
+	D3D12_COMMAND_LIST_TYPE commandListType = GetCommandListTypeFromFenceValue(fenceValue);
+	GetQueue(commandListType).DiscardCommandAllocator(fenceValue, pAllocator);
+}
+
 void CommandManager::CreateNewCommandList(D3D12_COMMAND_LIST_TYPE type, ID3D12GraphicsCommandList** ppCommandList, ID3D12CommandAllocator** ppAllocator)
 {
+	//there is no need to create command list again
+	assert((*ppCommandList) == nullptr);
+	RequestCommandAllocactor(type, ppAllocator);
+	ThrowIfFailed(m_device->CreateCommandList(1, type, *ppAllocator, nullptr, IID_PPV_ARGS(ppCommandList)));
+	(*ppCommandList)->SetName(L"CommandList");
+}
+
+void CommandManager::ResetCommandList(
+	D3D12_COMMAND_LIST_TYPE type,
+	ID3D12GraphicsCommandList** ppCommandList,
+	ID3D12CommandAllocator** ppAllocator) 
+{
+	assert((*ppCommandList) != nullptr);
+	RequestCommandAllocactor(type, ppAllocator);
+	(*ppCommandList)->Reset((*ppAllocator), nullptr);
+}
+
+void CommandManager::RequestCommandAllocactor(D3D12_COMMAND_LIST_TYPE type,
+	ID3D12CommandAllocator** ppAllocator) {
 	switch (type)
 	{
 	case D3D12_COMMAND_LIST_TYPE_DIRECT:
@@ -52,10 +76,7 @@ void CommandManager::CreateNewCommandList(D3D12_COMMAND_LIST_TYPE type, ID3D12Gr
 	default:
 		break;
 	}
-	//if there is other command list type, shutdown here
-	assert(*ppAllocator != nullptr);
-	ThrowIfFailed(m_device->CreateCommandList(1, type, *ppAllocator, nullptr, IID_PPV_ARGS(ppCommandList)));
-	(*ppCommandList)->SetName(L"CommandList");
+	assert((*ppAllocator) == nullptr);
 }
 
 bool CommandManager::IsFenceComplete(uint64_t fenceValue)
@@ -72,3 +93,8 @@ uint64_t CommandManager::CreateFenceValue(D3D12_COMMAND_LIST_TYPE type, uint64_t
 {
 	return ((type << 56) | origin);
 }
+
+D3D12_COMMAND_LIST_TYPE CommandManager::GetCommandListTypeFromFenceValue(uint64_t fenceValue) {
+	return (D3D12_COMMAND_LIST_TYPE)(fenceValue >> 56);
+}
+

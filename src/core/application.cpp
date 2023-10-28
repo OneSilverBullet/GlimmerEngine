@@ -94,9 +94,13 @@ Application::Application(HINSTANCE hInst)
 		m_device = CreateDevice(m_dxgiAdapter);
 	}
 	if (m_device) {
-		m_directCommandQueue = std::make_shared<CommandQueue>(m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
-		m_computeCommandQueue = std::make_shared<CommandQueue>(m_device, D3D12_COMMAND_LIST_TYPE_COMPUTE);
-		m_copyCommandQueue = std::make_shared<CommandQueue>(m_device, D3D12_COMMAND_LIST_TYPE_COPY);
+
+		
+		GRAPHICS_CORE::g_commandManager.Initialize(m_device.Get());
+
+		//m_directCommandQueue = std::make_shared<CommandQueue>(m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+		//m_computeCommandQueue = std::make_shared<CommandQueue>(m_device, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+		//m_copyCommandQueue = std::make_shared<CommandQueue>(m_device, D3D12_COMMAND_LIST_TYPE_COPY);
 		m_tearingSupported = CheckTearingSupport();
 	}
 
@@ -105,7 +109,7 @@ Application::Application(HINSTANCE hInst)
 }
 
 Application::~Application(){
-	Flush();
+
 }
 
 ComPtr<IDXGIAdapter4> Application::GetAdapter(bool bUseWarp) {
@@ -269,7 +273,7 @@ int Application::Run(std::shared_ptr<Game> gameInstance) {
 		}
 	}
 
-	Flush();
+	GRAPHICS_CORE::g_commandManager.Flush();
 
 	gameInstance->UnloadContent();
 	gameInstance->Destroy();
@@ -284,22 +288,6 @@ void Application::Quit(int exitCode) {
 
 ComPtr<ID3D12Device2> Application::GetDevice() const {
 	return m_device;
-}
-
-std::shared_ptr<CommandQueue> Application::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) {
-	if (type == D3D12_COMMAND_LIST_TYPE_COMPUTE)
-		return m_computeCommandQueue;
-	else if (type == D3D12_COMMAND_LIST_TYPE_COPY)
-		return m_copyCommandQueue;
-	else if (type == D3D12_COMMAND_LIST_TYPE_DIRECT)
-		return m_directCommandQueue;
-	return nullptr;
-}
-
-void Application::Flush() {
-	m_directCommandQueue->Flush();
-	m_computeCommandQueue->Flush();
-	m_copyCommandQueue->Flush();
 }
 
 ComPtr<ID3D12DescriptorHeap> Application::CreateDescriptorHeap(UINT numDescriptors, 

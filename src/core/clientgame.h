@@ -6,13 +6,14 @@
 class RootSignature;
 class GraphicsPSO;
 
+
 class ClientGame : public Game
 {
 public:
 	using super = Game;
 
 	ClientGame(const std::wstring& name, int width, int height, bool vSync = false);
-	
+	virtual ~ClientGame();
 	virtual bool LoadContent() override;
 	virtual void UnloadContent() override;
 
@@ -44,6 +45,19 @@ private:
 	void ClearDepth(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
 		D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 1.0f);
 
+	//the version for raw command list pointer
+	void TransitionResource(ID3D12GraphicsCommandList* commandList,
+		Microsoft::WRL::ComPtr<ID3D12Resource> resource,
+		D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
+
+
+	void ClearRTV(ID3D12GraphicsCommandList* commandList,
+		D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor);
+
+	void ClearDepth(ID3D12GraphicsCommandList* commandList,
+		D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 1.0f);
+
+
 	void ResizeDepthBuffer(int width, int height);
 
 
@@ -58,6 +72,11 @@ private:
 
 	RootSignature* m_rootSignature = nullptr;
 	GraphicsPSO* m_pso = nullptr;
+
+	//the command is temporary
+	//todo: encapsulate a graphics context
+	ID3D12GraphicsCommandList* m_commandList = nullptr;
+
 
 	D3D12_VIEWPORT m_viewport;
 	D3D12_RECT m_scissorRect;
