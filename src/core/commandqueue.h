@@ -4,6 +4,7 @@
 #include <queue>
 #include <cstdint>
 #include "commandallocatorpool.h"
+#include "commandmanager.h"
 
 using namespace Microsoft::WRL;
 
@@ -30,7 +31,7 @@ public:
 	void StallForFence(uint64_t fenceValue);
 	void StallForProducer(CommandQueue& producer);
 	void WaitForFence(uint64_t fenceValue);
-	void WaitForIdle(){ WaitForFence(IncrementFence());}
+	void Flush(){ WaitForFence(IncrementFence());}
 
 	ID3D12CommandQueue* GetCommandQueue() const { return m_commandQueuePtr; }
 	uint64_t GetNextFenceValue() const { return m_nextFenceValue; }
@@ -51,9 +52,10 @@ private:
 	uint64_t m_lastCompletedFenceValue;
 	uint64_t m_nextFenceValue;
 	HANDLE m_fenceEvent;
-	CommandAllocatorPool m_commandAllocatorPool;
-};
+	CommandAllocatorPool m_commandAllocatorPool; //reallocate the memory for the command lists
 
+	friend class CommandManager;
+};
 
 
 

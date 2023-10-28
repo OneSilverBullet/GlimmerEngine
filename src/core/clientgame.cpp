@@ -5,6 +5,7 @@
 #include "commandqueue.h"
 #include "rootsignature.h"
 #include "pso.h"
+#include "graphicscore.h"
 #include "d3dx12.h"
 #include <DirectXMath.h>
 #include <fstream>

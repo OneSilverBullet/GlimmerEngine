@@ -29,6 +29,8 @@ set_source_files_properties( shaders/default_pixel.hlsl PROPERTIES
 FILE(GLOB SRCS_GLIMMER_CORE
    src/core/commandqueue.h
    src/core/commandqueue.cpp
+   src/core/commandmanager.h
+   src/core/commandmanager.cpp
    src/core/d3dx12.h
    src/core/game.h
    src/core/game.cpp
