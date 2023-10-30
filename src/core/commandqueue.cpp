@@ -29,7 +29,7 @@ void CommandQueue::Initialize(ID3D12Device* device) {
 	queueDesc.Type = m_commandListType;
 	queueDesc.NodeMask = 1;
 	
-	device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_pFence));
+	device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueuePtr));
 	m_commandQueuePtr->SetName(L"CommandListManager::m_commandQueue");
 
 	ThrowIfFailed(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_pFence)));
@@ -58,7 +58,7 @@ void CommandQueue::Release() {
 	m_commandQueuePtr = nullptr;
 }
 
-uint64_t CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* commandList)
+uint64_t CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList* commandList)
 {
 	std::lock_guard<std::mutex> lock(m_fenceMutex);
 	ThrowIfFailed(commandList->Close());

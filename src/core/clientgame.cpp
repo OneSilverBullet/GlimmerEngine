@@ -171,8 +171,7 @@ bool ClientGame::LoadContent() {
     m_pso->SetPixelShader(pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize());
     m_pso->Finalize();
 
-    ThrowIfFailed(m_commandList->Close());
-    auto fenceValue = commandQueue.ExecuteCommandList((ID3D12GraphicsCommandList2*)m_commandList);
+    auto fenceValue = commandQueue.ExecuteCommandList(m_commandList);
     commandQueue.WaitForFence(fenceValue);
     m_contentLoaded = true;
     ResizeDepthBuffer(GetClientWidth(), GetClientHeight());
@@ -185,6 +184,7 @@ bool ClientGame::LoadContent() {
 void ClientGame::UnloadContent() {
     if (m_commandList != nullptr) {
         m_commandList->Release();
+        m_commandList = nullptr;
     }
 }
 
@@ -254,8 +254,7 @@ void ClientGame::OnRender(RenderEventArgs& e) {
         TransitionResource(m_commandList, currentBackbuffer,
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
-        ThrowIfFailed(m_commandList->Close());
-        uint64_t fenceValue = commandQueue.ExecuteCommandList((ID3D12GraphicsCommandList2*)m_commandList);
+        uint64_t fenceValue = commandQueue.ExecuteCommandList(m_commandList);
         currentBackBufferIndex = m_window->Present();
         commandQueue.WaitForFence(fenceValue);
 
@@ -315,7 +314,7 @@ void ClientGame::OnWindowDestroy() {
 }
 
 void ClientGame::UpdateBufferResource(
-    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
+    ID3D12GraphicsCommandList* commandList,
     ID3D12Resource** pDestinationResource, //destination resource
     ID3D12Resource** pIntermediateResource, //intermediate resource
     size_t numElements, size_t elementSize, const void* bufferData,
@@ -347,39 +346,20 @@ void ClientGame::UpdateBufferResource(
         subresourceData.pData = bufferData;
         subresourceData.RowPitch = bufferSize;
         subresourceData.SlicePitch = subresourceData.RowPitch;
-        UpdateSubresources(commandList.Get(), 
+        UpdateSubresources(commandList, 
             *pDestinationResource, *pIntermediateResource,
             0, 0, 1, &subresourceData);
     }
 }
 
-void ClientGame::TransitionResource(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
-    Microsoft::WRL::ComPtr<ID3D12Resource> resource,
-    D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState) {
-
-    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        resource.Get(),
-        beforeState, afterState);
-
-    commandList->ResourceBarrier(1, &barrier);
-}
-
-void ClientGame::ClearRTV(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor) {
-    commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-}
-
-void ClientGame::ClearDepth(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth) {
-    commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
-}
-
 void ClientGame::TransitionResource(ID3D12GraphicsCommandList* commandList,
     Microsoft::WRL::ComPtr<ID3D12Resource> resource,
     D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState) {
+
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
         resource.Get(),
         beforeState, afterState);
+
     commandList->ResourceBarrier(1, &barrier);
 }
 

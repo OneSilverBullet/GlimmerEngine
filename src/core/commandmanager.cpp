@@ -76,7 +76,7 @@ void CommandManager::RequestCommandAllocactor(D3D12_COMMAND_LIST_TYPE type,
 	default:
 		break;
 	}
-	assert((*ppAllocator) == nullptr);
+	assert((*ppAllocator) != nullptr);
 }
 
 bool CommandManager::IsFenceComplete(uint64_t fenceValue)

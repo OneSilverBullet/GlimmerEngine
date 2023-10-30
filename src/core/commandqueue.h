@@ -23,7 +23,7 @@ public:
 	inline bool IsReady()const { return m_pFence != nullptr; }
 
 
-	uint64_t ExecuteCommandList(ID3D12GraphicsCommandList2* commandList);
+	uint64_t ExecuteCommandList(ID3D12GraphicsCommandList* commandList);
 
 	uint64_t IncrementFence();
 	bool IsFenceComplete(uint64_t fenceValue);

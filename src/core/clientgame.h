@@ -30,26 +30,14 @@ protected:
 
 private:
 	void UpdateBufferResource(
-				Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
+				ID3D12GraphicsCommandList* commandList,
 				ID3D12Resource** pDestinationResource, ID3D12Resource** pIntermediateResource,
 				size_t numElements, size_t elementSize, const void* bufferData,
 				D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
 
-	void TransitionResource(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
-		Microsoft::WRL::ComPtr<ID3D12Resource> resource,
-		D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
-
-	void ClearRTV(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
-		D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor);
-
-	void ClearDepth(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
-		D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 1.0f);
-
-	//the version for raw command list pointer
 	void TransitionResource(ID3D12GraphicsCommandList* commandList,
 		Microsoft::WRL::ComPtr<ID3D12Resource> resource,
 		D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
-
 
 	void ClearRTV(ID3D12GraphicsCommandList* commandList,
 		D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor);

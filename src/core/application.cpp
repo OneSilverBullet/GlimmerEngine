@@ -109,7 +109,7 @@ Application::Application(HINSTANCE hInst)
 }
 
 Application::~Application(){
-
+	m_device->Release();
 }
 
 ComPtr<IDXGIAdapter4> Application::GetAdapter(bool bUseWarp) {

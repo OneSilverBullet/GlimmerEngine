@@ -231,7 +231,7 @@ ComPtr<IDXGISwapChain4> Window::CreateSwapChain() {
 
 
 	ID3D12CommandQueue* commandQueue = GRAPHICS_CORE::g_commandManager.GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT).GetCommandQueue();
-
+ 
 	ComPtr<IDXGISwapChain1> swapChain1;
 	ThrowIfFailed(dxgiFactory4->CreateSwapChainForHwnd(commandQueue, m_hWnd,
 		&swapChainDesc, nullptr, nullptr, &swapChain1));

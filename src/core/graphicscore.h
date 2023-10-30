@@ -1,14 +1,13 @@
-#include "headers.h"
-#include "commandmanager.h"
+#pragma once
 
+#include "commandmanager.h"
 
 
 namespace GRAPHICS_CORE
 {
-	CommandManager g_commandManager;
+	extern CommandManager g_commandManager;
 
-	void GraphicsCoreInitialize()
-	{
+	void GraphicsCoreInitialize();
 
-	}
+
 }
