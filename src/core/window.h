@@ -79,8 +79,9 @@ private:
 
 	HWND m_hWnd;
 	ComPtr<IDXGISwapChain4> m_dxgiSwapChain;
-	ComPtr<ID3D12DescriptorHeap> m_d3d12RTVDescriptorHeap;
+	//ComPtr<ID3D12DescriptorHeap> m_d3d12RTVDescriptorHeap;
 	ComPtr<ID3D12Resource> m_backbuffers[BufferCount];
+	D3D12_CPU_DESCRIPTOR_HANDLE m_rtvDescriptorHeapHandle;
 	UINT m_RTVDescriptorSize;
 	UINT m_currentBackBufferIndex;
 

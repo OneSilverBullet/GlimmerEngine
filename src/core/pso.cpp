@@ -1,6 +1,6 @@
 #include "pso.h"
 #include "rootsignature.h"
-#include "application.h"
+#include "graphicscore.h"
 
 /*
 * GraphicsPSO
@@ -90,7 +90,7 @@ void GraphicsPSO::Finalize()
 	//set input layout
 	m_psoDesc.InputLayout.pInputElementDescs = m_inputLayout.get();
 	
-	ThrowIfFailed(Application::GetInstance().GetDevice()->CreateGraphicsPipelineState(&m_psoDesc, IID_PPV_ARGS(&m_pso)));
+	ThrowIfFailed(GRAPHICS_CORE::g_device->CreateGraphicsPipelineState(&m_psoDesc, IID_PPV_ARGS(&m_pso)));
 	m_pso->SetName(m_name);
 }
 

@@ -55,8 +55,7 @@ private:
 	D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
 
 	ComPtr<ID3D12Resource> m_depthBuffer; //samilar with the back buffer
-	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
-
+	D3D12_CPU_DESCRIPTOR_HANDLE m_dsvDescriptorHandle;
 
 	RootSignature* m_rootSignature = nullptr;
 	GraphicsPSO* m_pso = nullptr;
@@ -64,7 +63,6 @@ private:
 	//the command is temporary
 	//todo: encapsulate a graphics context
 	ID3D12GraphicsCommandList* m_commandList = nullptr;
-
 
 	D3D12_VIEWPORT m_viewport;
 	D3D12_RECT m_scissorRect;

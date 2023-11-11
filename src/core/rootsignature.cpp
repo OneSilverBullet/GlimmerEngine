@@ -1,6 +1,5 @@
 #include "rootsignature.h"
 #include "graphicscore.h"
-#include "application.h"
 
 void RootSignature::Finalize(const std::wstring& name, D3D12_ROOT_SIGNATURE_FLAGS Flags) {
 
@@ -21,7 +20,7 @@ void RootSignature::Finalize(const std::wstring& name, D3D12_ROOT_SIGNATURE_FLAG
 	D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1,
 		pOutBlob.GetAddressOf(), pErrorBlob.GetAddressOf());
 
-	ThrowIfFailed(Application::GetInstance().GetDevice()->CreateRootSignature(0, pOutBlob->GetBufferPointer(),
+	ThrowIfFailed(GRAPHICS_CORE::g_device->CreateRootSignature(0, pOutBlob->GetBufferPointer(),
 		pOutBlob->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 
 	m_rootSignature->SetName(name.c_str());

@@ -27,13 +27,7 @@ static WindowPtr g_windowPtr = nullptr;
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 
-void EnableDX12DebugLayer() {
-#if defined(_DEBUG)
-	ComPtr<ID3D12Debug> debugInterface;
-	ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
-	debugInterface->EnableDebugLayer();
-#endif
-}
+
 
 //Regist Window
 void RegisterWindowClass(HINSTANCE hInst, const wchar_t* windowClassName) {
@@ -81,124 +75,18 @@ Application::Application(HINSTANCE hInst)
 	//adapte to the high dpi context
 	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
-	//Enable debug layer
-	EnableDX12DebugLayer();
-
 	//Register window class
 	RegisterWindowClass(m_hInst, L"Glimmer");
 
-	//Initialize DX12 Objects
-	m_dxgiAdapter = GetAdapter(false);
+	GRAPHICS_CORE::GraphicsCoreInitialize();
 
-	if (m_dxgiAdapter) {
-		m_device = CreateDevice(m_dxgiAdapter);
-	}
-	if (m_device) {
-
-		
-		GRAPHICS_CORE::g_commandManager.Initialize(m_device.Get());
-
-		//m_directCommandQueue = std::make_shared<CommandQueue>(m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
-		//m_computeCommandQueue = std::make_shared<CommandQueue>(m_device, D3D12_COMMAND_LIST_TYPE_COMPUTE);
-		//m_copyCommandQueue = std::make_shared<CommandQueue>(m_device, D3D12_COMMAND_LIST_TYPE_COPY);
-		m_tearingSupported = CheckTearingSupport();
-	}
 
 	//Initialize Timer
 	m_timer = new EngineTimer();
 }
 
 Application::~Application(){
-	m_device->Release();
-}
-
-ComPtr<IDXGIAdapter4> Application::GetAdapter(bool bUseWarp) {
-	ComPtr<IDXGIFactory4> dxgiFactory;
-	UINT createFactoryFlags = 0;
-
-#if defined(_DEBUG)
-	createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
-#endif
-
-	// Create DXGI Factory
-	ThrowIfFailed(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory)));
-
-	ComPtr<IDXGIAdapter1> dxgiAdapater1;
-	ComPtr<IDXGIAdapter4> dxgiAdapater4;
-
-	if (bUseWarp)
-	{
-		ThrowIfFailed(dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&dxgiAdapater1)));
-		ThrowIfFailed(dxgiAdapater1.As(&dxgiAdapater4));
-	}
-	else
-	{
-		SIZE_T maxDedicatedVideoMeory = 0;
-		for (UINT i = 0; dxgiFactory->EnumAdapters1(i, &dxgiAdapater1) != DXGI_ERROR_NOT_FOUND; i++) {
-			DXGI_ADAPTER_DESC1 dxgiAdapterDesc1;
-			dxgiAdapater1->GetDesc1(&dxgiAdapterDesc1);
-
-			if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
-				SUCCEEDED(D3D12CreateDevice(dxgiAdapater1.Get(), D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)) &&
-				dxgiAdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMeory) {
-				maxDedicatedVideoMeory = dxgiAdapterDesc1.DedicatedVideoMemory;
-				ThrowIfFailed(dxgiAdapater1.As(&dxgiAdapater4));
-			}
-		}
-	}
-	return dxgiAdapater4;
-}
-
-ComPtr<ID3D12Device2> Application::CreateDevice(ComPtr<IDXGIAdapter4> adapter) {
-	ComPtr<ID3D12Device2> device;
-	ThrowIfFailed(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&device)));
-
-	
-#if defined(_DEBUG)
-	ComPtr<ID3D12InfoQueue> pInfoQueue;
-	if (SUCCEEDED(device.As(&pInfoQueue))) {
-		pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-		pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-		pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
-
-		D3D12_MESSAGE_SEVERITY severities[] = {
-			D3D12_MESSAGE_SEVERITY_INFO
-		};
-
-		D3D12_MESSAGE_ID denyIds[] = {
-			D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,
-			D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
-			D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
-		};
-
-		D3D12_INFO_QUEUE_FILTER newFilter = {};
-		newFilter.DenyList.NumSeverities = _countof(severities);
-		newFilter.DenyList.pSeverityList = severities;
-		newFilter.DenyList.NumIDs = _countof(denyIds);
-		newFilter.DenyList.pIDList = denyIds;
-		ThrowIfFailed(pInfoQueue->PushStorageFilter(&newFilter));
-	}
-#endif
-
-	return device;
-}
-
-bool Application::CheckTearingSupport() {
-	BOOL allowTearing = FALSE;
-
-	ComPtr<IDXGIFactory4> factory4;
-	if (SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(&factory4)))) {
-		ComPtr<IDXGIFactory5> factory5;
-		if (SUCCEEDED(factory4.As(&factory5))) {
-			if (FAILED(factory5->CheckFeatureSupport(
-				DXGI_FEATURE_PRESENT_ALLOW_TEARING,
-				&allowTearing, sizeof(allowTearing)))) {
-				allowTearing = FALSE;
-			}
-		}
-	}
-	m_tearingSupported = allowTearing;
-	return allowTearing == TRUE;
+	GRAPHICS_CORE::GraphicsCoreRelease();
 }
 
 bool Application::IsTearingSupported() const {
@@ -284,28 +172,6 @@ int Application::Run(std::shared_ptr<Game> gameInstance) {
 
 void Application::Quit(int exitCode) {
 	PostQuitMessage(exitCode);
-}
-
-ComPtr<ID3D12Device2> Application::GetDevice() const {
-	return m_device;
-}
-
-ComPtr<ID3D12DescriptorHeap> Application::CreateDescriptorHeap(UINT numDescriptors, 
-	D3D12_DESCRIPTOR_HEAP_TYPE type) {
-	ComPtr<ID3D12DescriptorHeap> descriptorHeap;
-
-	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	desc.NodeMask = 0; //default GPU
-	desc.NumDescriptors = numDescriptors;
-	desc.Type = type;
-
-	ThrowIfFailed(m_device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)));
-	return descriptorHeap;
-}
-
-UINT Application::GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const {
-	return m_device->GetDescriptorHandleIncrementSize(type);
 }
 
 //anaylisis the mouse button type

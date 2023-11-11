@@ -74,7 +74,7 @@ ClientGame::~ClientGame() {
 }
 
 bool ClientGame::LoadContent() {
-    auto device = Application::GetInstance().GetDevice();
+    auto device = GRAPHICS_CORE::g_device;
 
     CommandQueue& commandQueue = GRAPHICS_CORE::g_commandManager.GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
@@ -99,13 +99,6 @@ bool ClientGame::LoadContent() {
     m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
     m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
     m_indexBufferView.SizeInBytes = sizeof(g_Indicies);
-
-    //Create the depth descriptor heap
-    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-    dsvHeapDesc.NumDescriptors = 1;
-    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    ThrowIfFailed(device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
 
     //Load Shader
     ComPtr<ID3DBlob> vertexShaderBlob;
@@ -171,6 +164,8 @@ bool ClientGame::LoadContent() {
     m_pso->SetPixelShader(pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize());
     m_pso->Finalize();
 
+    m_dsvDescriptorHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
     auto fenceValue = commandQueue.ExecuteCommandList(m_commandList);
     commandQueue.WaitForFence(fenceValue);
     m_contentLoaded = true;
@@ -199,7 +194,7 @@ void ClientGame::OnRender(RenderEventArgs& e) {
     UINT currentBackBufferIndex = m_window->GetCurrentBackBufferIndex();
     auto backbuffer = m_window->GetCurrentBackBuffer();
     auto rtv = m_window->GetCurrentRenderTargetView();
-    auto dsv = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
+    auto dsv = m_dsvDescriptorHandle;
   
 
     ComPtr<ID3D12Resource> currentBackbuffer = m_window->GetCurrentBackBuffer();
@@ -320,7 +315,7 @@ void ClientGame::UpdateBufferResource(
     size_t numElements, size_t elementSize, const void* bufferData,
     D3D12_RESOURCE_FLAGS flags) {
 
-    auto device = Application::GetInstance().GetDevice();
+    auto device = GRAPHICS_CORE::g_device;
     size_t bufferSize = numElements * elementSize;
 
     // Create a committed resource for the GPU resource in a default heap.
@@ -379,7 +374,7 @@ void ClientGame::ResizeDepthBuffer(int width, int height) {
         GRAPHICS_CORE::g_commandManager.Flush();
         width = std::max(1, width);
         height = std::max(1, height);
-        auto device = Application::GetInstance().GetDevice();
+        auto device = GRAPHICS_CORE::g_device;
 
         D3D12_CLEAR_VALUE optimizedClearValue = {};
         optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
@@ -402,6 +397,6 @@ void ClientGame::ResizeDepthBuffer(int width, int height) {
 		dsv.Flags = D3D12_DSV_FLAG_NONE;
 
 		device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, 
-            m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
+            m_dsvDescriptorHandle);
     }
 }

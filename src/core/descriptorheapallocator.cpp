@@ -2,11 +2,11 @@
 #include "headers.h"
 #include "graphicscore.h"
 
-std::mutex g_allocatorMutex; //resource critical section
-std::vector<Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>> g_descriptorPool; //descriptor heap pool
+std::mutex DescriptorAllocator::g_allocatorMutex; //resource critical section
+std::vector<Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>> DescriptorAllocator::g_descriptorPool; //descriptor heap pool
 
 DescriptorAllocator::DescriptorAllocator(D3D12_DESCRIPTOR_HEAP_TYPE type):
-	m_type(type), m_currentHeap(nullptr), m_descriptorSize(0)
+	m_type(type), m_currentHeap(nullptr), m_descriptorSize(0), m_remainingFreeHandles(0)
 {
 	m_currentHandle.ptr = D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN;
 }
