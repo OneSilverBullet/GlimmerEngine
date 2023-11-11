@@ -41,6 +41,10 @@ FILE(GLOB SRCS_GLIMMER_CORE
    src/core/graphicscore.cpp
    src/core/rootsignature.h
    src/core/rootsignature.cpp
+   src/core/staticdecriptorheap.h
+   src/core/staticdecriptorheap.cpp
+   src/core/descriptorheapallocator.h
+   src/core/descriptorheapallocator.cpp
    src/core/pso.h
    src/core/pso.cpp
    src/core/window.h
