@@ -1,3 +1,4 @@
+#pragma once
 #include "gpuresource.h"
 
 
@@ -21,6 +22,11 @@ protected:
 
 	void CreateTextureResource(ID3D12Device* device, const std::wstring& name,
 		const D3D12_RESOURCE_DESC& resourceDesc, D3D12_CLEAR_VALUE clearValue, 
+		D3D12_GPU_VIRTUAL_ADDRESS vidMemPtr = D3D12_GPU_VIRTUAL_ADDRESS_NULL);
+
+	void CreateTextureResource(ID3D12Device* device, const std::wstring& name,
+		const D3D12_RESOURCE_DESC& resourceDesc, D3D12_CLEAR_VALUE clearValue,
+		const D3D12_RESOURCE_STATES initialState,
 		D3D12_GPU_VIRTUAL_ADDRESS vidMemPtr = D3D12_GPU_VIRTUAL_ADDRESS_NULL);
 
 	static DXGI_FORMAT GetBaseFormat(DXGI_FORMAT Format);

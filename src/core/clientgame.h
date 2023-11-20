@@ -2,6 +2,7 @@
 #include "game.h"
 #include "window.h"
 #include <DirectXMath.h>
+#include "resources/depthbuffer.h"
 
 class RootSignature;
 class GraphicsPSO;
@@ -36,7 +37,7 @@ private:
 				D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
 
 	void TransitionResource(ID3D12GraphicsCommandList* commandList,
-		Microsoft::WRL::ComPtr<ID3D12Resource> resource,
+		ID3D12Resource* resource,
 		D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
 
 	void ClearRTV(ID3D12GraphicsCommandList* commandList,
@@ -54,8 +55,11 @@ private:
 	ComPtr<ID3D12Resource> m_indexBuffer;
 	D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
 
-	ComPtr<ID3D12Resource> m_depthBuffer; //samilar with the back buffer
-	D3D12_CPU_DESCRIPTOR_HANDLE m_dsvDescriptorHandle;
+
+	DepthBuffer m_depthBuffer;
+
+	//ComPtr<ID3D12Resource> m_depthBuffer; //samilar with the back buffer
+	//D3D12_CPU_DESCRIPTOR_HANDLE m_dsvDescriptorHandle;
 
 	RootSignature* m_rootSignature = nullptr;
 	GraphicsPSO* m_pso = nullptr;
@@ -75,9 +79,6 @@ private:
 	DirectX::XMMATRIX m_projMatrix;
 
 	bool m_contentLoaded;
-
-
-	
 };
 
 

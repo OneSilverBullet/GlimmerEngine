@@ -16,8 +16,8 @@ Window::Window(HWND windowInstance, std::wstring windowName,
 
 	m_isTearingSupported = app.IsTearingSupported();
 	m_dxgiSwapChain = CreateSwapChain();
-	m_rtvDescriptorHeapHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, BufferCount);
-	m_RTVDescriptorSize = GRAPHICS_CORE::g_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	//m_rtvDescriptorHeapHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, BufferCount);
+	//m_RTVDescriptorSize = GRAPHICS_CORE::g_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	UpdateRenderTargetViews();
 }
@@ -189,7 +189,7 @@ void Window::OnResize(ResizeEventArgs& e) {
 		GRAPHICS_CORE::g_commandManager.Flush();
 
 		for (int i = 0; i < BufferCount; ++i) {
-			m_backbuffers[i].Reset();
+			m_backbuffer[i].Destroy();
 		}
 
 		//Update Swap chain
@@ -206,7 +206,7 @@ void Window::OnResize(ResizeEventArgs& e) {
 }
 
 ComPtr<IDXGISwapChain4> Window::CreateSwapChain() {
-	Application& app = Application::GetInstance();
+
 
 	ComPtr<IDXGISwapChain4> swapChain4;
 	ComPtr<IDXGIFactory4> dxgiFactory4;
@@ -247,17 +247,14 @@ ComPtr<IDXGISwapChain4> Window::CreateSwapChain() {
 void Window::UpdateRenderTargetViews() {
 	auto device = GRAPHICS_CORE::g_device;
 	uint32_t rtvDescriptorIncreSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvDescriptorHeapHandle);
 
 	for (int i = 0; i < BufferCount; i++) {
 		ComPtr<ID3D12Resource> backBuffer;
 		//Get buffer from swap chain
 		ThrowIfFailed(m_dxgiSwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer)));
 
-		//Create RTV for each buffer
-		device->CreateRenderTargetView(backBuffer.Get(), nullptr, rtvHandle);
-		m_backbuffers[i] = backBuffer;
-		rtvHandle.Offset(rtvDescriptorIncreSize);
+		
+		m_backbuffer[i].CreateFromSwapChain(L"backbuffer", backBuffer.Detach());
 	}
 }
 
@@ -280,14 +277,9 @@ UINT Window::Present() {
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE Window::GetCurrentRenderTargetView() const {
-	UINT descriptorIncrementalSize = GRAPHICS_CORE::g_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
-		m_rtvDescriptorHeapHandle,
-		m_currentBackBufferIndex, descriptorIncrementalSize
-	);
+	return m_backbuffer[m_currentBackBufferIndex].GetRTV();
 }
 
-ComPtr<ID3D12Resource> Window::GetCurrentBackBuffer() const {
-	return m_backbuffers[m_currentBackBufferIndex];
+ID3D12Resource* Window::GetCurrentBackBuffer() {
+	return m_backbuffer[m_currentBackBufferIndex].GetResource();
 }

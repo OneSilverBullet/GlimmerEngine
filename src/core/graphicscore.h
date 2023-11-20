@@ -3,6 +3,7 @@
 #include "commandmanager.h"
 #include "descriptorheapallocator.h"
 
+
 namespace GRAPHICS_CORE
 {
 	extern CommandManager g_commandManager;
@@ -11,6 +12,7 @@ namespace GRAPHICS_CORE
 	extern bool g_tearingSupport;
 
 	extern DescriptorAllocator g_descriptorHeapAllocator[];
+
 
 	void GraphicsCoreInitialize();
 	void GraphicsCoreRelease();

@@ -164,7 +164,6 @@ bool ClientGame::LoadContent() {
     m_pso->SetPixelShader(pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize());
     m_pso->Finalize();
 
-    m_dsvDescriptorHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
     auto fenceValue = commandQueue.ExecuteCommandList(m_commandList);
     commandQueue.WaitForFence(fenceValue);
@@ -192,12 +191,11 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 
     
     UINT currentBackBufferIndex = m_window->GetCurrentBackBufferIndex();
-    auto backbuffer = m_window->GetCurrentBackBuffer();
     auto rtv = m_window->GetCurrentRenderTargetView();
-    auto dsv = m_dsvDescriptorHandle;
+    auto dsv = m_depthBuffer.GetDSV();
   
 
-    ComPtr<ID3D12Resource> currentBackbuffer = m_window->GetCurrentBackBuffer();
+    ID3D12Resource* currentBackbuffer = m_window->GetCurrentBackBuffer();
 
     // Clear the render target.
     {
@@ -348,11 +346,11 @@ void ClientGame::UpdateBufferResource(
 }
 
 void ClientGame::TransitionResource(ID3D12GraphicsCommandList* commandList,
-    Microsoft::WRL::ComPtr<ID3D12Resource> resource,
+    ID3D12Resource* resource,
     D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState) {
 
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        resource.Get(),
+        resource,
         beforeState, afterState);
 
     commandList->ResourceBarrier(1, &barrier);
@@ -380,6 +378,10 @@ void ClientGame::ResizeDepthBuffer(int width, int height) {
         optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
         optimizedClearValue.DepthStencil = { 1.0f, 0 };
 
+
+        m_depthBuffer.Create(L"depthBuffer", width, height, D3D12_RESOURCE_STATE_DEPTH_WRITE, DXGI_FORMAT_D32_FLOAT);
+
+        /*
         ThrowIfFailed(device->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
 			D3D12_HEAP_FLAG_NONE, // no flags
@@ -397,6 +399,6 @@ void ClientGame::ResizeDepthBuffer(int width, int height) {
 		dsv.Flags = D3D12_DSV_FLAG_NONE;
 
 		device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, 
-            m_dsvDescriptorHandle);
+            m_dsvDescriptorHandle);*/
     }
 }

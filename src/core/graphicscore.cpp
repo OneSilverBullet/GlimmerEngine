@@ -1,12 +1,15 @@
 #include "graphicscore.h"
 #include "headers.h"
 #include "descriptorheapallocator.h"
+#include "resources/depthbuffer.h"
+#include "resources/colorbuffer.h"
 
 namespace GRAPHICS_CORE
 {
 	CommandManager g_commandManager;
 	ID3D12Device* g_device = nullptr;
 	bool g_tearingSupport;
+
 
 	DescriptorAllocator g_descriptorHeapAllocator[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = {
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,

@@ -338,3 +338,21 @@ void PixelBuffer::CreateTextureResource(ID3D12Device* device, const std::wstring
     m_gpuAddress = D3D12_GPU_VIRTUAL_ADDRESS_NULL;
     m_resource->SetName(name.c_str());
 }
+
+
+void PixelBuffer::CreateTextureResource(ID3D12Device* device, const std::wstring& name,
+    const D3D12_RESOURCE_DESC& resourceDesc, D3D12_CLEAR_VALUE clearValue,
+    const D3D12_RESOURCE_STATES initialState,
+    D3D12_GPU_VIRTUAL_ADDRESS vidMemPtr) {
+    //Release previous resource
+    Destroy();
+    m_usageState = initialState;
+    //Create Texture
+    CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+    ThrowIfFailed(device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE,
+        &resourceDesc, m_usageState, &clearValue, IID_PPV_ARGS(&m_resource)));
+  
+    m_gpuAddress = D3D12_GPU_VIRTUAL_ADDRESS_NULL;
+    m_resource->SetName(name.c_str());
+}
+

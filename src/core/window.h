@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 #include "events.h"
+#include "resources/colorbuffer.h"
 
 using namespace Microsoft::WRL;
 
@@ -38,7 +39,7 @@ public:
 	UINT GetCurrentBackBufferIndex() const;
 	UINT Present();
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRenderTargetView() const;
-	ComPtr<ID3D12Resource> GetCurrentBackBuffer() const;
+	ID3D12Resource* GetCurrentBackBuffer();
 
 protected:
 	friend LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -79,10 +80,7 @@ private:
 
 	HWND m_hWnd;
 	ComPtr<IDXGISwapChain4> m_dxgiSwapChain;
-	//ComPtr<ID3D12DescriptorHeap> m_d3d12RTVDescriptorHeap;
-	ComPtr<ID3D12Resource> m_backbuffers[BufferCount];
-	D3D12_CPU_DESCRIPTOR_HANDLE m_rtvDescriptorHeapHandle;
-	UINT m_RTVDescriptorSize;
+	ColorBuffer m_backbuffer[BufferCount];
 	UINT m_currentBackBufferIndex;
 
 	RECT m_windowRect;

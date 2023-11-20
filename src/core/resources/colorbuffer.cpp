@@ -69,7 +69,7 @@ void ColorBuffer::CreateDerivedViews(ID3D12Device* device, DXGI_FORMAT format,
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 
-	if (arraySize > 1)
+	if (arraySize > 1) //for texture array
 	{
 		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
 		rtvDesc.Texture2DArray.MipSlice = 0;
@@ -87,12 +87,12 @@ void ColorBuffer::CreateDerivedViews(ID3D12Device* device, DXGI_FORMAT format,
 		srvDesc.Texture2DArray.FirstArraySlice = 0;
 		srvDesc.Texture2DArray.ArraySize = (UINT)arraySize;
 	}
-	else if (m_fragmentCount > 1)
+	else if (m_fragmentCount > 1) //for msaa
 	{
 		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
 		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
 	}
-	else
+	else //for a single texture
 	{
 		rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 		rtvDesc.Texture2D.MipSlice = 0;
@@ -105,25 +105,28 @@ void ColorBuffer::CreateDerivedViews(ID3D12Device* device, DXGI_FORMAT format,
 		srvDesc.Texture2D.MostDetailedMip = 0;
 	}
 
-	ID3D12Resource* Resource = m_resource;
+	//Create RTV and SRV
+	if (m_srvHandle.ptr == D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN)
+	{
+		m_rtvHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		m_srvHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
+	device->CreateRenderTargetView(m_resource, &rtvDesc, m_rtvHandle);
+	device->CreateShaderResourceView(m_resource, &srvDesc, m_srvHandle);
 
-	device->CreateRenderTargetView(Resource, &rtvDesc, m_rtvHandle);
-
-	device->CreateShaderResourceView(Resource, &srvDesc, m_srvHandle);
-
+	//if msaa is enabled, there is no need to create uav
 	if (m_fragmentCount > 1)
 		return;
 
-	// Create the UAVs for each mip level (RWTexture2D)
+	// Create the UAVs for each mip level (RWTexture2D) 
 	for (uint32_t i = 0; i < numMips; ++i)
 	{
 		if (m_uavHandle[i].ptr == D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN)
 			m_uavHandle[i] = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		GRAPHICS_CORE::g_device->CreateUnorderedAccessView(Resource, nullptr, &uavDesc, m_uavHandle[i]);
+		GRAPHICS_CORE::g_device->CreateUnorderedAccessView(m_resource, nullptr, &uavDesc, m_uavHandle[i]);
 
 		uavDesc.Texture2D.MipSlice++;
 	}
-
 }
 
