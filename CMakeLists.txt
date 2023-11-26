@@ -65,6 +65,10 @@ FILE(GLOB SRCS_RESOURCES
    src/core/resources/depthbuffer.cpp
    src/core/resources/colorbuffer.h
    src/core/resources/colorbuffer.cpp
+   src/core/resources/uploadbuffer.h
+   src/core/resources/uploadbuffer.cpp
+   src/core/resources/gpubuffer.h
+   src/core/resources/gpubuffer.cpp
 )
 
 FILE(GLOB SRCS_TYPES
