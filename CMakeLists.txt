@@ -71,6 +71,11 @@ FILE(GLOB SRCS_RESOURCES
    src/core/resources/gpubuffer.cpp
 )
 
+FILE(GLOB SRCS_RESOURCES_ALLOCATOR
+   src/core/resources/memoryallocator/linearallocator.h
+   src/core/resources/memoryallocator/linearallocator.cpp
+)
+
 FILE(GLOB SRCS_TYPES
    src/core/types/color.h
 )
@@ -79,11 +84,12 @@ set(SRCS_MAIN
    src/main.cpp
 )
 
-add_executable(Glimmer WIN32 ${SRCS_MAIN} ${SRCS_GLIMMER_CORE} ${SRCS_TYPES}  ${SRCS_RESOURCES} ${SHADER_FILES})
+add_executable(Glimmer WIN32 ${SRCS_MAIN} ${SRCS_GLIMMER_CORE} ${SRCS_RESOURCES_ALLOCATOR} ${SRCS_TYPES}  ${SRCS_RESOURCES} ${SHADER_FILES})
 
 source_group("source" FILES ${SRCS_MAIN})
 source_group("source\\core" FILES ${SRCS_GLIMMER_CORE})
 source_group("source\\core\\resources" FILES ${SRCS_RESOURCES})
+source_group("source\\core\\resources\\memoryallocator" FILES ${SRCS_RESOURCES_ALLOCATOR})
 source_group( "source\\core\\types" FILES ${SRCS_TYPES} )
 source_group( "resources\\shaders" FILES ${SHADER_FILES} )
 
