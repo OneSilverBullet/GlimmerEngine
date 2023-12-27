@@ -28,9 +28,11 @@ void GPUBuffer::Create(const std::wstring& name, uint32_t elements,
 		&heapProp, D3D12_HEAP_FLAG_NONE, &m_resourceDesc, m_usageState, nullptr, IID_PPV_ARGS(&m_resource)
 	));
 	m_resource->SetName(name.c_str());
+	m_gpuAddress = m_resource->GetGPUVirtualAddress();
+
+	//TODO: copy the data to current gpu buffer, linear memory system allocate memory to current buffer
 
 
-	//TODO: copy the data to current gpu buffer
 
 	//create related views 
 	CreateDerivedViews();
