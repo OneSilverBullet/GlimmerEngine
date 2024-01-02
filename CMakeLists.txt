@@ -45,6 +45,9 @@ FILE(GLOB SRCS_GLIMMER_CORE
    src/core/staticdecriptorheap.cpp
    src/core/descriptorheapallocator.h
    src/core/descriptorheapallocator.cpp
+   src/core/dynamicdescriptorheap.h
+   src/core/dynamicdescriptorheap.cpp
+   src/core/descriptortypes.h
    src/core/pso.h
    src/core/pso.cpp
    src/core/window.h
@@ -55,6 +58,8 @@ FILE(GLOB SRCS_GLIMMER_CORE
    src/core/clientgame.cpp
    src/core/commandallocatorpool.h
    src/core/commandallocatorpool.cpp
+   src/core/context.h
+   src/core/context.cpp
 )
 
 FILE(GLOB SRCS_RESOURCES
@@ -82,6 +87,7 @@ FILE(GLOB SRCS_MATH
 
 FILE(GLOB SRCS_TYPES
    src/core/types/color.h
+   src/core/types/commontypes.h
 )
 
 set(SRCS_MAIN  
