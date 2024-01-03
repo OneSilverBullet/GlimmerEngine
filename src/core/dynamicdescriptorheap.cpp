@@ -15,6 +15,9 @@ enum DynamicDescriptorHeapTypes
 	SAMPLER = 1
 };
 
+/*
+* DynamicDescriptorsManager
+*/
 ID3D12DescriptorHeap* DynamicDescriptorsManager::RequestDescriptorHeap(
 	D3D12_DESCRIPTOR_HEAP_TYPE heapType) {
 	
@@ -69,5 +72,23 @@ uint32_t DynamicDescriptorsManager::GetDescriptorHeapIdx(D3D12_DESCRIPTOR_HEAP_T
 		idx = DynamicDescriptorHeapTypes::CBV_SRV_UAV_RTV_DSV;
 	return idx;
 }
+
+
+
+
+DescriptorHandlesCache::DescriptorHandlesCache() {
+
+
+
+}
+
+
+void DescriptorHandlesCache::ParseRootSignature(D3D12_DESCRIPTOR_HEAP_TYPE type, 
+	const RootSignature& rootSig) {
+
+
+
+}
+
 
 

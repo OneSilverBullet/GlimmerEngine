@@ -7,7 +7,7 @@
 #include <d3d12.h>
 #include <wrl/client.h>
 #include "descriptortypes.h"
-
+#include "rootsignature.h"
 
 class DynamicDescriptorsManager
 {
@@ -43,7 +43,7 @@ struct DescriptorHandlesCache
 	DescriptorHandlesCache();
 
 
-
+	void ParseRootSignature(D3D12_DESCRIPTOR_HEAP_TYPE type, const RootSignature& rootSig);
 
 	//the max number of descriptors and descriptor tables
 	static const uint32_t maxNumDescriptors = 256; 

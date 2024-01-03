@@ -1,5 +1,6 @@
 #include "headers.h"
-
+#include <map>
+#include <wrl/client.h>
 
 class RootParameter
 {
@@ -12,6 +13,8 @@ public:
 	{
 		Clear();
 	}
+
+	const D3D12_ROOT_PARAMETER& operator()(void) { return m_rootParam; }
 
 	void Clear() {
 		if (m_rootParam.ParameterType == D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE) {
@@ -29,8 +32,77 @@ public:
 		m_rootParam.Constants.ShaderRegister = registerSlot;
 	}
 
+	void InitAsConstantBuffer(UINT registerSlot, D3D12_SHADER_VISIBILITY visible = D3D12_SHADER_VISIBILITY_ALL, UINT space = 0)
+	{
+		m_rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV; //create constant buffer root parameter
+		m_rootParam.ShaderVisibility = visible;
+		m_rootParam.Descriptor.RegisterSpace = space;
+		m_rootParam.Descriptor.ShaderRegister = registerSlot;
+	}
+
+	void InitAsBufferSRV(UINT registerSlot, D3D12_SHADER_VISIBILITY visible = D3D12_SHADER_VISIBILITY_ALL, UINT space = 0)
+	{
+		m_rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV; //create shader resource root parameter
+		m_rootParam.ShaderVisibility = visible;
+		m_rootParam.Descriptor.RegisterSpace = space;
+		m_rootParam.Descriptor.ShaderRegister = registerSlot;
+	}
+
+	void InitAsBufferUAV(UINT registerSlot, D3D12_SHADER_VISIBILITY visible = D3D12_SHADER_VISIBILITY_ALL, UINT space = 0)
+	{
+		m_rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV; //create unordered access root parameter
+		m_rootParam.ShaderVisibility = visible;
+		m_rootParam.Descriptor.RegisterSpace = space;
+		m_rootParam.Descriptor.ShaderRegister = registerSlot;
+	}
+
+	void InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE type, UINT registerSlot,
+		UINT count, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL, UINT space = 0) {
+		InitAsDescriptorTable(1, visibility, space);
+		SetTableRange(0, type, registerSlot, count, space);
+	}
+
+	void InitAsDescriptorTable(UINT registerSlotRange, D3D12_SHADER_VISIBILITY visible = D3D12_SHADER_VISIBILITY_ALL, UINT space = 0)
+	{
+		m_rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		m_rootParam.ShaderVisibility = visible;
+		m_rootParam.DescriptorTable.NumDescriptorRanges = registerSlotRange;
+		m_rootParam.DescriptorTable.pDescriptorRanges = new D3D12_DESCRIPTOR_RANGE[registerSlotRange];
+	}
+
+	void SetTableRange(UINT rangeIndex, D3D12_DESCRIPTOR_RANGE_TYPE type, UINT registerSlot, UINT count, UINT space = 0)
+	{
+		D3D12_DESCRIPTOR_RANGE* range = const_cast<D3D12_DESCRIPTOR_RANGE*>(m_rootParam.DescriptorTable.pDescriptorRanges + rangeIndex);
+		range->RangeType = type;
+		range->NumDescriptors = count;
+		range->RegisterSpace = space;
+		range->BaseShaderRegister = registerSlot;
+		range->OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	}
+
 protected:
 	D3D12_ROOT_PARAMETER m_rootParam;
+};
+
+class RootSignatureManager
+{
+public:
+	static RootSignatureManager& Instance() {
+		static RootSignatureManager instance;
+		return instance;
+	}
+
+	void Insert(uint32_t hashValue, ID3D12RootSignature* rootSignatureCompiled);
+	ID3D12RootSignature* Get(uint32_t hashValue);
+	void Release();
+
+private:
+	RootSignatureManager(){}
+	RootSignatureManager(const RootSignatureManager& val) = delete;
+	RootSignatureManager& operator=(const RootSignatureManager& val) = delete;
+		 
+private:
+	std::map<uint32_t, Microsoft::WRL::ComPtr<ID3D12RootSignature>> m_storage;
 };
 
 class RootSignature

@@ -1,6 +1,32 @@
 #include "rootsignature.h"
 #include "graphicscore.h"
 
+
+/*
+* RootSignatureManager
+* There are a great number of root signatures in graphics applications.
+* For the efficiency, we reuse the root signature which has the same descriptors layout 
+* Each root signature should be stored in this singleton.
+*/
+void RootSignatureManager::Insert(uint32_t hashValue, ID3D12RootSignature* rootSignatureCompiled) {
+	assert(rootSignatureCompiled != nullptr);
+	m_storage[hashValue].Attach(rootSignatureCompiled);
+}
+
+ID3D12RootSignature* RootSignatureManager::Get(uint32_t hashValue) {
+	if (m_storage.find(hashValue) != m_storage.end())
+		return m_storage[hashValue].Get();
+	return nullptr;
+}
+
+void RootSignatureManager::Release() {
+	m_storage.clear();
+}
+
+/*
+* RootSignature
+* Root Signature is a description of the input data types of the shader
+*/
 void RootSignature::Finalize(const std::wstring& name, D3D12_ROOT_SIGNATURE_FLAGS Flags) {
 
 	if(m_finalized)
@@ -24,7 +50,6 @@ void RootSignature::Finalize(const std::wstring& name, D3D12_ROOT_SIGNATURE_FLAG
 		pOutBlob->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 
 	m_rootSignature->SetName(name.c_str());
-
 
 	m_finalized = true;
 }
