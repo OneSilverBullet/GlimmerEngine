@@ -58,6 +58,7 @@ public:
 
 	void InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE type, UINT registerSlot,
 		UINT count, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL, UINT space = 0) {
+		//we just use one descriptors range in descriptor table
 		InitAsDescriptorTable(1, visibility, space);
 		SetTableRange(0, type, registerSlot, count, space);
 	}
@@ -149,12 +150,15 @@ public:
 	//compile and create root signature object
 	void Finalize(const std::wstring& name, D3D12_ROOT_SIGNATURE_FLAGS Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE);
 
+public:
+	uint32_t m_descriptorTableBitMap; //to indicate the descriptor table slot index
+	uint32_t m_descriptorTableSize[16]; //record the descriptors count in each descriptor table
+	uint32_t m_samplerBitMap; //to indicate the sampler slot index
 
 protected:
 	bool m_finalized = false;
 	int m_parametersNum;
 	int m_samplersNum;
-
 	std::unique_ptr<RootParameter[]> m_parameters;
 	std::unique_ptr<D3D12_STATIC_SAMPLER_DESC[]> m_samplers;
 	ID3D12RootSignature* m_rootSignature;

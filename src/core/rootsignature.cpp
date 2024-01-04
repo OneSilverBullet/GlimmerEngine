@@ -40,6 +40,35 @@ void RootSignature::Finalize(const std::wstring& name, D3D12_ROOT_SIGNATURE_FLAG
 	rootSignatureDesc.pStaticSamplers = (const D3D12_STATIC_SAMPLER_DESC*)m_samplers.get();
 	rootSignatureDesc.Flags = Flags;
 
+	m_descriptorTableBitMap = 0;
+	m_samplerBitMap = 0;
+	
+	//extract the parameters information in current root signature
+	for (int paramIndex = 0; paramIndex < m_parametersNum; ++paramIndex)
+	{
+		D3D12_ROOT_PARAMETER parameter = rootSignatureDesc.pParameters[paramIndex];
+
+		if (parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE)
+		{
+			//check the descriptor table is valid
+			assert(parameter.DescriptorTable.pDescriptorRanges != nullptr);
+
+			//current descriptor table stores multiple samplers
+			if (parameter.DescriptorTable.pDescriptorRanges->RangeType ==
+				D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER)
+				m_samplerBitMap |= (1 << paramIndex);
+			else
+				m_descriptorTableBitMap |= (1 << paramIndex);
+
+			//record the descriptors size in current entry
+			for (int subDescriptorRangeIndex = 0; subDescriptorRangeIndex < parameter.DescriptorTable.NumDescriptorRanges; ++subDescriptorRangeIndex)
+			{
+				m_descriptorTableSize[paramIndex] += parameter.DescriptorTable.pDescriptorRanges[subDescriptorRangeIndex].NumDescriptors;
+			}
+		}
+	}
+
+	//TODO: Do not compile the root signature every time; reuse the same parameter layout root signature
 
 	ComPtr<ID3DBlob> pOutBlob, pErrorBlob;
 

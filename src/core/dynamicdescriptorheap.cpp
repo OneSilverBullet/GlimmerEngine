@@ -82,13 +82,47 @@ DescriptorHandlesCache::DescriptorHandlesCache() {
 
 }
 
-
-void DescriptorHandlesCache::ParseRootSignature(D3D12_DESCRIPTOR_HEAP_TYPE type, 
-	const RootSignature& rootSig) {
-
-
+void DescriptorHandlesCache::StoreDescriptorsCPUHandles(UINT rootIndex, UINT offset, UINT handlesCount, const D3D12_CPU_DESCRIPTOR_HANDLE descriptorsHandleList[]) {
+	DescriptorTableEntry& curTableEntry = m_rootDescriptorTable[rootIndex];
+	D3D12_CPU_DESCRIPTOR_HANDLE* copyDest = curTableEntry.tableStart + offset;
+	for (int i = 0; i < handlesCount; ++i)
+		copyDest[i] = descriptorsHandleList[i];
+	//record the assigned cpu handles bit map
+	curTableEntry.assignedHandlesBitMap |= ((1 << handlesCount) - 1) << offset;
+	//indicate the root index descriptors table is valid
+	m_assignedRootParamsBitMap |= (1 << rootIndex);
 
 }
 
+//analysis the descriptor tables information in root signature
+void DescriptorHandlesCache::ParseRootSignature(D3D12_DESCRIPTOR_HEAP_TYPE type, 
+	const RootSignature& rootSig) {
 
+	uint32_t currentOffset = 0;
+	m_assignedRootParamsBitMap = 0;
+	if (type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
+		m_rootDescriptorTablesBitMap = rootSig.m_samplerBitMap;
+	else
+		m_rootDescriptorTablesBitMap = rootSig.m_descriptorTableBitMap;
+
+	unsigned long tmpBitMap = m_rootDescriptorTablesBitMap;
+	unsigned long curDescriptorTableIndex = 0;
+	while (_BitScanForward(&curDescriptorTableIndex, tmpBitMap))
+	{
+		tmpBitMap ^= (1 << curDescriptorTableIndex);
+
+		uint32_t curDescriptorTableSize = rootSig.m_descriptorTableSize[curDescriptorTableIndex];
+		assert(curDescriptorTableSize > 0);
+
+		//record the descriptors table information and allocate the descriptor memory block
+		DescriptorTableEntry& tableEntry = m_rootDescriptorTable[curDescriptorTableIndex];
+		tableEntry.tableSize = curDescriptorTableSize;
+		tableEntry.tableStart = m_descriptors + currentOffset;
+		tableEntry.assignedHandlesBitMap = 0;
+		
+		currentOffset += curDescriptorTableSize;
+	}
+	m_cachedDescriptorsNum += currentOffset;
+	assert(m_cachedDescriptorsNum < maxNumDescriptors);
+}
 
