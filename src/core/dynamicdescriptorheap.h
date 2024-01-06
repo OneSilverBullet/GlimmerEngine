@@ -43,11 +43,18 @@ struct DescriptorHandlesCache
 {
 	DescriptorHandlesCache();
 
+	//compute the descriptors size need in a descriptor heap
+	uint32_t ComputeAssignedDescriptorsSize();
 	//store the descriptors handle to current cache
 	void StoreDescriptorsCPUHandles(UINT rootIndex, UINT offset, UINT handlesCount, const D3D12_CPU_DESCRIPTOR_HANDLE descriptorsHandleList[]);
+	//copy the descriptors handles in current cache to a descriptor heaps
+	void CommitDescriptorHandleToDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t descriptorsSize,
+		DescriptorHandle dstHandleStart, ID3D12GraphicsCommandList* cmdList,
+		void (STDMETHODCALLTYPE ID3D12GraphicsCommandList::* SetFunc)(UINT, D3D12_GPU_DESCRIPTOR_HANDLE));
 	//analysis the root signature and only consider the descriptors tables
 	void ParseRootSignature(D3D12_DESCRIPTOR_HEAP_TYPE type, const RootSignature& rootSig);
-
+	//clear current cache
+	void ReleaseCaches();
 
 	//the max number of descriptors and descriptor tables
 	static const uint32_t maxNumDescriptors = 256; 

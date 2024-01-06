@@ -74,12 +74,121 @@ uint32_t DynamicDescriptorsManager::GetDescriptorHeapIdx(D3D12_DESCRIPTOR_HEAP_T
 }
 
 
-
-
 DescriptorHandlesCache::DescriptorHandlesCache() {
+	ReleaseCaches();
+}
 
+void DescriptorHandlesCache::CommitDescriptorHandleToDescriptorHeap(
+	D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t descriptorsSize,
+	DescriptorHandle dstHandleStart, ID3D12GraphicsCommandList* cmdList,
+	void (STDMETHODCALLTYPE ID3D12GraphicsCommandList::* SetFunc)(UINT, D3D12_GPU_DESCRIPTOR_HANDLE)) {
 
+	//Extract the dynamic descriptor heaps properties for efficiency
+	uint32_t descriptorTableSize[maxNumDescriptorTables];
+	uint32_t rootIndexDoc[maxNumDescriptorTables];
+	uint32_t assignedDescriptorTableCount = 0;
+	unsigned long descriptorsSpaceSize = 0;
+	unsigned long rootIndex = 0;
 
+	unsigned long assignedDescriptorTablesBitMap = m_assignedRootParamsBitMap;
+	while (_BitScanForward(&rootIndex, assignedDescriptorTablesBitMap)) {
+		rootIndexDoc[assignedDescriptorTableCount] = rootIndex;
+		assignedDescriptorTablesBitMap ^= (1 << rootIndex);
+		//extract the descriptors space in current descriptor table
+		unsigned long descriptorsNumInDescriptorTable;
+		_BitScanReverse(&descriptorsNumInDescriptorTable, assignedDescriptorTablesBitMap);
+
+		descriptorsSpaceSize += descriptorsNumInDescriptorTable + 1;
+		descriptorTableSize[assignedDescriptorTableCount] = descriptorsNumInDescriptorTable + 1;
+		assignedDescriptorTableCount++;
+	}
+
+	//
+	static const uint32_t maxNumCopyDescriptorsNum = 16;
+
+	uint32_t destDescriptorRangeIndex = 0;
+	D3D12_CPU_DESCRIPTOR_HANDLE pDestDescriptorRangeStart[maxNumCopyDescriptorsNum];
+	uint32_t destDescriptorRangeDescriptorsSize[maxNumCopyDescriptorsNum];
+
+	uint32_t srcDescriptorRangeIndex = 0;
+	D3D12_CPU_DESCRIPTOR_HANDLE pSrcDescriptorRangeStart[maxNumCopyDescriptorsNum];
+	uint32_t srcDescriptorRangeDescriptorsSize[maxNumCopyDescriptorsNum];
+	//loop each descriptor table
+	for (uint32_t i = 0; i < assignedDescriptorTableCount; ++i) {
+		rootIndex = rootIndexDoc[i];
+		(cmdList->*SetFunc)(rootIndex, dstHandleStart);
+		
+		//the source descriptor handle
+		DescriptorTableEntry& descriptorTableCachedInfo = m_rootDescriptorTable[rootIndex];
+		D3D12_CPU_DESCRIPTOR_HANDLE* srcHandles = descriptorTableCachedInfo.tableStart;
+		unsigned long assignedDescriptorBitMap = descriptorTableCachedInfo.assignedHandlesBitMap;
+		//the destination descriptor handle
+		D3D12_CPU_DESCRIPTOR_HANDLE dstHandles = dstHandleStart;
+		dstHandleStart += descriptorTableSize[i] * descriptorsSize;
+
+		//copy the source descriptors in descriptor table to the descriptor heap and recover the descriptor layout
+		unsigned long skipCount;
+		while (_BitScanForward(&skipCount, assignedDescriptorBitMap))
+		{
+			//skip the first several empty descriptor slots
+			assignedDescriptorBitMap >>= skipCount;
+			srcHandles += skipCount;
+			dstHandles.ptr += skipCount * descriptorsSize;
+
+			//gain the non-empty descriptor slots number in current filled block
+			unsigned long descriptorCount;
+			_BitScanForward(&descriptorCount, ~assignedDescriptorBitMap);
+			assignedDescriptorBitMap >>= descriptorCount;
+
+			//if current descriptors block is extend the max copy number
+			if (srcDescriptorRangeIndex + descriptorCount > maxNumCopyDescriptorsNum)
+			{
+				//copy the data directly, current loop's data will be copied in the next loop
+				GRAPHICS_CORE::g_device->CopyDescriptors(
+					destDescriptorRangeIndex, pDestDescriptorRangeStart, destDescriptorRangeDescriptorsSize,
+					srcDescriptorRangeIndex, pSrcDescriptorRangeStart, srcDescriptorRangeDescriptorsSize, type
+				);
+
+				srcDescriptorRangeIndex = 0;
+				destDescriptorRangeIndex = 0;
+			}
+
+			//initial the descriptor range infomation of destination descriptor block
+			pDestDescriptorRangeStart[destDescriptorRangeIndex] = dstHandles;
+			destDescriptorRangeDescriptorsSize[destDescriptorRangeIndex] = descriptorCount;
+			destDescriptorRangeIndex++;
+
+			//initial the descriptor range information of source descriptor block and load the source data
+			for (int srcDescriptorIndex = 0; srcDescriptorIndex < descriptorCount; srcDescriptorIndex++)
+			{
+				pSrcDescriptorRangeStart[srcDescriptorRangeIndex] = srcHandles[srcDescriptorIndex];
+				srcDescriptorRangeDescriptorsSize[srcDescriptorRangeIndex] = 1;
+				srcDescriptorRangeIndex++;
+			}
+
+			srcHandles += descriptorCount;
+			dstHandles.ptr += descriptorCount * descriptorsSize;
+		}
+	}
+
+	GRAPHICS_CORE::g_device->CopyDescriptors(
+		destDescriptorRangeIndex, pDestDescriptorRangeStart, destDescriptorRangeDescriptorsSize,
+		srcDescriptorRangeIndex, pSrcDescriptorRangeStart, srcDescriptorRangeDescriptorsSize, type
+	);
+}
+
+uint32_t DescriptorHandlesCache::ComputeAssignedDescriptorsSize() {
+	//calculate the descriptors size need for the descriptor heap.
+	uint32_t assignedSize = 0;
+	unsigned long assignedDescriptorBitMap = m_assignedRootParamsBitMap;
+	unsigned long rootIndex;
+	while (_BitScanForward(&rootIndex, assignedDescriptorBitMap)) {
+		assignedDescriptorBitMap ^= (1 << rootIndex);
+		unsigned long descriptorsSize;
+		assert(TRUE == _BitScanReverse(&descriptorsSize, m_rootDescriptorTable[rootIndex].assignedHandlesBitMap));
+		assignedSize += descriptorsSize + 1;
+	}
+	return assignedSize;
 }
 
 void DescriptorHandlesCache::StoreDescriptorsCPUHandles(UINT rootIndex, UINT offset, UINT handlesCount, const D3D12_CPU_DESCRIPTOR_HANDLE descriptorsHandleList[]) {
@@ -125,4 +234,12 @@ void DescriptorHandlesCache::ParseRootSignature(D3D12_DESCRIPTOR_HEAP_TYPE type,
 	m_cachedDescriptorsNum += currentOffset;
 	assert(m_cachedDescriptorsNum < maxNumDescriptors);
 }
+
+void DescriptorHandlesCache::ReleaseCaches() {
+	//lazy release: we just modify the data flag 
+	m_rootDescriptorTablesBitMap = 0;
+	m_assignedRootParamsBitMap = 0;
+	m_cachedDescriptorsNum = 0;
+}
+
 
