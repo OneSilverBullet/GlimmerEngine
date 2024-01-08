@@ -242,4 +242,105 @@ void DescriptorHandlesCache::ReleaseCaches() {
 	m_cachedDescriptorsNum = 0;
 }
 
+DynamicDescriptorHeap::DynamicDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType)
+	: m_descriptorHeapType(heapType)
+{
+	m_curDescriptorHeap = nullptr;
+	m_currentOffset = 0;
+	m_descriptorSize = GRAPHICS_CORE::g_device->GetDescriptorHandleIncrementSize(heapType);
+}
 
+DynamicDescriptorHeap::~DynamicDescriptorHeap() {
+
+}
+
+void DynamicDescriptorHeap::CleanupUsedHeap(uint64_t fence) {
+	RetireCurrentHeap();
+	RetireUsedHeaps(fence);
+	m_graphicsDescriptorsCache.ReleaseCaches();
+	m_computeDescriptorsCache.ReleaseCaches();
+}
+
+void DynamicDescriptorHeap::SetGraphicsDescriptorHandles(uint32_t rootIndex, uint32_t offset,
+	uint32_t numHandles, const D3D12_CPU_DESCRIPTOR_HANDLE handles[]) {
+	m_graphicsDescriptorsCache.StoreDescriptorsCPUHandles(rootIndex, offset, numHandles, handles);
+}
+
+void DynamicDescriptorHeap::SetComputeDescriptorHandles(uint32_t rootIndex, uint32_t offset,
+	uint32_t numHandles, const D3D12_CPU_DESCRIPTOR_HANDLE handles[]) {
+	m_computeDescriptorsCache.StoreDescriptorsCPUHandles(rootIndex, offset, numHandles, handles);
+}
+
+void DynamicDescriptorHeap::ParseGraphicsRootSignature(const RootSignature& rootSignature) {
+	m_graphicsDescriptorsCache.ParseRootSignature(m_descriptorHeapType, rootSignature);
+}
+
+void DynamicDescriptorHeap::ParseComputeRootSignature(const RootSignature& rootSignature) {
+	m_computeDescriptorsCache.ParseRootSignature(m_descriptorHeapType, rootSignature);
+}
+
+void DynamicDescriptorHeap::CommittedDescriptorTables(DescriptorHandlesCache& handleCache, ID3D12GraphicsCommandList* cmdList,
+	void (STDMETHODCALLTYPE ID3D12GraphicsCommandList::* SetFunc)(UINT, D3D12_GPU_DESCRIPTOR_HANDLE)) {
+	//calculate the descriptors size in dyanmic descriptors caches 
+	uint32_t needSize = handleCache.ComputeAssignedDescriptorsSize();
+	if (!HasFreeSpace(needSize)) {
+		RetireCurrentHeap();
+	}
+
+	//TODO:Set Descriptor Heaps to Graphics Context
+
+	handleCache.CommitDescriptorHandleToDescriptorHeap(m_descriptorHeapType, m_descriptorSize,
+		Allocate(needSize), cmdList, SetFunc);
+}
+
+void DynamicDescriptorHeap::CommitGraphicsDescriptorTablesOfRootSignature(ID3D12GraphicsCommandList* graphicsList) {
+	if (m_graphicsDescriptorsCache.m_assignedRootParamsBitMap != 0) {
+		CommittedDescriptorTables(m_graphicsDescriptorsCache, graphicsList, &ID3D12GraphicsCommandList::SetGraphicsRootDescriptorTable);
+	}
+}
+
+void DynamicDescriptorHeap::CommitComputeDescriptorTablesOfRootSignature(ID3D12GraphicsCommandList* computeList) {
+	if (m_computeDescriptorsCache.m_assignedRootParamsBitMap != 0) {
+		CommittedDescriptorTables(m_computeDescriptorsCache, computeList, &ID3D12GraphicsCommandList::SetComputeRootDescriptorTable);
+	}
+}
+
+DescriptorHandle DynamicDescriptorHeap::Allocate(UINT count) {
+	DescriptorHandle ret = m_firstDescriptorHandle + m_currentOffset * m_descriptorSize;
+	m_currentOffset += count;
+	return ret;
+}
+
+bool DynamicDescriptorHeap::HasFreeSpace(UINT count) {
+	return (m_curDescriptorHeap != nullptr) && (m_currentOffset + count <= kNumDescriptorsPerHeap);
+}
+
+ID3D12DescriptorHeap* DynamicDescriptorHeap::GetHeapPointer() {
+	if (m_curDescriptorHeap == nullptr) {
+		assert(m_currentOffset == 0);
+		m_curDescriptorHeap = DynamicDescriptorsManager::Instance().RequestDescriptorHeap(m_descriptorHeapType);
+		m_firstDescriptorHandle = DescriptorHandle(
+			m_curDescriptorHeap->GetCPUDescriptorHandleForHeapStart(),
+			m_curDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+	}
+	return m_curDescriptorHeap;
+}
+
+void DynamicDescriptorHeap::RetireCurrentHeap() {
+	//never retire empty heap
+	if (m_currentOffset == 0) {
+		assert(m_curDescriptorHeap == nullptr);
+		return;
+	}
+	assert(m_curDescriptorHeap != nullptr);
+	m_retiredDescriptorHeaps.push_back(m_curDescriptorHeap);
+	//refresh the descriptor heap
+	m_curDescriptorHeap = nullptr;
+	m_currentOffset = 0;
+}
+
+void DynamicDescriptorHeap::RetireUsedHeaps(uint64_t fenceValue) {
+	//discard all the retired descriptor heaps
+	DynamicDescriptorsManager::Instance().DiscardDescriptors(m_descriptorHeapType, fenceValue, m_retiredDescriptorHeaps);
+	m_retiredDescriptorHeaps.clear();
+}

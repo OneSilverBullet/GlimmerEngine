@@ -75,11 +75,41 @@ struct DescriptorHandlesCache
 
 class DynamicDescriptorHeap
 {
+public: 
+	DynamicDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType);
+	~DynamicDescriptorHeap();
+
+	void CleanupUsedHeap(uint64_t fence);
+	//store the resource handles to current descriptors cache
+	void SetGraphicsDescriptorHandles(uint32_t rootIndex, uint32_t offset, uint32_t numHandles, const D3D12_CPU_DESCRIPTOR_HANDLE handles[]);
+	void SetComputeDescriptorHandles(uint32_t rootIndex, uint32_t offset, uint32_t numHandles, const D3D12_CPU_DESCRIPTOR_HANDLE handles[]);
+	//analysis the root signature and record the descriptor tables information 
+	void ParseGraphicsRootSignature(const RootSignature& rootSignature);
+	void ParseComputeRootSignature(const RootSignature& rootSignature);
+	//commit the descriptor tables to the command LIST
+	void CommitGraphicsDescriptorTablesOfRootSignature(ID3D12GraphicsCommandList* graphicsList);
+	void CommitComputeDescriptorTablesOfRootSignature(ID3D12GraphicsCommandList* computeList);
 
 
+private:
+	void CommittedDescriptorTables(DescriptorHandlesCache& handleCache, ID3D12GraphicsCommandList* cmdList,
+		void (STDMETHODCALLTYPE ID3D12GraphicsCommandList::*SetFunc)(UINT, D3D12_GPU_DESCRIPTOR_HANDLE));
+	DescriptorHandle Allocate(UINT count);
+	bool HasFreeSpace(UINT count);
+	ID3D12DescriptorHeap* GetHeapPointer();
+	void RetireCurrentHeap();
+	void RetireUsedHeaps(uint64_t fenceValue);
 
+private: 
+	static const uint32_t kNumDescriptorsPerHeap = 1024;
+	DescriptorHandlesCache m_graphicsDescriptorsCache;
+	DescriptorHandlesCache m_computeDescriptorsCache;
 
+	ID3D12DescriptorHeap* m_curDescriptorHeap;
+	std::vector<ID3D12DescriptorHeap*> m_retiredDescriptorHeaps;
 
-
-
+	uint32_t m_descriptorSize;
+	uint32_t m_currentOffset;
+	DescriptorHandle m_firstDescriptorHandle;
+	D3D12_DESCRIPTOR_HEAP_TYPE m_descriptorHeapType;
 };
