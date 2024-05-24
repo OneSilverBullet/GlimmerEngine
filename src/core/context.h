@@ -5,6 +5,8 @@
 #include <memory>
 
 
+class Context;
+
 class ContextManager
 {
 public:
@@ -12,7 +14,9 @@ public:
 
 
 private:
-	std::vector<std::unique_ptr<>>
+	std::vector<std::unique_ptr<Context>> m_contextPool[4];
+	std::queue<Context*> m_availableContextPool[4];
+
 
 
 };

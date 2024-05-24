@@ -1,6 +1,7 @@
 #pragma once
 #include "gpubuffer.h"
 #include "graphicscore.h"
+#include "mathematics/bitoperation.h"
 
 void GPUBuffer::Create(const std::wstring& name, uint32_t elements, 
 	uint32_t elementSize, const void* data) {
@@ -57,7 +58,17 @@ D3D12_RESOURCE_DESC GPUBuffer::DescribeBuffer() {
 
 
 D3D12_CPU_DESCRIPTOR_HANDLE GPUBuffer::CreateConstantBufferView(uint32_t offset, uint32_t size) const {
+	assert(offset + size <= m_bufferSize);
 
+	size = Mathematics::AlignUp(size, 16);
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+	cbvDesc.BufferLocation = m_gpuAddress + (size_t)size;
+	cbvDesc.SizeInBytes = size;
+
+	D3D12_CPU_DESCRIPTOR_HANDLE hcbv = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	GRAPHICS_CORE::g_device->CreateConstantBufferView(&cbvDesc, hcbv);
+	return hcbv;
 }
 
 //Initialize gpu buffer as the vertex buffer
