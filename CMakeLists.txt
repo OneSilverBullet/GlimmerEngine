@@ -74,6 +74,8 @@ FILE(GLOB SRCS_RESOURCES
    src/core/resources/uploadbuffer.cpp
    src/core/resources/gpubuffer.h
    src/core/resources/gpubuffer.cpp
+   src/core/resources/readbackbuffer.h
+   src/core/resources/readbackbuffer.cpp
 )
 
 FILE(GLOB SRCS_RESOURCES_ALLOCATOR
