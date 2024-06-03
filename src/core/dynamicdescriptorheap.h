@@ -8,6 +8,7 @@
 #include <wrl/client.h>
 #include "descriptortypes.h"
 #include "rootsignature.h"
+#include "context.h"
 
 class DynamicDescriptorsManager
 {
@@ -76,7 +77,7 @@ struct DescriptorHandlesCache
 class DynamicDescriptorHeap
 {
 public: 
-	DynamicDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType);
+	DynamicDescriptorHeap(Context& owningContext, D3D12_DESCRIPTOR_HEAP_TYPE heapType);
 	~DynamicDescriptorHeap();
 
 	void CleanupUsedHeap(uint64_t fence);
@@ -101,6 +102,7 @@ private:
 	void RetireUsedHeaps(uint64_t fenceValue);
 
 private: 
+	Context& m_owningContext;
 	static const uint32_t kNumDescriptorsPerHeap = 1024;
 	DescriptorHandlesCache m_graphicsDescriptorsCache;
 	DescriptorHandlesCache m_computeDescriptorsCache;

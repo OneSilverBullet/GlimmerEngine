@@ -33,6 +33,8 @@ public:
 
 	ID3D12Resource** GetAddressOf() { return &m_resource; }
 	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress() { return m_gpuAddress; }
+	D3D12_RESOURCE_STATES GetUsageState() { return m_usageState; }
+	void SetUsageState(D3D12_RESOURCE_STATES v) { m_usageState = v; }
 
 protected:
 	ID3D12Resource* m_resource;

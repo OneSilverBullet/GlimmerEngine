@@ -12,8 +12,9 @@ using namespace Microsoft::WRL;
 */
 class CommandQueue
 {
+	friend class Context;
+	friend class CommandManager;
 public:
-
 	CommandQueue(D3D12_COMMAND_LIST_TYPE type);
 	virtual ~CommandQueue();
 

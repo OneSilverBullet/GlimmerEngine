@@ -242,8 +242,8 @@ void DescriptorHandlesCache::ReleaseCaches() {
 	m_cachedDescriptorsNum = 0;
 }
 
-DynamicDescriptorHeap::DynamicDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE heapType)
-	: m_descriptorHeapType(heapType)
+DynamicDescriptorHeap::DynamicDescriptorHeap(Context& owningContext, D3D12_DESCRIPTOR_HEAP_TYPE heapType)
+	: m_owningContext(owningContext), m_descriptorHeapType(heapType)
 {
 	m_curDescriptorHeap = nullptr;
 	m_currentOffset = 0;
@@ -287,7 +287,8 @@ void DynamicDescriptorHeap::CommittedDescriptorTables(DescriptorHandlesCache& ha
 		RetireCurrentHeap();
 	}
 
-	//TODO:Set Descriptor Heaps to Graphics Context
+	//Set Descriptor Heaps to Graphics Context
+	m_owningContext.SetDescriptorHeap(m_descriptorHeapType, GetHeapPointer());
 
 	handleCache.CommitDescriptorHandleToDescriptorHeap(m_descriptorHeapType, m_descriptorSize,
 		Allocate(needSize), cmdList, SetFunc);
