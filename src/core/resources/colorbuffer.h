@@ -21,6 +21,7 @@ public:
 	const D3D12_CPU_DESCRIPTOR_HANDLE& GetUAV() const { return m_uavHandle[0]; }
 
 	void SetClearColor(Color clearColor) { m_clearColor = clearColor; }
+	Color GetClearColor() { return m_clearColor; }
 
 	void SetMsaaMode(uint32_t numColorSamples, uint32_t numCoverageSamples) {
 		assert(numCoverageSamples >= numColorSamples);

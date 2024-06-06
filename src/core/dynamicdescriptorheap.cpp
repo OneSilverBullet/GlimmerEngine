@@ -306,6 +306,24 @@ void DynamicDescriptorHeap::CommitComputeDescriptorTablesOfRootSignature(ID3D12G
 	}
 }
 
+D3D12_GPU_DESCRIPTOR_HANDLE DynamicDescriptorHeap::UploadDirect(D3D12_CPU_DESCRIPTOR_HANDLE handle)
+{
+	if (!HasFreeSpace(1)) {
+		RetireCurrentHeap();
+	}
+
+	m_owningContext.SetDescriptorHeap(m_descriptorHeapType, GetHeapPointer());
+
+	DescriptorHandle descriptor = m_firstDescriptorHandle + m_currentOffset * m_descriptorSize;
+	m_currentOffset += 1;
+
+	//from handle's descriptor heap copy to current descriptor heap
+	GRAPHICS_CORE::g_device->CopyDescriptorsSimple(1, descriptor, handle, m_descriptorHeapType);
+
+	//return the gpu descriptor handle
+	return descriptor;
+}
+
 DescriptorHandle DynamicDescriptorHeap::Allocate(UINT count) {
 	DescriptorHandle ret = m_firstDescriptorHandle + m_currentOffset * m_descriptorSize;
 	m_currentOffset += count;

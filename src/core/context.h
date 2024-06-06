@@ -162,14 +162,46 @@ public:
 
 	void SetViewport(const D3D12_VIEWPORT& vp);
 	void SetViewport(float x, float y, float w, float h, float minDepth = 0.0f, float maxDepth = 1.0f);
-
 	void SetScissor(const D3D12_RECT rect);
 	void SetScissor(UINT left, UINT right, UINT up, UINT bottom);
+	void SetViewportAndScissor(const D3D12_VIEWPORT& vp, const D3D12_RECT& rect);
 
+	void SetStencilRef(UINT StencilRef);
+	void SetBlendFactor(Color blendFactor);
+	void SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY topology);
 
+	void SetConstantArray(UINT rootIndex, UINT numConstants, const void* pConstants);
+	void SetConstant(UINT rootIndex, UINT offset, DWParam val);
+	void SetConstants(UINT rootIndex, DWParam X);
+	void SetConstants(UINT rootIndex, DWParam X, DWParam Y);
+	void SetConstants(UINT rootIndex, DWParam X, DWParam Y, DWParam Z);
+	void SetConstants(UINT rootIndex, DWParam X, DWParam Y, DWParam Z, DWParam W);
+	void SetConstantBuffer(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS cbv);
 
+	void SetDynamicConstantBufferView(UINT rootIndex, size_t bufferSize, const void* bufferData);
 
+	void SetBufferSRV(UINT rootIndex, const GPUBuffer& srv, UINT64 offset = 0);
+	void SetBufferUAV(UINT rootIndex, const GPUBuffer& uav, UINT64 offset = 0);
+	void SetDescriptorTable(UINT rootIndex, D3D12_GPU_DESCRIPTOR_HANDLE firstHandle);
 
+	void SetDynamicDescriptor(UINT rootIndex, UINT offset, D3D12_CPU_DESCRIPTOR_HANDLE handle);
+	void SetDynamicDescriptors(UINT rootIndex, UINT offset, UINT count, const D3D12_CPU_DESCRIPTOR_HANDLE handles[]);
+	void SetDynamicSampler(UINT rootIndex, UINT offset, D3D12_CPU_DESCRIPTOR_HANDLE handle);
+	void SetDynamicSamplers(UINT rootIndex, UINT offset, const D3D12_CPU_DESCRIPTOR_HANDLE handles[]);
+
+	void SetIndexBuffer(const D3D12_INDEX_BUFFER_VIEW& ibView);
+	void SetVertexBuffer(UINT slot, const D3D12_VERTEX_BUFFER_VIEW& vbView);
+	void SetVertexBuffers(UINT startSlot, UINT count, const D3D12_VERTEX_BUFFER_VIEW vbViews[]);
+	void SetDynamicVB(UINT slot, size_t numVertices, size_t vertexStride, const void* vbData);
+	void SetDynamicIB(size_t indexCount, const uint16_t* IBData);
+	void SetDynamicSRV(UINT rootIndex, size_t bufferSize, const void* bufferData);
+
+	void Draw(UINT vertexCount, UINT vertexStartOffset = 0);
+	void DrawIndexed(UINT indexCount, UINT startIndexLocation = 0, INT baseVertexLocation = 0);
+	void DrawInstanced(UINT vertexCountPerInstance, UINT instanceCount, 
+		UINT startVertexLocation = 0, UINT startInstanceLocation = 0);
+	void DrawIndexedInstanced(UINT indexCountPerInstance, UINT InstanceCount, UINT startIndexLocation,
+		UINT startVertexLocation = 0, UINT startInstanceLocation = 0);
 
 };
 

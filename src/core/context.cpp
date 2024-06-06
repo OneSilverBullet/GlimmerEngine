@@ -272,3 +272,202 @@ void CentralContext::InitializeBuffer(GPUResource& dest, const void* data, size_
 void CentralContext::InitializeBuffer(GPUResource& dest, const UploadBuffer& src, size_t srcOffset, size_t destOffset)
 {
 }
+
+
+/*
+* GraphicsContext: the context for rendering
+*/
+void GraphicsContext::ClearUAV(GPUBuffer& buffer)
+{
+	//finish all the resource transition
+	FlushResourceBarrier();
+
+	//after binding the buffer, we can get the gpu descriptor handle and we can clear the buffer by this handle
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuVisibleHandle = m_dynamicViewDescriptorHeap.UploadDirect(buffer.GetUAV());
+	const UINT clearColor[4] = {};
+	m_graphicsCommandList->ClearUnorderedAccessViewUint(gpuVisibleHandle, buffer.GetUAV(),
+		buffer.GetResource(), clearColor, 0, nullptr);
+}
+
+void GraphicsContext::ClearUAV(ColorBuffer& buffer)
+{
+	FlushResourceBarrier();
+
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuVisibleHandle = m_dynamicViewDescriptorHeap.UploadDirect(buffer.GetUAV());
+	CD3DX12_RECT clearRect(0, 0, (UINT)buffer.GetWidth(), (UINT)buffer.GetHeight());
+
+	const float* clearColor = buffer.GetClearColor().GetPtr();
+	m_graphicsCommandList->ClearUnorderedAccessViewFloat(gpuVisibleHandle, buffer.GetUAV(),
+		buffer.GetResource(), clearColor, 1, &clearRect);
+
+}
+
+void GraphicsContext::ClearColor(ColorBuffer& buffer, D3D12_RECT* rect)
+{
+	FlushResourceBarrier();
+	m_graphicsCommandList->ClearRenderTargetView(buffer.GetRTV(), buffer.GetClearColor().GetPtr(), (rect == nullptr) ? 0 : 1, rect);
+}
+
+void GraphicsContext::ClearColor(ColorBuffer& target, float colour[4], D3D12_RECT* rect)
+{
+	FlushResourceBarrier();
+	m_graphicsCommandList->ClearRenderTargetView(target.GetRTV(), colour, (rect == nullptr) ? 1 : 0, rect);
+}
+
+void GraphicsContext::ClearDepth(DepthBuffer& target)
+{
+	FlushResourceBarrier();
+	//m_graphicsCommandList->ClearDepthStencilView(target.GetDSV(), D3D12_CLEAR_FLAG_DEPTH, target)
+}
+
+void GraphicsContext::ClearStencil(DepthBuffer& target)
+{
+}
+
+void GraphicsContext::ClearDepthAndStencil(DepthBuffer& target)
+{
+}
+
+void GraphicsContext::SetRootSignature(const RootSignature& root)
+{
+}
+
+void GraphicsContext::SetRenderTargets(UINT numRTVs, const D3D12_CPU_DESCRIPTOR_HANDLE RTVs[])
+{
+}
+
+void GraphicsContext::SetRenderTargets(UINT numRTVs, const D3D12_CPU_DESCRIPTOR_HANDLE RTVs[], D3D12_CPU_DESCRIPTOR_HANDLE DSV)
+{
+}
+
+void GraphicsContext::SetViewport(const D3D12_VIEWPORT& vp)
+{
+}
+
+void GraphicsContext::SetViewport(float x, float y, float w, float h, float minDepth, float maxDepth)
+{
+}
+
+void GraphicsContext::SetScissor(const D3D12_RECT rect)
+{
+}
+
+void GraphicsContext::SetScissor(UINT left, UINT right, UINT up, UINT bottom)
+{
+}
+
+void GraphicsContext::SetViewportAndScissor(const D3D12_VIEWPORT& vp, const D3D12_RECT& rect)
+{
+}
+
+void GraphicsContext::SetStencilRef(UINT StencilRef)
+{
+}
+
+void GraphicsContext::SetBlendFactor(Color blendFactor)
+{
+}
+
+void GraphicsContext::SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY topology)
+{
+}
+
+void GraphicsContext::SetConstantArray(UINT rootIndex, UINT numConstants, const void* pConstants)
+{
+}
+
+void GraphicsContext::SetConstant(UINT rootIndex, UINT offset, DWParam val)
+{
+}
+
+void GraphicsContext::SetConstants(UINT rootIndex, DWParam X)
+{
+}
+
+void GraphicsContext::SetConstants(UINT rootIndex, DWParam X, DWParam Y)
+{
+}
+
+void GraphicsContext::SetConstants(UINT rootIndex, DWParam X, DWParam Y, DWParam Z)
+{
+}
+
+void GraphicsContext::SetConstants(UINT rootIndex, DWParam X, DWParam Y, DWParam Z, DWParam W)
+{
+}
+
+void GraphicsContext::SetConstantBuffer(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS cbv)
+{
+}
+
+void GraphicsContext::SetDynamicConstantBufferView(UINT rootIndex, size_t bufferSize, const void* bufferData)
+{
+}
+
+void GraphicsContext::SetBufferSRV(UINT rootIndex, const GPUBuffer& srv, UINT64 offset)
+{
+}
+
+void GraphicsContext::SetBufferUAV(UINT rootIndex, const GPUBuffer& uav, UINT64 offset)
+{
+}
+
+void GraphicsContext::SetDescriptorTable(UINT rootIndex, D3D12_GPU_DESCRIPTOR_HANDLE firstHandle)
+{
+}
+
+void GraphicsContext::SetDynamicDescriptor(UINT rootIndex, UINT offset, D3D12_CPU_DESCRIPTOR_HANDLE handle)
+{
+}
+
+void GraphicsContext::SetDynamicDescriptors(UINT rootIndex, UINT offset, UINT count, const D3D12_CPU_DESCRIPTOR_HANDLE handles[])
+{
+}
+
+void GraphicsContext::SetDynamicSampler(UINT rootIndex, UINT offset, D3D12_CPU_DESCRIPTOR_HANDLE handle)
+{
+}
+
+void GraphicsContext::SetDynamicSamplers(UINT rootIndex, UINT offset, const D3D12_CPU_DESCRIPTOR_HANDLE handles[])
+{
+}
+
+void GraphicsContext::SetIndexBuffer(const D3D12_INDEX_BUFFER_VIEW& ibView)
+{
+}
+
+void GraphicsContext::SetVertexBuffer(UINT slot, const D3D12_VERTEX_BUFFER_VIEW& vbView)
+{
+}
+
+void GraphicsContext::SetVertexBuffers(UINT startSlot, UINT count, const D3D12_VERTEX_BUFFER_VIEW vbViews[])
+{
+}
+
+void GraphicsContext::SetDynamicVB(UINT slot, size_t numVertices, size_t vertexStride, const void* vbData)
+{
+}
+
+void GraphicsContext::SetDynamicIB(size_t indexCount, const uint16_t* IBData)
+{
+}
+
+void GraphicsContext::SetDynamicSRV(UINT rootIndex, size_t bufferSize, const void* bufferData)
+{
+}
+
+void GraphicsContext::Draw(UINT vertexCount, UINT vertexStartOffset)
+{
+}
+
+void GraphicsContext::DrawIndexed(UINT indexCount, UINT startIndexLocation, INT baseVertexLocation)
+{
+}
+
+void GraphicsContext::DrawInstanced(UINT vertexCountPerInstance, UINT instanceCount, UINT startVertexLocation, UINT startInstanceLocation)
+{
+}
+
+void GraphicsContext::DrawIndexedInstanced(UINT indexCountPerInstance, UINT InstanceCount, UINT startIndexLocation, UINT startVertexLocation, UINT startInstanceLocation)
+{
+}

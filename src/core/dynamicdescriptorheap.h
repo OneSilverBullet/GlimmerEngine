@@ -91,6 +91,9 @@ public:
 	void CommitGraphicsDescriptorTablesOfRootSignature(ID3D12GraphicsCommandList* graphicsList);
 	void CommitComputeDescriptorTablesOfRootSignature(ID3D12GraphicsCommandList* computeList);
 
+	//bypass the cache and upload directly to the shader-visible heap
+	D3D12_GPU_DESCRIPTOR_HANDLE UploadDirect(D3D12_CPU_DESCRIPTOR_HANDLE handles);
+
 
 private:
 	void CommittedDescriptorTables(DescriptorHandlesCache& handleCache, ID3D12GraphicsCommandList* cmdList,
