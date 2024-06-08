@@ -187,7 +187,7 @@ public:
 	void SetDynamicDescriptor(UINT rootIndex, UINT offset, D3D12_CPU_DESCRIPTOR_HANDLE handle);
 	void SetDynamicDescriptors(UINT rootIndex, UINT offset, UINT count, const D3D12_CPU_DESCRIPTOR_HANDLE handles[]);
 	void SetDynamicSampler(UINT rootIndex, UINT offset, D3D12_CPU_DESCRIPTOR_HANDLE handle);
-	void SetDynamicSamplers(UINT rootIndex, UINT offset, const D3D12_CPU_DESCRIPTOR_HANDLE handles[]);
+	void SetDynamicSamplers(UINT rootIndex, UINT offset, UINT count, const D3D12_CPU_DESCRIPTOR_HANDLE handles[]);
 
 	void SetIndexBuffer(const D3D12_INDEX_BUFFER_VIEW& ibView);
 	void SetVertexBuffer(UINT slot, const D3D12_VERTEX_BUFFER_VIEW& vbView);

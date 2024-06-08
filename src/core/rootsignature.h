@@ -145,7 +145,7 @@ public:
 		return m_parameters.get()[index];
 	}
 
-	ID3D12RootSignature* GetSignature() { return m_rootSignature; }
+	ID3D12RootSignature* GetSignature() const { return m_rootSignature; }
 
 	//compile and create root signature object
 	void Finalize(const std::wstring& name, D3D12_ROOT_SIGNATURE_FLAGS Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE);

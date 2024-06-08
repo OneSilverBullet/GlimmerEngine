@@ -1,6 +1,9 @@
 #pragma once
 #include "context.h"
 #include "graphicscore.h"
+#include "rootsignature.h"
+#include "mathematics/bitoperation.h"
+
 /*
 * ContextManager
 */
@@ -317,157 +320,265 @@ void GraphicsContext::ClearColor(ColorBuffer& target, float colour[4], D3D12_REC
 void GraphicsContext::ClearDepth(DepthBuffer& target)
 {
 	FlushResourceBarrier();
-	//m_graphicsCommandList->ClearDepthStencilView(target.GetDSV(), D3D12_CLEAR_FLAG_DEPTH, target)
+	m_graphicsCommandList->ClearDepthStencilView(target.GetDSV(), D3D12_CLEAR_FLAG_DEPTH,
+		target.GetClearValue(), target.GetStencilValue(), 0, nullptr);
 }
 
 void GraphicsContext::ClearStencil(DepthBuffer& target)
 {
+	FlushResourceBarrier();
+	m_graphicsCommandList->ClearDepthStencilView(target.GetDSV(), D3D12_CLEAR_FLAG_STENCIL,
+		target.GetClearValue(), target.GetStencilValue(), 0, nullptr);
 }
 
 void GraphicsContext::ClearDepthAndStencil(DepthBuffer& target)
 {
+	FlushResourceBarrier();
+	m_graphicsCommandList->ClearDepthStencilView(target.GetDSV(), D3D12_CLEAR_FLAG_STENCIL | D3D12_CLEAR_FLAG_DEPTH,
+		target.GetClearValue(), target.GetStencilValue(), 0, nullptr);
 }
 
-void GraphicsContext::SetRootSignature(const RootSignature& root)
+void GraphicsContext::SetRootSignature(const RootSignature& rootSig)
 {
+	if (rootSig.GetSignature() == m_graphicsSignature)
+		return;
+
+	//bind the root signature 
+	m_graphicsSignature = rootSig.GetSignature();
+	m_graphicsCommandList->SetGraphicsRootSignature(m_graphicsSignature);
+
+	//parse the root signature
+	m_dynamicViewDescriptorHeap.ParseGraphicsRootSignature(rootSig);
+	m_dynamicSamplerDescriptorHeap.ParseGraphicsRootSignature(rootSig);
 }
 
 void GraphicsContext::SetRenderTargets(UINT numRTVs, const D3D12_CPU_DESCRIPTOR_HANDLE RTVs[])
 {
+	m_graphicsCommandList->OMSetRenderTargets(numRTVs, RTVs, FALSE, nullptr);
 }
 
 void GraphicsContext::SetRenderTargets(UINT numRTVs, const D3D12_CPU_DESCRIPTOR_HANDLE RTVs[], D3D12_CPU_DESCRIPTOR_HANDLE DSV)
 {
+	m_graphicsCommandList->OMSetRenderTargets(numRTVs, RTVs, FALSE, &DSV);
 }
 
 void GraphicsContext::SetViewport(const D3D12_VIEWPORT& vp)
 {
+	m_graphicsCommandList->RSSetViewports(1, &vp);
 }
 
 void GraphicsContext::SetViewport(float x, float y, float w, float h, float minDepth, float maxDepth)
 {
+	D3D12_VIEWPORT vp;
+	vp.Width = w;
+	vp.Height = h;
+	vp.MinDepth = minDepth;
+	vp.MaxDepth = maxDepth;
+	vp.TopLeftX = x;
+	vp.TopLeftY = y;
+	m_graphicsCommandList->RSSetViewports(1, &vp);
+
 }
 
 void GraphicsContext::SetScissor(const D3D12_RECT rect)
 {
+	m_graphicsCommandList->RSSetScissorRects(1, &rect);
 }
 
 void GraphicsContext::SetScissor(UINT left, UINT right, UINT up, UINT bottom)
 {
+	D3D12_RECT rect;
+	rect.left = left;
+	rect.right = right;
+	rect.top = up;
+	rect.bottom = bottom;
+	m_graphicsCommandList->RSSetScissorRects(1, &rect);
 }
 
 void GraphicsContext::SetViewportAndScissor(const D3D12_VIEWPORT& vp, const D3D12_RECT& rect)
 {
+	SetViewport(vp);
+	SetScissor(rect);
 }
 
 void GraphicsContext::SetStencilRef(UINT StencilRef)
 {
+	m_graphicsCommandList->OMSetStencilRef(StencilRef);
 }
 
 void GraphicsContext::SetBlendFactor(Color blendFactor)
 {
+	m_graphicsCommandList->OMSetBlendFactor(blendFactor.GetPtr());
 }
 
 void GraphicsContext::SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY topology)
 {
+	m_graphicsCommandList->IASetPrimitiveTopology(topology);
 }
 
 void GraphicsContext::SetConstantArray(UINT rootIndex, UINT numConstants, const void* pConstants)
 {
+	m_graphicsCommandList->SetGraphicsRoot32BitConstants(rootIndex, numConstants, pConstants, 0);
 }
 
 void GraphicsContext::SetConstant(UINT rootIndex, UINT offset, DWParam val)
 {
+	m_graphicsCommandList->SetGraphicsRoot32BitConstant(rootIndex, val.Uint, offset);
 }
 
 void GraphicsContext::SetConstants(UINT rootIndex, DWParam X)
 {
+	m_graphicsCommandList->SetGraphicsRoot32BitConstant(rootIndex, X.Uint, 0);
 }
 
 void GraphicsContext::SetConstants(UINT rootIndex, DWParam X, DWParam Y)
 {
+	m_graphicsCommandList->SetGraphicsRoot32BitConstant(rootIndex, X.Uint, 0);
+	m_graphicsCommandList->SetGraphicsRoot32BitConstant(rootIndex, Y.Uint, 1);
 }
 
 void GraphicsContext::SetConstants(UINT rootIndex, DWParam X, DWParam Y, DWParam Z)
 {
+	m_graphicsCommandList->SetGraphicsRoot32BitConstant(rootIndex, X.Uint, 0);
+	m_graphicsCommandList->SetGraphicsRoot32BitConstant(rootIndex, Y.Uint, 1);
+	m_graphicsCommandList->SetGraphicsRoot32BitConstant(rootIndex, Z.Uint, 2);
 }
 
 void GraphicsContext::SetConstants(UINT rootIndex, DWParam X, DWParam Y, DWParam Z, DWParam W)
 {
+	m_graphicsCommandList->SetGraphicsRoot32BitConstant(rootIndex, X.Uint, 0);
+	m_graphicsCommandList->SetGraphicsRoot32BitConstant(rootIndex, Y.Uint, 1);
+	m_graphicsCommandList->SetGraphicsRoot32BitConstant(rootIndex, Z.Uint, 2);
+	m_graphicsCommandList->SetGraphicsRoot32BitConstant(rootIndex, W.Uint, 3);
 }
 
 void GraphicsContext::SetConstantBuffer(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS cbv)
 {
+	m_graphicsCommandList->SetGraphicsRootConstantBufferView(rootIndex, cbv);
 }
 
-void GraphicsContext::SetDynamicConstantBufferView(UINT rootIndex, size_t bufferSize, const void* bufferData)
+void GraphicsContext::SetDynamicConstantBufferView(UINT rootIndex, size_t bufferSize, 
+	const void* bufferData)
 {
+	//allocate the constant buffer
+	DynamicAlloc cb = m_cpuLinearAllocator.Allocate(bufferSize);
+	memcpy(cb.m_cpuVirtualAddress, bufferData, bufferSize);
+	//binding the constant buffer view 
+	m_graphicsCommandList->SetGraphicsRootConstantBufferView(rootIndex, cb.m_gpuVirtualAddress);
 }
 
 void GraphicsContext::SetBufferSRV(UINT rootIndex, const GPUBuffer& srv, UINT64 offset)
 {
+	m_graphicsCommandList->SetGraphicsRootShaderResourceView(rootIndex, srv.RootConstantBufferView() + offset);
 }
 
 void GraphicsContext::SetBufferUAV(UINT rootIndex, const GPUBuffer& uav, UINT64 offset)
 {
+	m_graphicsCommandList->SetGraphicsRootShaderResourceView(rootIndex, uav.RootConstantBufferView() + offset);
 }
 
 void GraphicsContext::SetDescriptorTable(UINT rootIndex, D3D12_GPU_DESCRIPTOR_HANDLE firstHandle)
 {
+	m_graphicsCommandList->SetGraphicsRootDescriptorTable(rootIndex, firstHandle);
 }
 
 void GraphicsContext::SetDynamicDescriptor(UINT rootIndex, UINT offset, D3D12_CPU_DESCRIPTOR_HANDLE handle)
 {
+	SetDynamicDescriptors(rootIndex, offset, 1, &handle);
 }
 
 void GraphicsContext::SetDynamicDescriptors(UINT rootIndex, UINT offset, UINT count, const D3D12_CPU_DESCRIPTOR_HANDLE handles[])
 {
+	m_dynamicViewDescriptorHeap.SetGraphicsDescriptorHandles(rootIndex, offset, count, handles);
 }
 
 void GraphicsContext::SetDynamicSampler(UINT rootIndex, UINT offset, D3D12_CPU_DESCRIPTOR_HANDLE handle)
 {
+	SetDynamicSamplers(rootIndex, offset, 1, &handle);
 }
 
-void GraphicsContext::SetDynamicSamplers(UINT rootIndex, UINT offset, const D3D12_CPU_DESCRIPTOR_HANDLE handles[])
+void GraphicsContext::SetDynamicSamplers(UINT rootIndex, UINT offset, UINT count, const D3D12_CPU_DESCRIPTOR_HANDLE handles[])
 {
+	m_dynamicSamplerDescriptorHeap.SetGraphicsDescriptorHandles(rootIndex, offset, count, handles);
 }
 
 void GraphicsContext::SetIndexBuffer(const D3D12_INDEX_BUFFER_VIEW& ibView)
 {
+	m_graphicsCommandList->IASetIndexBuffer(&ibView);
 }
 
 void GraphicsContext::SetVertexBuffer(UINT slot, const D3D12_VERTEX_BUFFER_VIEW& vbView)
 {
+	SetVertexBuffers(slot, 1, &vbView);
 }
 
 void GraphicsContext::SetVertexBuffers(UINT startSlot, UINT count, const D3D12_VERTEX_BUFFER_VIEW vbViews[])
 {
+	m_graphicsCommandList->IASetVertexBuffers(startSlot, count, vbViews);
 }
 
 void GraphicsContext::SetDynamicVB(UINT slot, size_t numVertices, size_t vertexStride, const void* vbData)
 {
+	//set the dynamic vertex buffer
+	size_t bufferSize = Mathematics::AlignUp(numVertices * vertexStride, 16);
+	DynamicAlloc vertextBufferAllocated = m_cpuLinearAllocator.Allocate(bufferSize);
+
+	memcpy(vertextBufferAllocated.m_cpuVirtualAddress, vbData, bufferSize);
+
+	D3D12_VERTEX_BUFFER_VIEW vbView;
+	vbView.BufferLocation = vertextBufferAllocated.m_gpuVirtualAddress;
+	vbView.SizeInBytes = (UINT)bufferSize;
+	vbView.StrideInBytes = (UINT)vertexStride;
+
+	m_graphicsCommandList->IASetVertexBuffers(slot, 1, &vbView);
 }
 
 void GraphicsContext::SetDynamicIB(size_t indexCount, const uint16_t* IBData)
 {
+	size_t bufferSize = Mathematics::AlignUp(indexCount * sizeof(uint16_t), 16);
+	DynamicAlloc ib = m_cpuLinearAllocator.Allocate(bufferSize);
+
+	memcpy(ib.m_cpuVirtualAddress, IBData, bufferSize >> 4);
+
+	D3D12_INDEX_BUFFER_VIEW IBView;
+	IBView.BufferLocation = ib.m_gpuVirtualAddress;
+	IBView.SizeInBytes = (UINT)(indexCount * sizeof(uint16_t));
+	IBView.Format = DXGI_FORMAT_R16_UINT;
+
+	m_graphicsCommandList->IASetIndexBuffer(&IBView);
 }
 
 void GraphicsContext::SetDynamicSRV(UINT rootIndex, size_t bufferSize, const void* bufferData)
 {
+	DynamicAlloc cb = m_cpuLinearAllocator.Allocate(bufferSize);
+	memcpy(cb.m_cpuVirtualAddress, bufferData, Mathematics::AlignUp(bufferSize, 16) >> 4);
+	m_graphicsCommandList->SetGraphicsRootShaderResourceView(rootIndex, cb.m_gpuVirtualAddress);
 }
 
 void GraphicsContext::Draw(UINT vertexCount, UINT vertexStartOffset)
 {
+	DrawInstanced(vertexCount, 1, vertexStartOffset, 0);
 }
 
 void GraphicsContext::DrawIndexed(UINT indexCount, UINT startIndexLocation, INT baseVertexLocation)
 {
+	DrawIndexedInstanced(indexCount, 1, startIndexLocation, baseVertexLocation, 0);
 }
 
 void GraphicsContext::DrawInstanced(UINT vertexCountPerInstance, UINT instanceCount, UINT startVertexLocation, UINT startInstanceLocation)
 {
+	FlushResourceBarrier();
+	m_dynamicViewDescriptorHeap.CommitGraphicsDescriptorTablesOfRootSignature(m_graphicsCommandList);
+	m_dynamicSamplerDescriptorHeap.CommitGraphicsDescriptorTablesOfRootSignature(m_graphicsCommandList);
+	m_graphicsCommandList->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startInstanceLocation);
 }
 
-void GraphicsContext::DrawIndexedInstanced(UINT indexCountPerInstance, UINT InstanceCount, UINT startIndexLocation, UINT startVertexLocation, UINT startInstanceLocation)
+void GraphicsContext::DrawIndexedInstanced(UINT indexCountPerInstance, UINT InstanceCount, 
+	UINT startIndexLocation, UINT startVertexLocation, UINT startInstanceLocation)
 {
+	FlushResourceBarrier();
+	m_dynamicViewDescriptorHeap.CommitGraphicsDescriptorTablesOfRootSignature(m_graphicsCommandList);
+	m_dynamicSamplerDescriptorHeap.CommitGraphicsDescriptorTablesOfRootSignature(m_graphicsCommandList);
+	m_graphicsCommandList->DrawIndexedInstanced(indexCountPerInstance, InstanceCount,
+		startIndexLocation, startVertexLocation, startInstanceLocation);
 }
