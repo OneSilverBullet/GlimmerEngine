@@ -8,7 +8,8 @@
 #include <wrl/client.h>
 #include "descriptortypes.h"
 #include "rootsignature.h"
-#include "context.h"
+
+class Context;
 
 class DynamicDescriptorsManager
 {

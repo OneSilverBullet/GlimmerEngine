@@ -4,6 +4,7 @@
 #include "rootsignature.h"
 #include "mathematics/bitoperation.h"
 
+
 /*
 * ContextManager
 */
@@ -104,10 +105,12 @@ uint64_t Context::Flush(bool waitForCompletion) {
 		m_graphicsCommandList->SetPipelineState(m_pipelineState);
 
 	BindDescriptorHeaps();
+	return fenceValue;
 }
 
 uint64_t Context::Finish(bool waitForCompletion) {
 
+	return 0;
 }
 
 void Context::CopyBuffer(GPUResource& dest, GPUResource& src) {

@@ -1,3 +1,4 @@
+#pragma once
 #include "headers.h"
 #include <map>
 #include <wrl/client.h>

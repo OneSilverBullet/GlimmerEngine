@@ -2,6 +2,8 @@
 #include <d3d12.h>
 #include <vector>
 #include <memory>
+#include <queue>
+#include <mutex>
 #include "commandmanager.h"
 #include "dynamicdescriptorheap.h"
 #include "commandmanager.h"
@@ -14,7 +16,11 @@
 #include "types/commontypes.h"
 #include "pso.h"
 
+
 class Context;
+class GraphicsContext;
+class ComputeContext;
+
 
 class ContextManager
 {

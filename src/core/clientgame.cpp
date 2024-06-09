@@ -7,6 +7,7 @@
 #include "pso.h"
 #include "graphicscore.h"
 #include "d3dx12.h"
+#include "context.h"
 #include <DirectXMath.h>
 #include <fstream>
 #include <iostream>
