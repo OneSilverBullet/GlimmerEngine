@@ -27,6 +27,8 @@ class ContextManager
 public:
 	ContextManager(){}
 	Context* AllocateContext(D3D12_COMMAND_LIST_TYPE type);
+	GraphicsContext& GetAvailableGraphicsContext();
+
 	void FreeContext(Context*);
 	void DestroyAllContexts();
 
@@ -153,6 +155,7 @@ public:
 	void ClearUAV(ColorBuffer& buffer);
 	void ClearColor(ColorBuffer& target, D3D12_RECT* rect = nullptr);
 	void ClearColor(ColorBuffer& target, float colour[4], D3D12_RECT* rect = nullptr);
+	void ClearColor(D3D12_CPU_DESCRIPTOR_HANDLE target, float colour[4]);
 	void ClearDepth(DepthBuffer& target);
 	void ClearStencil(DepthBuffer& target);
 	void ClearDepthAndStencil(DepthBuffer& target);

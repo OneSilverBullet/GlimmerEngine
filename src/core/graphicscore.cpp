@@ -7,6 +7,7 @@
 namespace GRAPHICS_CORE
 {
 	CommandManager g_commandManager;
+	ContextManager g_contextManager;
 	ID3D12Device* g_device = nullptr;
 	bool g_tearingSupport;
 

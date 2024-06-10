@@ -29,6 +29,11 @@ Context* ContextManager::AllocateContext(D3D12_COMMAND_LIST_TYPE type)
 	return ret;
 }
 
+GraphicsContext& ContextManager::GetAvailableGraphicsContext() {
+	Context* newContext = AllocateContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	return newContext->GetGraphicsContext();
+}
+
 void ContextManager::FreeContext(Context* usedContext)
 {
 	std::lock_guard<std::mutex> lockGuard(sm_contextAllocatorMutex);
@@ -110,7 +115,26 @@ uint64_t Context::Flush(bool waitForCompletion) {
 
 uint64_t Context::Finish(bool waitForCompletion) {
 
-	return 0;
+	FlushResourceBarrier();
+
+	assert(m_commandAllocator != nullptr);
+
+	CommandQueue& queue = GRAPHICS_CORE::g_commandManager.GetDirectQueue();
+
+	uint64_t fenceValue = queue.ExecuteCommandList(m_graphicsCommandList);
+	queue.DiscardCommandAllocator(fenceValue, m_commandAllocator);
+	m_commandAllocator = nullptr;
+
+	m_cpuLinearAllocator.ClearUpPages(fenceValue);
+	m_dynamicViewDescriptorHeap.CleanupUsedHeap(fenceValue);
+	m_dynamicSamplerDescriptorHeap.CleanupUsedHeap(fenceValue);
+
+	if (waitForCompletion)
+		GRAPHICS_CORE::g_commandManager.WaitForFence(fenceValue);
+
+	GRAPHICS_CORE::g_contextManager.FreeContext(this);
+
+	return fenceValue;
 }
 
 void Context::CopyBuffer(GPUResource& dest, GPUResource& src) {
@@ -312,6 +336,11 @@ void GraphicsContext::ClearColor(ColorBuffer& buffer, D3D12_RECT* rect)
 {
 	FlushResourceBarrier();
 	m_graphicsCommandList->ClearRenderTargetView(buffer.GetRTV(), buffer.GetClearColor().GetPtr(), (rect == nullptr) ? 0 : 1, rect);
+}
+
+void GraphicsContext::ClearColor(D3D12_CPU_DESCRIPTOR_HANDLE target, float colour[4]) {
+	FlushResourceBarrier();
+	m_graphicsCommandList->ClearRenderTargetView(target, colour, 0, nullptr);
 }
 
 void GraphicsContext::ClearColor(ColorBuffer& target, float colour[4], D3D12_RECT* rect)

@@ -4,7 +4,7 @@
 #include "clientgame.h"
 #include <dxgidebug.h>
 #include <shlwapi.h>
-
+#include <iostream>
 
 //Check the object leak
 void ReportLiveObjects() {
@@ -28,6 +28,19 @@ int SetWorkDirectory() {
 //The Main Entry Point
 int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	PWSTR lpCmdLine, int nCmdShow) {
+
+	//create console in windows system
+	AllocConsole();
+
+	//redirect the std iostream into current console
+	FILE* stream;
+	freopen_s(&stream, "CONOUT$", "w", stdout);
+	freopen_s(&stream, "CONOUT$", "w", stderr);
+	freopen_s(&stream, "CONIN$", "r", stdin);
+
+	std::cout << "Glimmer Engine Console" << std::endl;
+
+
 	SetWorkDirectory();
 	Application::Initialize(hInstance);
 	std::shared_ptr<ClientGame> game = std::make_shared<ClientGame>(L"Glimmer", 1280, 720);

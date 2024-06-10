@@ -79,13 +79,17 @@ bool ClientGame::LoadContent() {
 
     CommandQueue& commandQueue = GRAPHICS_CORE::g_commandManager.GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
+
     //load content, the first time to initialize the command list
-    ID3D12CommandAllocator* commandAllocator = nullptr;
-    GRAPHICS_CORE::g_commandManager.CreateNewCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT, &m_commandList, &commandAllocator);
+    //ID3D12CommandAllocator* commandAllocator = nullptr;
+    //GRAPHICS_CORE::g_commandManager.CreateNewCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT, &m_commandList, &commandAllocator);
 
     //Upload vertex buffer data
+    GraphicsContext& initContext = GRAPHICS_CORE::g_contextManager.GetAvailableGraphicsContext();
+    ID3D12GraphicsCommandList* initCommandList = (ID3D12GraphicsCommandList*)initContext.GetCommandList();
+
     ComPtr<ID3D12Resource> intermediateVertexBuffer;
-    UpdateBufferResource(m_commandList,
+    UpdateBufferResource(initCommandList,
         &m_vertexBuffer, &intermediateVertexBuffer,
         _countof(g_Vertices), sizeof(VertexPosColor), g_Vertices);
     m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
@@ -94,12 +98,14 @@ bool ClientGame::LoadContent() {
 
     //Upload index buffer data
     ComPtr<ID3D12Resource> intermediateIndexBuffer;
-    UpdateBufferResource(m_commandList,
+    UpdateBufferResource(initCommandList,
         &m_indexBuffer, &intermediateIndexBuffer,
         		_countof(g_Indicies), sizeof(WORD), g_Indicies);
     m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
     m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
     m_indexBufferView.SizeInBytes = sizeof(g_Indicies);
+    
+    initContext.Finish();
 
     //Load Shader
     ComPtr<ID3DBlob> vertexShaderBlob;
@@ -166,29 +172,42 @@ bool ClientGame::LoadContent() {
     m_pso->Finalize();
 
 
-    auto fenceValue = commandQueue.ExecuteCommandList(m_commandList);
-    commandQueue.WaitForFence(fenceValue);
+
+
+    //auto fenceValue = commandQueue.ExecuteCommandList(m_commandList);
+    //commandQueue.WaitForFence(fenceValue);
     m_contentLoaded = true;
     ResizeDepthBuffer(GetClientWidth(), GetClientHeight());
 
     //reload the allocator
-    GRAPHICS_CORE::g_commandManager.ReallocateCommandAllocator(fenceValue, commandAllocator);
+    //GRAPHICS_CORE::g_commandManager.ReallocateCommandAllocator(fenceValue, commandAllocator);
 	return true;
 }
 
 void ClientGame::UnloadContent() {
+    /*
     if (m_commandList != nullptr) {
         m_commandList->Release();
         m_commandList = nullptr;
-    }
+    }*/
 }
 
 void ClientGame::OnRender(RenderEventArgs& e) {
     super::OnRender(e);
 
+    GraphicsContext& graphicsContext = GRAPHICS_CORE::g_contextManager.GetAvailableGraphicsContext();
+
+    ID3D12GraphicsCommandList* curCommandList = (ID3D12GraphicsCommandList*)graphicsContext.GetCommandList();
+
+    //std::cout << "OnRender in Client Game" << std::endl;
+
+
     CommandQueue& commandQueue = GRAPHICS_CORE::g_commandManager.GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-    ID3D12CommandAllocator* commandAllocator = nullptr;
-    GRAPHICS_CORE::g_commandManager.ResetCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT, &m_commandList, &commandAllocator);
+    
+
+    
+    //ID3D12CommandAllocator* commandAllocator = nullptr;
+    //GRAPHICS_CORE::g_commandManager.ResetCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT, &curCommandList, &commandAllocator);
 
     
     UINT currentBackBufferIndex = m_window->GetCurrentBackBufferIndex();
@@ -200,35 +219,51 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 
     // Clear the render target.
     {
-        TransitionResource(m_commandList, currentBackbuffer,
+        TransitionResource(curCommandList, currentBackbuffer,
 			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         FLOAT clearColor[4] = { 0.4f, 0.6f, 0.9f, 1.0f };
 
-        ClearRTV(m_commandList, rtv, clearColor);
-        ClearDepth(m_commandList, dsv);
+        ClearRTV(curCommandList, rtv, clearColor);
+        ClearDepth(curCommandList, dsv);
     }
 
+    {
+        graphicsContext.SetPiplelineObject(*m_pso);
+        graphicsContext.SetRootSignature(*m_rootSignature);
+        graphicsContext.SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        graphicsContext.SetVertexBuffer(0, m_vertexBufferView);
+        graphicsContext.SetIndexBuffer(m_indexBufferView);
+        graphicsContext.SetViewportAndScissor(m_viewport, m_scissorRect);
+        
+
+        graphicsContext.SetRenderTargets(1, &rtv, dsv);
+    }
+
+
+    
     //Assemble the rendering components
     {
-        m_commandList->SetPipelineState(m_pso->GetPSO());
-        m_commandList->SetGraphicsRootSignature(m_rootSignature->GetSignature());
+        /*
+        curCommandList->SetPipelineState(m_pso->GetPSO());
+        curCommandList->SetGraphicsRootSignature(m_rootSignature->GetSignature());
 
         //Assemble Geometry
-        m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-        m_commandList->IASetIndexBuffer(&m_indexBufferView);
+        curCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        curCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+        curCommandList->IASetIndexBuffer(&m_indexBufferView);
 
         //Setup Rasterizer State
-        m_commandList->RSSetViewports(1, &m_viewport);
-        m_commandList->RSSetScissorRects(1, &m_scissorRect);
+        curCommandList->RSSetViewports(1, &m_viewport);
+        curCommandList->RSSetScissorRects(1, &m_scissorRect);
         
         //Bind Render target
-        m_commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+        curCommandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+        */
 
         //Update Constant buffer
         XMMATRIX mvpMatrix = XMMatrixMultiply(XMMatrixMultiply(m_worldMatrix, m_viewMatrix), m_projMatrix);
-        m_commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
+        curCommandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
 
         XMFLOAT4X4 mvp;
         XMStoreFloat4x4(&mvp, mvpMatrix);
@@ -240,21 +275,34 @@ void ClientGame::OnRender(RenderEventArgs& e) {
             << std::to_string(mvp._41) << " " << std::to_string(mvp._42) << " " << std::to_string(mvp._43) << " " << std::to_string(mvp._44) << std::endl;
 
 
-        m_commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
+        //curCommandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
+
+        graphicsContext.DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
+        
     }
+
 
     // Present
     {
-        TransitionResource(m_commandList, currentBackbuffer,
+        TransitionResource(curCommandList, currentBackbuffer,
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
-        uint64_t fenceValue = commandQueue.ExecuteCommandList(m_commandList);
+        //std::cout << fence << std::endl;
+
+        uint64_t fenceValue = graphicsContext.Finish(true);
+        m_window->Present();
+        std::cout << "current frame:" << fenceValue << std::endl;
+        /*
+        uint64_t fenceValue = commandQueue.ExecuteCommandList(curCommandList);
         currentBackBufferIndex = m_window->Present();
         commandQueue.WaitForFence(fenceValue);
+        */
 
         //reallocate allocator
-        GRAPHICS_CORE::g_commandManager.ReallocateCommandAllocator(fenceValue, commandAllocator);
+        //GRAPHICS_CORE::g_commandManager.ReallocateCommandAllocator(fenceValue, commandAllocator);
     }
+    
+
 }
 
 void ClientGame::OnUpdate(UpdateEventArgs& e) {

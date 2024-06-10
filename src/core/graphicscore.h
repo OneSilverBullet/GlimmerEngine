@@ -1,13 +1,14 @@
 #pragma once
 
 #include "commandmanager.h"
+#include "context.h"
 #include "descriptorheapallocator.h"
 
 
 namespace GRAPHICS_CORE
 {
 	extern CommandManager g_commandManager;
-
+	extern ContextManager g_contextManager;
 	extern ID3D12Device* g_device;
 	extern bool g_tearingSupport;
 

@@ -16,8 +16,6 @@ Window::Window(HWND windowInstance, std::wstring windowName,
 
 	m_isTearingSupported = app.IsTearingSupported();
 	m_dxgiSwapChain = CreateSwapChain();
-	//m_rtvDescriptorHeapHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, BufferCount);
-	//m_RTVDescriptorSize = GRAPHICS_CORE::g_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	UpdateRenderTargetViews();
 }

@@ -66,7 +66,8 @@ private:
 
 	//the command is temporary
 	//todo: encapsulate a graphics context
-	ID3D12GraphicsCommandList* m_commandList = nullptr;
+	//ID3D12GraphicsCommandList* m_commandList = nullptr;
+
 
 	D3D12_VIEWPORT m_viewport;
 	D3D12_RECT m_scissorRect;
