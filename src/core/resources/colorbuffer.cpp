@@ -1,5 +1,6 @@
 #include "colorbuffer.h"
 #include "graphicscore.h"
+#include <iostream>
 
 ColorBuffer::ColorBuffer(Color clearColor)
 	: m_clearColor(clearColor), m_mips(0), m_fragmentCount(1), m_sampleCount(1)
@@ -8,6 +9,9 @@ ColorBuffer::ColorBuffer(Color clearColor)
 	m_srvHandle.ptr = D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN;
 	for (int i = 0; i < _countof(m_uavHandle); ++i)
 		m_uavHandle[i].ptr = D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN;
+
+
+	std::cout << "color buffer init" << std::endl;
 }
 
 void ColorBuffer::CreateFromSwapChain(const std::wstring& name, ID3D12Resource* baseResource) {

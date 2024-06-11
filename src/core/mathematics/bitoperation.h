@@ -1,3 +1,4 @@
+#pragma once
 #include <DirectXMath.h>
 
 using namespace DirectX;
@@ -13,7 +14,10 @@ namespace Mathematics
 		return AlignUpWithMask(value, alignment - 1);
 	}
 
-
+	template <typename T> __forceinline T DivideByMultiple(T value, size_t alignment)
+	{
+		return (T)((value + alignment - 1) / alignment);
+	}
 }
 
 

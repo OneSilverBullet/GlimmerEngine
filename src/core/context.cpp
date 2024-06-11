@@ -3,7 +3,7 @@
 #include "graphicscore.h"
 #include "rootsignature.h"
 #include "mathematics/bitoperation.h"
-
+#include "mathematics/bitoperation.h"
 
 /*
 * ContextManager
@@ -27,6 +27,11 @@ Context* ContextManager::AllocateContext(D3D12_COMMAND_LIST_TYPE type)
 	}
 
 	return ret;
+}
+
+Context& ContextManager::GetAvailableContext() {
+	Context* newContext = AllocateContext(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	return *newContext;
 }
 
 GraphicsContext& ContextManager::GetAvailableGraphicsContext() {
@@ -206,11 +211,7 @@ void Context::FillBuffer(GPUResource& dest, size_t destOffset,
 
 }
 
-void Context::TransitionResource(GPUResource& resource,
-	D3D12_RESOURCE_STATES newState, bool flushImm) {
-
-	D3D12_RESOURCE_STATES oldState = resource.GetUsageState();
-
+void Context::TransitionResource(GPUResource& resource, D3D12_RESOURCE_STATES oldState, D3D12_RESOURCE_STATES newState, bool flushImm) {
 	if (oldState != newState) {
 		//D3D12_RESOURCE_BARRIER store the transition parameters 
 		D3D12_RESOURCE_BARRIER& curResourceBarrier = m_resourceBarrierBuffer[m_numBarriersToFlush++];
@@ -219,6 +220,8 @@ void Context::TransitionResource(GPUResource& resource,
 		curResourceBarrier.Transition.pResource = resource.GetResource();
 		curResourceBarrier.Transition.StateAfter = newState;
 		curResourceBarrier.Transition.StateBefore = oldState;
+		if (oldState == 0)
+			curResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
 		curResourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
 		resource.SetUsageState(newState);
@@ -229,6 +232,14 @@ void Context::TransitionResource(GPUResource& resource,
 	//once the resource barrier command is equal to 16, we flush the resource barrier immediately
 	if (flushImm || m_numBarriersToFlush == 16)
 		FlushResourceBarrier();
+}
+
+void Context::TransitionResource(GPUResource& resource,
+	D3D12_RESOURCE_STATES newState, bool flushImm) {
+
+	D3D12_RESOURCE_STATES oldState = resource.GetUsageState();
+
+	TransitionResource(resource, oldState, newState, flushImm);
 }
 
 void Context::InsertUAVBarrier(GPUResource& resource, bool flushImm) {
@@ -293,10 +304,28 @@ void Context::BindDescriptorHeaps() {
 
 void CentralContext::InitializeTexture(GPUResource& dest, UINT numSubresources, D3D12_SUBRESOURCE_DATA subData[])
 {
+	UINT64 uploadBufferSize = GetRequiredIntermediateSize(dest.GetResource(), 0, numSubresources);
+
+	Context& initContext = GRAPHICS_CORE::g_contextManager.GetAvailableContext();
+	DynamicAlloc uploadBufferMem = initContext.ReserverUploadMemory(uploadBufferSize);
+	UpdateSubresources((ID3D12GraphicsCommandList*)initContext.GetCommandList(), dest.GetResource(),
+		uploadBufferMem.m_resource.GetResource(), 0, 0, numSubresources, subData);
+	initContext.TransitionResource(dest, D3D12_RESOURCE_STATE_GENERIC_READ);
+	initContext.Finish(true);
 }
 
 void CentralContext::InitializeBuffer(GPUResource& dest, const void* data, size_t numBytes, size_t offset)
 {
+	Context& initContext = GRAPHICS_CORE::g_contextManager.GetAvailableContext();
+	
+	DynamicAlloc uploadBufferMem = initContext.ReserverUploadMemory(numBytes);
+	memcpy(uploadBufferMem.m_cpuVirtualAddress, data, Mathematics::DivideByMultiple(numBytes, 16));
+
+	initContext.TransitionResource(dest, D3D12_RESOURCE_STATE_COPY_DEST, true);
+	initContext.GetGraphicCommandList()->CopyBufferRegion(dest.GetResource(), offset, uploadBufferMem.m_resource.GetResource(), 0, numBytes);
+	initContext.TransitionResource(dest, D3D12_RESOURCE_STATE_GENERIC_READ, true);
+
+	initContext.Finish();
 }
 
 void CentralContext::InitializeBuffer(GPUResource& dest, const UploadBuffer& src, size_t srcOffset, size_t destOffset)

@@ -27,6 +27,7 @@ class ContextManager
 public:
 	ContextManager(){}
 	Context* AllocateContext(D3D12_COMMAND_LIST_TYPE type);
+	Context& GetAvailableContext();
 	GraphicsContext& GetAvailableGraphicsContext();
 
 	void FreeContext(Context*);
@@ -47,7 +48,6 @@ class CentralContext
 	static void InitializeBuffer(GPUResource& dest, const UploadBuffer& src, size_t srcOffset, size_t destOffset);
 
 };
-
 
 //context class limitation
 struct NonCopyable
@@ -88,6 +88,7 @@ public:
 	}
 
 	ID3D12CommandList* GetCommandList() { return m_graphicsCommandList; }
+	ID3D12GraphicsCommandList* GetGraphicCommandList() { return (ID3D12GraphicsCommandList*)m_graphicsCommandList; }
 
 	//interface to copy texture
 	void CopyBuffer(GPUResource& dest, GPUResource& src);
@@ -108,6 +109,7 @@ public:
 	void FillBuffer(GPUResource& dest, size_t destOffset, DWParam value, size_t numBytes);
 
 	//texture status transition
+	void TransitionResource(GPUResource& resource, D3D12_RESOURCE_STATES oldState, D3D12_RESOURCE_STATES newState, bool flushImm = false);
 	void TransitionResource(GPUResource& resource, D3D12_RESOURCE_STATES newState, bool flushImm = false);
 	void InsertUAVBarrier(GPUResource& resource, bool flushImm = false);
 	inline void FlushResourceBarrier();

@@ -77,13 +77,6 @@ ClientGame::~ClientGame() {
 bool ClientGame::LoadContent() {
     auto device = GRAPHICS_CORE::g_device;
 
-    CommandQueue& commandQueue = GRAPHICS_CORE::g_commandManager.GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-
-
-    //load content, the first time to initialize the command list
-    //ID3D12CommandAllocator* commandAllocator = nullptr;
-    //GRAPHICS_CORE::g_commandManager.CreateNewCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT, &m_commandList, &commandAllocator);
-
     //Upload vertex buffer data
     GraphicsContext& initContext = GRAPHICS_CORE::g_contextManager.GetAvailableGraphicsContext();
     ID3D12GraphicsCommandList* initCommandList = (ID3D12GraphicsCommandList*)initContext.GetCommandList();
@@ -172,24 +165,13 @@ bool ClientGame::LoadContent() {
     m_pso->Finalize();
 
 
-
-
-    //auto fenceValue = commandQueue.ExecuteCommandList(m_commandList);
-    //commandQueue.WaitForFence(fenceValue);
     m_contentLoaded = true;
     ResizeDepthBuffer(GetClientWidth(), GetClientHeight());
 
-    //reload the allocator
-    //GRAPHICS_CORE::g_commandManager.ReallocateCommandAllocator(fenceValue, commandAllocator);
 	return true;
 }
 
 void ClientGame::UnloadContent() {
-    /*
-    if (m_commandList != nullptr) {
-        m_commandList->Release();
-        m_commandList = nullptr;
-    }*/
 }
 
 void ClientGame::OnRender(RenderEventArgs& e) {
@@ -203,29 +185,29 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 
 
     CommandQueue& commandQueue = GRAPHICS_CORE::g_commandManager.GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-    
-
-    
-    //ID3D12CommandAllocator* commandAllocator = nullptr;
-    //GRAPHICS_CORE::g_commandManager.ResetCommandList(D3D12_COMMAND_LIST_TYPE_DIRECT, &curCommandList, &commandAllocator);
-
-    
-    UINT currentBackBufferIndex = m_window->GetCurrentBackBufferIndex();
+     
+    ColorBuffer& currentBackbuffer = m_window->GetCurrentBackBuffer();
     auto rtv = m_window->GetCurrentRenderTargetView();
     auto dsv = m_depthBuffer.GetDSV();
-  
-
-    ID3D12Resource* currentBackbuffer = m_window->GetCurrentBackBuffer();
 
     // Clear the render target.
     {
-        TransitionResource(curCommandList, currentBackbuffer,
-			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+       D3D12_RESOURCE_STATES state =  currentBackbuffer.GetUsageState();
+       std::cout << "currentState:" << state << std::endl;
+        
+       //graphicsContext.TransitionResource(currentBackbuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
+       TransitionResource(curCommandList, currentBackbuffer.GetResource(),
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         FLOAT clearColor[4] = { 0.4f, 0.6f, 0.9f, 1.0f };
 
-        ClearRTV(curCommandList, rtv, clearColor);
-        ClearDepth(curCommandList, dsv);
+
+        graphicsContext.ClearColor(rtv, clearColor);
+        graphicsContext.ClearDepth(m_depthBuffer);
+
+        //ClearRTV(curCommandList, rtv, clearColor);
+        //ClearDepth(curCommandList, dsv);
     }
 
     {
@@ -241,29 +223,12 @@ void ClientGame::OnRender(RenderEventArgs& e) {
     }
 
 
-    
     //Assemble the rendering components
     {
-        /*
-        curCommandList->SetPipelineState(m_pso->GetPSO());
-        curCommandList->SetGraphicsRootSignature(m_rootSignature->GetSignature());
-
-        //Assemble Geometry
-        curCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        curCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-        curCommandList->IASetIndexBuffer(&m_indexBufferView);
-
-        //Setup Rasterizer State
-        curCommandList->RSSetViewports(1, &m_viewport);
-        curCommandList->RSSetScissorRects(1, &m_scissorRect);
-        
-        //Bind Render target
-        curCommandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-        */
-
         //Update Constant buffer
         XMMATRIX mvpMatrix = XMMatrixMultiply(XMMatrixMultiply(m_worldMatrix, m_viewMatrix), m_projMatrix);
-        curCommandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
+
+        graphicsContext.SetConstantArray(0, sizeof(XMMATRIX) / 4, &mvpMatrix);
 
         XMFLOAT4X4 mvp;
         XMStoreFloat4x4(&mvp, mvpMatrix);
@@ -274,17 +239,15 @@ void ClientGame::OnRender(RenderEventArgs& e) {
             << std::to_string(mvp._31) << " " << std::to_string(mvp._32) << " " << std::to_string(mvp._33) << " " << std::to_string(mvp._34) << std::endl
             << std::to_string(mvp._41) << " " << std::to_string(mvp._42) << " " << std::to_string(mvp._43) << " " << std::to_string(mvp._44) << std::endl;
 
-
-        //curCommandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
-
-        graphicsContext.DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
-        
+        graphicsContext.DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);        
     }
 
 
     // Present
     {
-        TransitionResource(curCommandList, currentBackbuffer,
+        //phicsContext.TransitionResource(currentBackbuffer, D3D12_RESOURCE_STATE_PRESENT, true);
+
+        TransitionResource(curCommandList, currentBackbuffer.GetResource(),
             D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
         //std::cout << fence << std::endl;
@@ -292,14 +255,6 @@ void ClientGame::OnRender(RenderEventArgs& e) {
         uint64_t fenceValue = graphicsContext.Finish(true);
         m_window->Present();
         std::cout << "current frame:" << fenceValue << std::endl;
-        /*
-        uint64_t fenceValue = commandQueue.ExecuteCommandList(curCommandList);
-        currentBackBufferIndex = m_window->Present();
-        commandQueue.WaitForFence(fenceValue);
-        */
-
-        //reallocate allocator
-        //GRAPHICS_CORE::g_commandManager.ReallocateCommandAllocator(fenceValue, commandAllocator);
     }
     
 

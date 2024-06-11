@@ -39,7 +39,8 @@ public:
 	UINT GetCurrentBackBufferIndex() const;
 	UINT Present();
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRenderTargetView() const;
-	ID3D12Resource* GetCurrentBackBuffer();
+	ID3D12Resource* GetCurrentBackBufferRaw();
+	ColorBuffer& GetCurrentBackBuffer();
 
 protected:
 	friend LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);

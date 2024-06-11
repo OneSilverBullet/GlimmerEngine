@@ -278,6 +278,11 @@ D3D12_CPU_DESCRIPTOR_HANDLE Window::GetCurrentRenderTargetView() const {
 	return m_backbuffer[m_currentBackBufferIndex].GetRTV();
 }
 
-ID3D12Resource* Window::GetCurrentBackBuffer() {
+ID3D12Resource* Window::GetCurrentBackBufferRaw() {
 	return m_backbuffer[m_currentBackBufferIndex].GetResource();
+}
+
+
+ColorBuffer& Window::GetCurrentBackBuffer() {
+	return m_backbuffer[m_currentBackBufferIndex];
 }
