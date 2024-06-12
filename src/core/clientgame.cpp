@@ -178,12 +178,6 @@ void ClientGame::OnRender(RenderEventArgs& e) {
     super::OnRender(e);
 
     GraphicsContext& graphicsContext = GRAPHICS_CORE::g_contextManager.GetAvailableGraphicsContext();
-
-    ID3D12GraphicsCommandList* curCommandList = (ID3D12GraphicsCommandList*)graphicsContext.GetCommandList();
-
-    //std::cout << "OnRender in Client Game" << std::endl;
-
-
     CommandQueue& commandQueue = GRAPHICS_CORE::g_commandManager.GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
      
     ColorBuffer& currentBackbuffer = m_window->GetCurrentBackBuffer();
@@ -193,12 +187,10 @@ void ClientGame::OnRender(RenderEventArgs& e) {
     // Clear the render target.
     {
 
-       D3D12_RESOURCE_STATES state =  currentBackbuffer.GetUsageState();
-       std::cout << "currentState:" << state << std::endl;
+        D3D12_RESOURCE_STATES state =  currentBackbuffer.GetUsageState();
+        std::cout << "currentState:" << state << std::endl;
         
-       //graphicsContext.TransitionResource(currentBackbuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
-       TransitionResource(curCommandList, currentBackbuffer.GetResource(),
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        graphicsContext.TransitionResource(currentBackbuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 
         FLOAT clearColor[4] = { 0.4f, 0.6f, 0.9f, 1.0f };
 
@@ -227,9 +219,7 @@ void ClientGame::OnRender(RenderEventArgs& e) {
     {
         //Update Constant buffer
         XMMATRIX mvpMatrix = XMMatrixMultiply(XMMatrixMultiply(m_worldMatrix, m_viewMatrix), m_projMatrix);
-
         graphicsContext.SetConstantArray(0, sizeof(XMMATRIX) / 4, &mvpMatrix);
-
         XMFLOAT4X4 mvp;
         XMStoreFloat4x4(&mvp, mvpMatrix);
         std::ofstream fout;
@@ -245,19 +235,11 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 
     // Present
     {
-        //phicsContext.TransitionResource(currentBackbuffer, D3D12_RESOURCE_STATE_PRESENT, true);
-
-        TransitionResource(curCommandList, currentBackbuffer.GetResource(),
-            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-        //std::cout << fence << std::endl;
-
+        graphicsContext.TransitionResource(currentBackbuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT, true);
         uint64_t fenceValue = graphicsContext.Finish(true);
         m_window->Present();
         std::cout << "current frame:" << fenceValue << std::endl;
     }
-    
-
 }
 
 void ClientGame::OnUpdate(UpdateEventArgs& e) {

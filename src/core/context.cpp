@@ -217,11 +217,10 @@ void Context::TransitionResource(GPUResource& resource, D3D12_RESOURCE_STATES ol
 		D3D12_RESOURCE_BARRIER& curResourceBarrier = m_resourceBarrierBuffer[m_numBarriersToFlush++];
 
 		curResourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		curResourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 		curResourceBarrier.Transition.pResource = resource.GetResource();
 		curResourceBarrier.Transition.StateAfter = newState;
 		curResourceBarrier.Transition.StateBefore = oldState;
-		if (oldState == 0)
-			curResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
 		curResourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
 		resource.SetUsageState(newState);
@@ -236,9 +235,7 @@ void Context::TransitionResource(GPUResource& resource, D3D12_RESOURCE_STATES ol
 
 void Context::TransitionResource(GPUResource& resource,
 	D3D12_RESOURCE_STATES newState, bool flushImm) {
-
 	D3D12_RESOURCE_STATES oldState = resource.GetUsageState();
-
 	TransitionResource(resource, oldState, newState, flushImm);
 }
 
