@@ -301,6 +301,7 @@ void Context::BindDescriptorHeaps() {
 
 void CentralContext::InitializeTexture(GPUResource& dest, UINT numSubresources, D3D12_SUBRESOURCE_DATA subData[])
 {
+	//the gpu dest has been initialized
 	UINT64 uploadBufferSize = GetRequiredIntermediateSize(dest.GetResource(), 0, numSubresources);
 
 	Context& initContext = GRAPHICS_CORE::g_contextManager.GetAvailableContext();

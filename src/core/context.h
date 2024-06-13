@@ -40,8 +40,9 @@ private:
 };
 
 //Central Context contains multiple static functions related to temp context
-class CentralContext
+class GlobalContext
 {
+public:
 	//initialize a texture
 	static void InitializeTexture(GPUResource& dest, UINT numSubresources, D3D12_SUBRESOURCE_DATA subData[]);
 	static void InitializeBuffer(GPUResource& dest, const void* data, size_t numBytes, size_t offset = 0);

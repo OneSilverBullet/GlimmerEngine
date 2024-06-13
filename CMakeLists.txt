@@ -66,6 +66,8 @@ FILE(GLOB SRCS_RESOURCES
    src/core/resources/gpuresource.h
    src/core/resources/pixelbuffer.h
    src/core/resources/pixelbuffer.cpp
+   src/core/resources/texture.h
+   src/core/resources/texture.cpp
    src/core/resources/depthbuffer.h
    src/core/resources/depthbuffer.cpp
    src/core/resources/colorbuffer.h
