@@ -1,6 +1,7 @@
 #include "texture.h"
 #include "graphicscore.h"
 #include "context.h"
+#include "DDSTextureLoader.h"
 
 void Texture::Create2D(size_t rowPitchBytes, size_t width, size_t height, DXGI_FORMAT format, const void* initData)
 {
@@ -119,15 +120,16 @@ void Texture::CreateCube(size_t rowPitchBytes, size_t width, size_t height, DXGI
     GRAPHICS_CORE::g_device->CreateShaderResourceView(m_resource, &srvDesc, m_hCpuDescriptorHandle);
 }
 
-void Texture::CreateTGAFromMemory(const void* memBuffer, size_t fillSize, bool sRBG)
-{
-}
 
 bool Texture::CreateDDSFromMemory(const void* memBuffer, size_t fillSize, bool sRGB)
 {
-    return false;
+    if (m_hCpuDescriptorHandle.ptr == D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN)
+        m_hCpuDescriptorHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    HRESULT hr = CreateDDSTextureFromMemory(GRAPHICS_CORE::g_device, (const uint8_t*)memBuffer,
+        fillSize, 0, sRGB, &m_resource, m_hCpuDescriptorHandle);
+
+    return SUCCEEDED(hr);
 }
 
-void Texture::CreatePIXImageFromMemory(const void* memBuffer, size_t fileSize)
-{
-}
+

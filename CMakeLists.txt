@@ -31,6 +31,8 @@ FILE(GLOB SRCS_GLIMMER_CORE
    src/core/commandqueue.cpp
    src/core/commandmanager.h
    src/core/commandmanager.cpp
+   src/core/texturemanager.h
+   src/core/texturemanager.cpp
    src/core/d3dx12.h
    src/core/game.h
    src/core/game.cpp
@@ -63,6 +65,9 @@ FILE(GLOB SRCS_GLIMMER_CORE
 )
 
 FILE(GLOB SRCS_RESOURCES
+   src/core/resources/dds.h
+   src/core/resources/DDSTextureLoader.h
+   src/core/resources/DDSTextureLoader.cpp
    src/core/resources/gpuresource.h
    src/core/resources/pixelbuffer.h
    src/core/resources/pixelbuffer.cpp

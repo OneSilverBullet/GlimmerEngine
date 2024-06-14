@@ -299,7 +299,7 @@ void Context::BindDescriptorHeaps() {
 		m_graphicsCommandList->SetDescriptorHeaps(nonNullHeaps, heapsToBind);
 }
 
-void CentralContext::InitializeTexture(GPUResource& dest, UINT numSubresources, D3D12_SUBRESOURCE_DATA subData[])
+void GlobalContext::InitializeTexture(GPUResource& dest, UINT numSubresources, D3D12_SUBRESOURCE_DATA subData[])
 {
 	//the gpu dest has been initialized
 	UINT64 uploadBufferSize = GetRequiredIntermediateSize(dest.GetResource(), 0, numSubresources);
@@ -312,7 +312,7 @@ void CentralContext::InitializeTexture(GPUResource& dest, UINT numSubresources, 
 	initContext.Finish(true);
 }
 
-void CentralContext::InitializeBuffer(GPUResource& dest, const void* data, size_t numBytes, size_t offset)
+void GlobalContext::InitializeBuffer(GPUResource& dest, const void* data, size_t numBytes, size_t offset)
 {
 	Context& initContext = GRAPHICS_CORE::g_contextManager.GetAvailableContext();
 	
@@ -326,7 +326,7 @@ void CentralContext::InitializeBuffer(GPUResource& dest, const void* data, size_
 	initContext.Finish();
 }
 
-void CentralContext::InitializeBuffer(GPUResource& dest, const UploadBuffer& src, size_t srcOffset, size_t destOffset)
+void GlobalContext::InitializeBuffer(GPUResource& dest, const UploadBuffer& src, size_t srcOffset, size_t destOffset)
 {
 }
 

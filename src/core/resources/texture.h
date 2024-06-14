@@ -11,9 +11,9 @@ public:
 	void Create2D(size_t rowPitchBytes, size_t width, size_t height, DXGI_FORMAT format, const void* initData);
 	void CreateCube(size_t rowPitchBytes, size_t width, size_t height, DXGI_FORMAT format, const void* initData);
 
-	void CreateTGAFromMemory(const void* memBuffer, size_t fillSize, bool sRBG);
+
 	bool CreateDDSFromMemory(const void* memBuffer, size_t fillSize, bool sRGB);
-	void CreatePIXImageFromMemory(const void* memBuffer, size_t fileSize);
+
 
 	virtual void Destroy() override
 	{
