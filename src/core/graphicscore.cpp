@@ -6,6 +6,7 @@
 
 namespace GRAPHICS_CORE
 {
+	TextureManager g_textureManager;
 	CommandManager g_commandManager;
 	ContextManager g_contextManager;
 	ID3D12Device* g_device = nullptr;
@@ -135,6 +136,7 @@ namespace GRAPHICS_CORE
 		if (GRAPHICS_CORE::g_device) {
 			//Update essential d3d12 device
 			GRAPHICS_CORE::g_commandManager.Initialize(GRAPHICS_CORE::g_device);
+			GRAPHICS_CORE::g_textureManager.Initialize(L"");
 
 			g_tearingSupport = CheckTearingSupport();
 		}

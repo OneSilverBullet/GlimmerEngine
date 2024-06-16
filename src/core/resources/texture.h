@@ -1,6 +1,7 @@
 #pragma once
 #include "gpuresource.h"
 
+
 class Texture : public GPUResource
 {
 public:
@@ -33,4 +34,16 @@ protected:
 	
 	D3D12_CPU_DESCRIPTOR_HANDLE m_hCpuDescriptorHandle;
 
+};
+
+enum DefaultTextureType {
+	Magenta2D = 0,
+	BlackOpaque2D = 1,
+	BlackTransparent2D = 2,
+	WhiteOpaque2D = 3,
+	WhiteTransparent2D = 4,
+	DefaultNormalMap2D = 5,
+	BlackCubeMap = 6,
+
+	DefaultTextureNum = 7,
 };
