@@ -16,6 +16,17 @@ namespace GRAPHICS_CORE
 	extern DescriptorAllocator g_descriptorHeapAllocator[];
 
 
+	//global default sampler descriptor handle
+	//todo: build up samplers manager
+	extern SamplerDesc g_samplerLinearWrapDesc;
+	extern D3D12_CPU_DESCRIPTOR_HANDLE g_samplerLinearWrap;
+	extern SamplerDesc g_samplerAnisoWrapDesc;
+	extern D3D12_CPU_DESCRIPTOR_HANDLE g_samplerAnisoWrap;
+
+
+
+
+
 	void GraphicsCoreInitialize();
 	void GraphicsCoreRelease();
 

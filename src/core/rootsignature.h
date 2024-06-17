@@ -136,6 +136,10 @@ public:
 		m_samplersNum = samplerNum;
 	}
 
+	void InitSamplerDesc(UINT registerSlot,
+		const D3D12_SAMPLER_DESC& nonStaticSamplerDesc,
+		D3D12_SHADER_VISIBILITY visibility);
+
 	RootParameter& operator[](size_t index) {
 		assert(index < m_parametersNum);
 		return m_parameters.get()[index];

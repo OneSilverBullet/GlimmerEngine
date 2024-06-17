@@ -3,6 +3,7 @@
 #include "descriptorheapallocator.h"
 #include "resources/depthbuffer.h"
 #include "resources/colorbuffer.h"
+#include "resources/samplerdesc.h"
 
 namespace GRAPHICS_CORE
 {
@@ -11,6 +12,13 @@ namespace GRAPHICS_CORE
 	ContextManager g_contextManager;
 	ID3D12Device* g_device = nullptr;
 	bool g_tearingSupport;
+
+	SamplerDesc g_samplerLinearWrapDesc;
+	D3D12_CPU_DESCRIPTOR_HANDLE g_samplerLinearWrap;
+	SamplerDesc g_samplerAnisoWrapDesc;
+	D3D12_CPU_DESCRIPTOR_HANDLE g_samplerAnisoWrap;
+
+
 
 
 	DescriptorAllocator g_descriptorHeapAllocator[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = {
@@ -123,6 +131,14 @@ namespace GRAPHICS_CORE
 #endif
 	}
 
+	void SamplersInitialize() {
+		g_samplerLinearWrapDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		g_samplerLinearWrap = g_samplerLinearWrapDesc.CreateSamplerDescHandle();
+
+		g_samplerAnisoWrapDesc.MaxAnisotropy = 4;
+		g_samplerAnisoWrap = g_samplerAnisoWrapDesc.CreateSamplerDescHandle();
+	}
+
 	void GraphicsCoreInitialize()
 	{
 		EnableDX12DebugLayer();
@@ -136,7 +152,8 @@ namespace GRAPHICS_CORE
 		if (GRAPHICS_CORE::g_device) {
 			//Update essential d3d12 device
 			GRAPHICS_CORE::g_commandManager.Initialize(GRAPHICS_CORE::g_device);
-			GRAPHICS_CORE::g_textureManager.Initialize(L"");
+			GRAPHICS_CORE::g_textureManager.Initialize("");
+			SamplersInitialize();
 
 			g_tearingSupport = CheckTearingSupport();
 		}
@@ -150,5 +167,7 @@ namespace GRAPHICS_CORE
 
 		GRAPHICS_CORE::g_commandManager.Release();
 	}
+
+
 
 }

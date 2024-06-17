@@ -27,6 +27,38 @@ void RootSignatureManager::Release() {
 * RootSignature
 * Root Signature is a description of the input data types of the shader
 */
+
+void RootSignature::InitSamplerDesc(UINT registerSlot,
+	const D3D12_SAMPLER_DESC& nonStaticSamplerDesc,
+	D3D12_SHADER_VISIBILITY visibility) {
+	//D3D12_SAMPLER_DESC is suitable for modifying sampler multipyly
+	//D3D12_STATIC_SAMPLER_DESC is more efficient cause it is static sampler
+	D3D12_STATIC_SAMPLER_DESC& staticSamplerDesc = m_samplers[m_samplersNum++];
+	staticSamplerDesc.Filter = nonStaticSamplerDesc.Filter;
+	staticSamplerDesc.AddressU = nonStaticSamplerDesc.AddressU;
+	staticSamplerDesc.AddressV = nonStaticSamplerDesc.AddressV;
+	staticSamplerDesc.AddressW = nonStaticSamplerDesc.AddressW;
+	staticSamplerDesc.MipLODBias = nonStaticSamplerDesc.MipLODBias;
+	staticSamplerDesc.MaxAnisotropy = nonStaticSamplerDesc.MaxAnisotropy;
+	staticSamplerDesc.ComparisonFunc = nonStaticSamplerDesc.ComparisonFunc;
+	staticSamplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+	staticSamplerDesc.MinLOD = nonStaticSamplerDesc.MinLOD;
+	staticSamplerDesc.MaxLOD = nonStaticSamplerDesc.MaxLOD;
+	staticSamplerDesc.ShaderRegister = registerSlot;
+	staticSamplerDesc.RegisterSpace = 0;
+	staticSamplerDesc.ShaderVisibility = visibility;
+
+	if (nonStaticSamplerDesc.BorderColor[3] == 1.0f)
+	{
+		if (nonStaticSamplerDesc.BorderColor[0] == 1.0f)
+			staticSamplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+		else
+			staticSamplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+	}
+	else
+		staticSamplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+}
+
 void RootSignature::Finalize(const std::wstring& name, D3D12_ROOT_SIGNATURE_FLAGS Flags) {
 
 	if(m_finalized)
@@ -69,6 +101,7 @@ void RootSignature::Finalize(const std::wstring& name, D3D12_ROOT_SIGNATURE_FLAG
 	}
 
 	//TODO: Do not compile the root signature every time; reuse the same parameter layout root signature
+	//TODO: hash function 
 
 	ComPtr<ID3DBlob> pOutBlob, pErrorBlob;
 

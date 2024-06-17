@@ -83,6 +83,8 @@ FILE(GLOB SRCS_RESOURCES
    src/core/resources/gpubuffer.cpp
    src/core/resources/readbackbuffer.h
    src/core/resources/readbackbuffer.cpp
+   src/core/resources/samplerdesc.h
+   src/core/resources/samplerdesc.cpp
 )
 
 FILE(GLOB SRCS_RESOURCES_ALLOCATOR
