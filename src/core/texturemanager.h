@@ -9,7 +9,25 @@
 #include "resources/gpuresource.h"
 #include "resources/texture.h"
 
-class ManagedTexture;
+class ManagedTexture : public Texture
+{
+	friend class TextureRef;
+public:
+	ManagedTexture(const std::string& fileName);
+
+	void WaitForLoad(void) const;
+	void CreateFromMemory(std::string memory, DefaultTextureType fallback, bool sRGB);
+
+private:
+	bool IsValid(void) const { return m_isValid; }
+	void Unload();
+
+	std::string m_mapKey;
+	bool m_isValid;
+	bool m_isLoading;
+	size_t m_referenceCount;
+};
+
 
 //the encapsulation of the managed texture
 //implement the function of texture ptr

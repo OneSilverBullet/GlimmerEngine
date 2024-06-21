@@ -3,7 +3,7 @@
 #include "descriptorheapallocator.h"
 #include "resources/depthbuffer.h"
 #include "resources/colorbuffer.h"
-#include "resources/samplerdesc.h"
+
 
 namespace GRAPHICS_CORE
 {
@@ -17,7 +17,6 @@ namespace GRAPHICS_CORE
 	D3D12_CPU_DESCRIPTOR_HANDLE g_samplerLinearWrap;
 	SamplerDesc g_samplerAnisoWrapDesc;
 	D3D12_CPU_DESCRIPTOR_HANDLE g_samplerAnisoWrap;
-
 
 
 

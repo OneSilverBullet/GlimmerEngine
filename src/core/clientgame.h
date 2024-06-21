@@ -3,6 +3,8 @@
 #include "window.h"
 #include <DirectXMath.h>
 #include "resources/depthbuffer.h"
+#include "texturemanager.h"
+#include "staticdecriptorheap.h"
 
 class RootSignature;
 class GraphicsPSO;
@@ -63,6 +65,16 @@ private:
 
 	RootSignature* m_rootSignature = nullptr;
 	GraphicsPSO* m_pso = nullptr;
+
+	TextureRef m_testTextureRef;
+
+	
+	StaticDescriptorHeap m_textureDescriptorHeap;
+	StaticDescriptorHeap m_samplerDescriptorHeap;
+
+	DescriptorHandle m_testTextures;
+	DescriptorHandle m_testSamplers;
+
 
 	//the command is temporary
 	//todo: encapsulate a graphics context

@@ -78,6 +78,11 @@ ClientGame::~ClientGame() {
 bool ClientGame::LoadContent() {
     auto device = GRAPHICS_CORE::g_device;
 
+    //Create the descriptor heap for textures and samplers
+    m_textureDescriptorHeap.Initialize(L"TextureDescriptorHeap", D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 4096);
+    m_samplerDescriptorHeap.Initialize(L"SamplerDescriptorHeap", D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 2048);
+
+    
     //Upload vertex buffer data
     GraphicsContext& initContext = GRAPHICS_CORE::g_contextManager.GetAvailableGraphicsContext();
     ID3D12GraphicsCommandList* initCommandList = (ID3D12GraphicsCommandList*)initContext.GetCommandList();
@@ -121,10 +126,10 @@ bool ClientGame::LoadContent() {
         D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
-    m_rootSignature = new RootSignature(2, 1);
-    m_rootSignature->InitSamplerDesc(0, GRAPHICS_CORE::g_samplerLinearWrapDesc, D3D12_SHADER_VISIBILITY_PIXEL);
+    m_rootSignature = new RootSignature(3, 0);
     (*m_rootSignature)[0].InitAsConstant32(0, sizeof(XMMATRIX) / 4, D3D12_SHADER_VISIBILITY_VERTEX);
     (*m_rootSignature)[1].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 1, D3D12_SHADER_VISIBILITY_PIXEL);
+    (*m_rootSignature)[2].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 0, 1, D3D12_SHADER_VISIBILITY_PIXEL);
     m_rootSignature->Finalize(L"", rootSignatureFlag);
 
     //Create RTV
@@ -168,6 +173,28 @@ bool ClientGame::LoadContent() {
     m_pso->Finalize();
 
     //generate texture
+    m_testTextureRef = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("spnza_bricks_a.DDS", WhiteOpaque2D, true);
+
+
+    m_testTextures = m_textureDescriptorHeap.Alloc(1);
+    m_testSamplers = m_samplerDescriptorHeap.Alloc(1);
+
+    //texture loading process
+    D3D12_CPU_DESCRIPTOR_HANDLE textures[] = {
+        m_testTextureRef.GetSRV()
+    };
+
+    UINT destNum = 1;
+    UINT srcNums[] = { 1 };
+
+    GRAPHICS_CORE::g_device->CopyDescriptors(1, &m_testTextures, &destNum, destNum, textures, srcNums, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    //sampler loading process
+    D3D12_CPU_DESCRIPTOR_HANDLE samplers[] = {
+        GRAPHICS_CORE::g_samplerLinearWrap
+    };
+
+    GRAPHICS_CORE::g_device->CopyDescriptors(1, &m_testSamplers, &destNum, destNum, samplers, srcNums, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 
 
 
@@ -192,14 +219,12 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 
     // Clear the render target.
     {
-
         D3D12_RESOURCE_STATES state =  currentBackbuffer.GetUsageState();
         std::cout << "currentState:" << state << std::endl;
         
         graphicsContext.TransitionResource(currentBackbuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 
         FLOAT clearColor[4] = { 0.4f, 0.6f, 0.9f, 1.0f };
-
 
         graphicsContext.ClearColor(rtv, clearColor);
         graphicsContext.ClearDepth(m_depthBuffer);
@@ -215,13 +240,12 @@ void ClientGame::OnRender(RenderEventArgs& e) {
         graphicsContext.SetVertexBuffer(0, m_vertexBufferView);
         graphicsContext.SetIndexBuffer(m_indexBufferView);
         graphicsContext.SetViewportAndScissor(m_viewport, m_scissorRect);
-        
 
         graphicsContext.SetRenderTargets(1, &rtv, dsv);
     }
 
 
-    //Assemble the rendering components
+    //set the constant array 
     {
         //Update Constant buffer
         XMMATRIX mvpMatrix = XMMatrixMultiply(XMMatrixMultiply(m_worldMatrix, m_viewMatrix), m_projMatrix);
@@ -238,6 +262,11 @@ void ClientGame::OnRender(RenderEventArgs& e) {
         graphicsContext.DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);        
     }
 
+    //set the texture array buffer
+    {
+        graphicsContext.SetDescriptorTable(1, m_textureDescriptorHeap[0]);
+        graphicsContext.SetDescriptorTable(2, m_samplerDescriptorHeap[0]);
+    }
 
     // Present
     {

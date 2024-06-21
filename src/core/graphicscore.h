@@ -4,6 +4,7 @@
 #include "context.h"
 #include "descriptorheapallocator.h"
 #include "texturemanager.h"
+#include "resources/samplerdesc.h"
 
 namespace GRAPHICS_CORE
 {
@@ -22,9 +23,6 @@ namespace GRAPHICS_CORE
 	extern D3D12_CPU_DESCRIPTOR_HANDLE g_samplerLinearWrap;
 	extern SamplerDesc g_samplerAnisoWrapDesc;
 	extern D3D12_CPU_DESCRIPTOR_HANDLE g_samplerAnisoWrap;
-
-
-
 
 
 	void GraphicsCoreInitialize();

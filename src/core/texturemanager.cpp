@@ -6,24 +6,6 @@
 #include "resources/DDSTextureLoader.h"
 #include <thread>
 
-class ManagedTexture : public Texture
-{
-	friend class TextureRef;
-public:
-	ManagedTexture(const std::string& fileName);
-
-	void WaitForLoad(void) const;
-	void CreateFromMemory(std::string memory, DefaultTextureType fallback, bool sRGB);
-
-private:
-	bool IsValid(void) const { return m_isValid; }
-	void Unload();
-
-	std::string m_mapKey;
-	bool m_isValid;
-	bool m_isLoading;
-	size_t m_referenceCount;
-};
 
 ManagedTexture::ManagedTexture(const std::string& fileName)
 	: m_mapKey(fileName), m_isValid(false), m_isLoading(true), m_referenceCount(0)
@@ -69,7 +51,6 @@ void ManagedTexture::Unload()
 {
 	GRAPHICS_CORE::g_textureManager.DestoryTexture(m_mapKey);
 }
-
 
 void TextureManager::Initialize(const std::string& rootPath)
 {

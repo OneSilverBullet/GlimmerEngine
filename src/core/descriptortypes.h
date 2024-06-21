@@ -32,6 +32,8 @@ public:
 		if (IsShaderVisible()) m_gpuHandle.ptr += offset;
 	}
 
+
+	const D3D12_CPU_DESCRIPTOR_HANDLE* operator&() { return &m_cpuHandle; }
 	//implided convert to descriptor handle
 	operator D3D12_CPU_DESCRIPTOR_HANDLE()const { return m_cpuHandle; }
 	operator D3D12_GPU_DESCRIPTOR_HANDLE()const { return m_gpuHandle; }
