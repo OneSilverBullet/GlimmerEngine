@@ -156,9 +156,9 @@ public:
 	void Finalize(const std::wstring& name, D3D12_ROOT_SIGNATURE_FLAGS Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE);
 
 public:
-	uint32_t m_descriptorTableBitMap; //to indicate the descriptor table slot index
-	uint32_t m_descriptorTableSize[16]; //record the descriptors count in each descriptor table
-	uint32_t m_samplerBitMap; //to indicate the sampler slot index
+	uint32_t m_descriptorTableBitMap = 0; //to indicate the descriptor table slot index
+	uint32_t m_descriptorTableSize[16] = { 0 }; //record the descriptors count in each descriptor table
+	uint32_t m_samplerBitMap = 0; //to indicate the sampler slot index
 
 protected:
 	bool m_finalized = false;

@@ -252,6 +252,7 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 
     //set the texture array buffer
     {
+        DescriptorHandle textureHandle = m_textureDescriptorHeap[0];
         graphicsContext.SetDescriptorTable(1, m_textureDescriptorHeap[0]);
         graphicsContext.SetDescriptorTable(2, m_samplerDescriptorHeap[0]);
     }
