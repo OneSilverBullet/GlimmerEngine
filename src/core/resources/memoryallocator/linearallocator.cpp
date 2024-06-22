@@ -45,13 +45,14 @@ LinearPage* LinearAllocationPageManager::CreateNewPage(size_t pageSize)
 	//create gpu resource description
 	D3D12_RESOURCE_DESC gpuResourceDesc;
 	gpuResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	gpuResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	gpuResourceDesc.Alignment = 0;
 	gpuResourceDesc.Height = 1;
 	gpuResourceDesc.DepthOrArraySize = 1;
 	gpuResourceDesc.MipLevels = 1;
 	gpuResourceDesc.Format = DXGI_FORMAT_UNKNOWN;
 	gpuResourceDesc.SampleDesc.Count = 1;
-	gpuResourceDesc.SampleDesc.Quality = 1;
+	gpuResourceDesc.SampleDesc.Quality = 0;
 
 	D3D12_RESOURCE_STATES defaultUsage;
 

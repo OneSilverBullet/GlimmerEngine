@@ -49,17 +49,6 @@ constexpr const T& clamp(const T& v, const T& lo, const T& hi)
 	return v < lo ? lo : hi < v ? hi : v;
 }
 
-struct PipelineStateStream
-{
-    CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE p_rootSignature;
-    CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT p_inputLayout;
-    CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY p_primitiveTopologyType;
-    CD3DX12_PIPELINE_STATE_STREAM_VS p_vs;
-    CD3DX12_PIPELINE_STATE_STREAM_PS p_ps;
-    CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT p_dsvFormat;
-    CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS p_rtvFormats;
-};
-
 
 ClientGame::ClientGame(const std::wstring& name, int width, int height, bool vSync): 
 	super(name, width, height, vSync)	
@@ -123,8 +112,7 @@ bool ClientGame::LoadContent() {
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-        D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
     m_rootSignature = new RootSignature(3, 0);
     (*m_rootSignature)[0].InitAsConstant32(0, sizeof(XMMATRIX) / 4, D3D12_SHADER_VISIBILITY_VERTEX);

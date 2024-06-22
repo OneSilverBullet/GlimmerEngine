@@ -63,15 +63,15 @@ struct DescriptorHandlesCache
 	static const uint32_t maxNumDescriptorTables = 16;
 
 	//the bit map of descriptor table in current root signature 
-	uint32_t m_rootDescriptorTablesBitMap;
+	uint32_t m_rootDescriptorTablesBitMap = 0;
 	//the non empty slot of current root signature
-	uint32_t m_assignedRootParamsBitMap;
+	uint32_t m_assignedRootParamsBitMap = 0;
 	//record the information of descriptor table in root signature
 	DescriptorTableEntry m_rootDescriptorTable[maxNumDescriptorTables];
 	//store the descriptor of descriptors table in a linear way
 	D3D12_CPU_DESCRIPTOR_HANDLE m_descriptors[maxNumDescriptors];
 	//the descriptor number
-	uint32_t m_cachedDescriptorsNum;
+	uint32_t m_cachedDescriptorsNum = 0;
 };
 
 

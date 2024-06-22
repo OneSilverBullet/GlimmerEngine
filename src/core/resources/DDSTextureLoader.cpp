@@ -1344,8 +1344,8 @@ HRESULT CreateDDSTextureFromFile(
     if ( alphaMode )
         *alphaMode = GetAlphaMode( header );
 
-    if (SUCCEEDED(hr))
-        (*texture)->SetName(fileName);
+    //if (SUCCEEDED(hr))
+    //    (*texture)->SetName(fileName);
 
     return hr;
 }

@@ -19,8 +19,28 @@ void ManagedTexture::WaitForLoad(void) const
 		std::this_thread::yield();
 }
 
+std::wstring String2Wstring(std::string wstr)
+{
+	std::wstring res;
+	int len = MultiByteToWideChar(CP_ACP, 0, wstr.c_str(), wstr.size(), nullptr, 0);
+	if (len < 0) {
+		return res;
+	}
+	wchar_t* buffer = new wchar_t[len + 1];
+	if (buffer == nullptr) {
+		return res;
+	}
+	MultiByteToWideChar(CP_ACP, 0, wstr.c_str(), wstr.size(), buffer, len);
+	buffer[len] = '\0';
+	res.append(buffer);
+	delete[] buffer;
+	return res;
+}
+
 void ManagedTexture::CreateFromMemory(std::string memory, DefaultTextureType fallback, bool sRGB)
 {
+	std::wstring filePath = String2Wstring(memory);
+
 	if (memory.size() == 0)
 	{
 		m_hCpuDescriptorHandle = GRAPHICS_CORE::g_textureManager.GetDefaultTexture(fallback);
@@ -28,9 +48,12 @@ void ManagedTexture::CreateFromMemory(std::string memory, DefaultTextureType fal
 	else {
 		m_hCpuDescriptorHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		if (CreateDDSTextureFromMemory(GRAPHICS_CORE::g_device, 
-			(const uint8_t*)memory.data(), memory.size(),
-			0, sRGB, &m_resource, m_hCpuDescriptorHandle))
+		//if (CreateDDSTextureFromMemory(GRAPHICS_CORE::g_device, 
+		//	(const uint8_t*)memory.data(), memory.size(),
+		//	0, sRGB, &m_resource, m_hCpuDescriptorHandle))
+
+		if (CreateDDSTextureFromFile(GRAPHICS_CORE::g_device, 
+			L"resource/textures/spnza_bricks_a.DDS", 0, sRGB, &m_resource, m_hCpuDescriptorHandle))
 		{
 			m_isValid = true;
 			D3D12_RESOURCE_DESC desc = GetResource()->GetDesc();

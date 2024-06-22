@@ -50,7 +50,7 @@ public:
 	const Texture* operator->(void) const;
 
 private:
-	ManagedTexture* m_ref;
+	ManagedTexture* m_ref = nullptr;
 };
 
 class TextureManager
