@@ -89,6 +89,7 @@ public:
 	}
 
 	ID3D12CommandList* GetCommandList() { return m_graphicsCommandList; }
+	ID3D12CommandList const* GetCommandList() const { return m_graphicsCommandList; }
 	ID3D12GraphicsCommandList* GetGraphicCommandList() { return (ID3D12GraphicsCommandList*)m_graphicsCommandList; }
 
 	//interface to copy texture

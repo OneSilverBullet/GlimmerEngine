@@ -5,12 +5,16 @@
 #include "descriptorheapallocator.h"
 #include "texturemanager.h"
 #include "resources/samplerdesc.h"
+#include "staticdecriptorheap.h"
 
 namespace GRAPHICS_CORE
 {
 	extern TextureManager g_textureManager;
 	extern CommandManager g_commandManager;
 	extern ContextManager g_contextManager;
+	extern StaticDescriptorHeap g_texturesDescriptorHeap;
+	extern StaticDescriptorHeap g_samplersDescriptorHeap;
+
 	extern ID3D12Device* g_device;
 	extern bool g_tearingSupport;
 

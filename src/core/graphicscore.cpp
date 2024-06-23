@@ -10,6 +10,8 @@ namespace GRAPHICS_CORE
 	TextureManager g_textureManager;
 	CommandManager g_commandManager;
 	ContextManager g_contextManager;
+	StaticDescriptorHeap g_texturesDescriptorHeap;
+	StaticDescriptorHeap g_samplersDescriptorHeap;
 	ID3D12Device* g_device = nullptr;
 	bool g_tearingSupport;
 
@@ -153,6 +155,11 @@ namespace GRAPHICS_CORE
 			GRAPHICS_CORE::g_commandManager.Initialize(GRAPHICS_CORE::g_device);
 			GRAPHICS_CORE::g_textureManager.Initialize("");
 			SamplersInitialize();
+
+			//Create the descriptor heap for textures and samplers
+			GRAPHICS_CORE::g_texturesDescriptorHeap.Initialize(L"TextureDescriptorHeap", D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 4096);
+			GRAPHICS_CORE::g_samplersDescriptorHeap.Initialize(L"SamplerDescriptorHeap", D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 2048);
+
 
 			g_tearingSupport = CheckTearingSupport();
 		}

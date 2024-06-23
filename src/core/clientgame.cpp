@@ -67,9 +67,6 @@ ClientGame::~ClientGame() {
 bool ClientGame::LoadContent() {
     auto device = GRAPHICS_CORE::g_device;
 
-    //Create the descriptor heap for textures and samplers
-    m_textureDescriptorHeap.Initialize(L"TextureDescriptorHeap", D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 4096);
-    m_samplerDescriptorHeap.Initialize(L"SamplerDescriptorHeap", D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 2048);
 
     
     //Upload vertex buffer data
@@ -116,8 +113,8 @@ bool ClientGame::LoadContent() {
 
     m_rootSignature = new RootSignature(3, 0);
     (*m_rootSignature)[0].InitAsConstant32(0, sizeof(XMMATRIX) / 4, D3D12_SHADER_VISIBILITY_VERTEX);
-    (*m_rootSignature)[1].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 1, D3D12_SHADER_VISIBILITY_PIXEL);
-    (*m_rootSignature)[2].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 0, 1, D3D12_SHADER_VISIBILITY_PIXEL);
+    (*m_rootSignature)[1].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 1, D3D12_SHADER_VISIBILITY_ALL);
+    (*m_rootSignature)[2].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 0, 1, D3D12_SHADER_VISIBILITY_ALL);
     m_rootSignature->Finalize(L"", rootSignatureFlag);
 
     //Create RTV
@@ -126,11 +123,20 @@ bool ClientGame::LoadContent() {
     rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 
     //Create input layout
+    /*
     D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
         {"POSITION",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
         {"COLOR_IN",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        {"TEXCOORD",  0, DXGI_FORMAT_R16G16_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+        {"TEXCOORD",  0, DXGI_FORMAT_R16G16_FLOAT, 0, 8, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+    };*/
+
+    D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
+    { "POSITION",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    { "COLOR_IN",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     };
+
+  
 
     //Create Rasterizer State
     D3D12_RASTERIZER_DESC rasterizerDesc = {};
@@ -163,9 +169,8 @@ bool ClientGame::LoadContent() {
     //generate texture
     m_testTextureRef = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("spnza_bricks_a.DDS", WhiteOpaque2D, true);
 
-
-    m_testTextures = m_textureDescriptorHeap.Alloc(1);
-    m_testSamplers = m_samplerDescriptorHeap.Alloc(1);
+    m_testTextures = GRAPHICS_CORE::g_texturesDescriptorHeap.Alloc(1);
+    m_testSamplers = GRAPHICS_CORE::g_samplersDescriptorHeap.Alloc(1);
 
     //texture loading process
     D3D12_CPU_DESCRIPTOR_HANDLE textures[] = {
@@ -183,8 +188,6 @@ bool ClientGame::LoadContent() {
     };
 
     GRAPHICS_CORE::g_device->CopyDescriptors(1, &m_testSamplers, &destNum, destNum, samplers, srcNums, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-
-
 
     m_contentLoaded = true;
     ResizeDepthBuffer(GetClientWidth(), GetClientHeight());
@@ -208,7 +211,7 @@ void ClientGame::OnRender(RenderEventArgs& e) {
     // Clear the render target.
     {
         D3D12_RESOURCE_STATES state =  currentBackbuffer.GetUsageState();
-        std::cout << "currentState:" << state << std::endl;
+        //std::cout << "currentState:" << state << std::endl;
         
         graphicsContext.TransitionResource(currentBackbuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 
@@ -252,9 +255,15 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 
     //set the texture array buffer
     {
-        DescriptorHandle textureHandle = m_textureDescriptorHeap[0];
-        graphicsContext.SetDescriptorTable(1, m_textureDescriptorHeap[0]);
-        graphicsContext.SetDescriptorTable(2, m_samplerDescriptorHeap[0]);
+        graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap());
+        graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap());
+
+        //ID3D12Resource* tex = m_testTextureRef.Get()->GetResource();
+        //CD3DX12_GPU_DESCRIPTOR_HANDLE handle = CD3DX12_GPU_DESCRIPTOR_HANDLE();
+        //D3D12_GPU_DESCRIPTOR_HANDLE gpuPtr;
+        //gpuPtr.ptr = tex->GetGPUVirtualAddress();
+        graphicsContext.SetDescriptorTable(1, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+        graphicsContext.SetDescriptorTable(2, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
     }
 
     // Present
@@ -262,7 +271,7 @@ void ClientGame::OnRender(RenderEventArgs& e) {
         graphicsContext.TransitionResource(currentBackbuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT, true);
         uint64_t fenceValue = graphicsContext.Finish(true);
         m_window->Present();
-        std::cout << "current frame:" << fenceValue << std::endl;
+        //std::cout << "current frame:" << fenceValue << std::endl;
     }
 }
 

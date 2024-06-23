@@ -21,7 +21,6 @@ public:
 	virtual void UnloadContent() override;
 
 protected:
-
 	virtual void OnUpdate(UpdateEventArgs& e) override;
 	virtual void OnRender(RenderEventArgs& e) override;
 	virtual void OnKeyPressed(KeyEventArgs& e) override;
@@ -68,9 +67,6 @@ private:
 
 	TextureRef m_testTextureRef;
 
-	
-	StaticDescriptorHeap m_textureDescriptorHeap;
-	StaticDescriptorHeap m_samplerDescriptorHeap;
 
 	DescriptorHandle m_testTextures;
 	DescriptorHandle m_testSamplers;

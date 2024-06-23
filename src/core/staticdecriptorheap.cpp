@@ -38,7 +38,6 @@ DescriptorHandle StaticDescriptorHeap::Alloc(uint32_t count) {
 	return ret;
 }
 
-
 bool StaticDescriptorHeap::ValidateHandle(const DescriptorHandle& dhandle) const {
 	if (dhandle.GetCPUPtr() < m_firstHandle.GetCPUPtr() || 
 		dhandle.GetCPUPtr() >= m_firstHandle.GetCPUPtr() + m_descriptorSize * m_heapDesc.NumDescriptors)

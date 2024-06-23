@@ -1,5 +1,3 @@
-
-
 Texture2D<float4> baseColorTexture : register(t0);
 SamplerState baseColorSampler : register(s0);
 
@@ -14,4 +12,5 @@ float4 PSMain(PixelInputAttributes input) : SV_Target
 {
     float4 sampleColor = baseColorTexture.Sample(baseColorSampler, input.uv);
     return sampleColor;
+    //return float4(input.uv, sampleColor.r, 1.0f);
 }

@@ -126,8 +126,7 @@ bool Texture::CreateDDSFromMemory(const void* memBuffer, size_t fillSize, bool s
     if (m_hCpuDescriptorHandle.ptr == D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN)
         m_hCpuDescriptorHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-    HRESULT hr = CreateDDSTextureFromMemory(GRAPHICS_CORE::g_device, (const uint8_t*)memBuffer,
-        fillSize, 0, sRGB, &m_resource, m_hCpuDescriptorHandle);
+    HRESULT hr = S_OK;
 
     return SUCCEEDED(hr);
 }

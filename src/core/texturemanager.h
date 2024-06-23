@@ -46,8 +46,8 @@ public:
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetSRV() const;
 
-	const Texture* Get(void) const;
-	const Texture* operator->(void) const;
+	Texture* Get(void) const;
+	Texture* operator->(void) const;
 
 private:
 	ManagedTexture* m_ref = nullptr;

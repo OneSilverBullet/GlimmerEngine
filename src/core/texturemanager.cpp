@@ -48,18 +48,49 @@ void ManagedTexture::CreateFromMemory(std::string memory, DefaultTextureType fal
 	else {
 		m_hCpuDescriptorHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		//if (CreateDDSTextureFromMemory(GRAPHICS_CORE::g_device, 
-		//	(const uint8_t*)memory.data(), memory.size(),
-		//	0, sRGB, &m_resource, m_hCpuDescriptorHandle))
-
-		if (CreateDDSTextureFromFile(GRAPHICS_CORE::g_device, 
-			L"resource/textures/spnza_bricks_a.DDS", 0, sRGB, &m_resource, m_hCpuDescriptorHandle))
+		std::unique_ptr<uint8_t[]> ddsData;
+		std::vector<D3D12_SUBRESOURCE_DATA> subresouceData;
+		if (LoadDDSTextureFromFile(GRAPHICS_CORE::g_device,
+			L"resource/textures/spnza_bricks_a.DDS",
+			&m_resource,
+			ddsData,
+			subresouceData) == S_OK)
 		{
+
+			GPUResource destTexture(m_resource, D3D12_RESOURCE_STATE_COPY_DEST);
+			GlobalContext::InitializeTexture(destTexture, (UINT)subresouceData.size(), subresouceData.data());
+
+
 			m_isValid = true;
 			D3D12_RESOURCE_DESC desc = GetResource()->GetDesc();
 			m_Width = desc.Width;
 			m_Height = desc.Height;
 			m_Depth = desc.DepthOrArraySize;
+
+			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+			srvDesc.Format = desc.Format;
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+			srvDesc.Texture2D.MipLevels = desc.MipLevels;
+
+			GRAPHICS_CORE::g_device->CreateShaderResourceView(m_resource, &srvDesc, m_hCpuDescriptorHandle);
+
+			/*
+			CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle0(m_srvUavHeap->GetCPUDescriptorHandleForHeapStart(), SrvParticlePosVelo0 + index, m_srvUavDescriptorSize);
+			CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle1(m_srvUavHeap->GetCPUDescriptorHandleForHeapStart(), SrvParticlePosVelo1 + index, m_srvUavDescriptorSize);
+
+			m_device->CreateShaderResourceView(m_particleBuffer1[index].Get(), &srvDesc, srvHandle1);
+
+
+			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+			srvDesc.Format = desc.Format;
+			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+			srvDesc.Texture2D.MipLevels = desc.MipLevels;
+			GRAPHICS_CORE::g_device->CreateShaderResourceView(m_resource,
+				&srvDesc,
+				m_hCpuDescriptorHandle);
+				*/
 		}
 		else {
 			GRAPHICS_CORE::g_device->CopyDescriptorsSimple(1, m_hCpuDescriptorHandle,
@@ -104,6 +135,7 @@ void TextureManager::Release()
 
 TextureRef TextureManager::LoadDDSFromFile(const std::string& filePath, DefaultTextureType defaultTex, bool sRGB)
 {
+	//ManagedTexture* loadedTexture = 
 	return FindOrLoadTexture(filePath, defaultTex, sRGB);
 }
 
@@ -157,7 +189,7 @@ TextureRef::TextureRef(const TextureRef& ref) : m_ref(ref.m_ref) {
 		++m_ref->m_referenceCount;
 }
 
-TextureRef::TextureRef(ManagedTexture* tex) {
+TextureRef::TextureRef(ManagedTexture* tex) : m_ref(tex) {
 	if (m_ref != nullptr)
 		++m_ref->m_referenceCount;
 }
@@ -192,10 +224,10 @@ D3D12_CPU_DESCRIPTOR_HANDLE TextureRef::GetSRV() const {
 	return GRAPHICS_CORE::g_textureManager.GetDefaultTexture(DefaultTextureType::WhiteOpaque2D);
 }
 
-const Texture* TextureRef::Get(void) const {
+Texture* TextureRef::Get(void) const {
 	return m_ref;
 }
 
-const Texture* TextureRef::operator->(void) const {
+Texture* TextureRef::operator->(void) const {
 	return m_ref;
 }

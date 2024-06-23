@@ -4,6 +4,7 @@
 #include "rootsignature.h"
 #include "mathematics/bitoperation.h"
 #include "mathematics/bitoperation.h"
+#include "d3dx12.h"
 
 /*
 * ContextManager
@@ -301,6 +302,30 @@ void Context::BindDescriptorHeaps() {
 
 void GlobalContext::InitializeTexture(GPUResource& dest, UINT numSubresources, D3D12_SUBRESOURCE_DATA subData[])
 {
+
+	//copy
+	Context& initContext = GRAPHICS_CORE::g_contextManager.GetAvailableContext();
+	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(dest.GetResource(), 0, numSubresources);
+
+	DynamicAlloc uploadBufferMem = initContext.ReserverUploadMemory(uploadBufferSize);
+	UpdateSubresources((ID3D12GraphicsCommandList*)initContext.GetCommandList(), dest.GetResource(), uploadBufferMem.m_resource.GetResource(),
+		0, 0, numSubresources, subData);
+	initContext.TransitionResource(dest, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+
+	//auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(dest.GetResource(),
+	//	D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	//((ID3D12GraphicsCommandList*)initContext.GetCommandList())->ResourceBarrier(1, &barrier);
+	//initContext.TransitionResource(dest, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	initContext.Finish(true);
+
+	//((ID3D12GraphicsCommandList*)initContext.GetCommandList())->Close();
+
+	//CommandQueue& queue = GRAPHICS_CORE::g_commandManager.GetDirectQueue();
+	//queue.GetCommandQueue()->ExecuteCommandLists(1, CommandListCast(&cinitContext.GetCommandList());
+
+
+	/*
 	//the gpu dest has been initialized
 	UINT64 uploadBufferSize = GetRequiredIntermediateSize(dest.GetResource(), 0, numSubresources);
 
@@ -308,8 +333,9 @@ void GlobalContext::InitializeTexture(GPUResource& dest, UINT numSubresources, D
 	DynamicAlloc uploadBufferMem = initContext.ReserverUploadMemory(uploadBufferSize);
 	UpdateSubresources((ID3D12GraphicsCommandList*)initContext.GetCommandList(), dest.GetResource(),
 		uploadBufferMem.m_resource.GetResource(), 0, 0, numSubresources, subData);
-	initContext.TransitionResource(dest, D3D12_RESOURCE_STATE_GENERIC_READ);
+	initContext.TransitionResource(dest, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	initContext.Finish(true);
+	*/
 }
 
 void GlobalContext::InitializeBuffer(GPUResource& dest, const void* data, size_t numBytes, size_t offset)

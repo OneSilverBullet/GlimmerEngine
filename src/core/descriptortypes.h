@@ -11,7 +11,7 @@ class DescriptorHandle
 {
 public:
 	DescriptorHandle() {
-		m_cpuHandle.ptr = D3D12_GPU_VIRTUAL_ADDRESS_NULL;
+		m_cpuHandle.ptr = D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN;
 		m_gpuHandle.ptr = D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN;
 	}
 
