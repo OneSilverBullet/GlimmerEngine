@@ -19,7 +19,8 @@ public:
 
 	virtual void Destroy() {
 		if (m_resource != nullptr) {
-			m_resource->Release();
+			//do not release the resource in here!
+			//m_resource->Release();
 			m_resource = nullptr;
 		}
 		m_gpuAddress = D3D12_GPU_VIRTUAL_ADDRESS_NULL;

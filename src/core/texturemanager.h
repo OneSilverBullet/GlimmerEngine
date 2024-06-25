@@ -16,7 +16,7 @@ public:
 	ManagedTexture(const std::string& fileName);
 
 	void WaitForLoad(void) const;
-	void CreateFromMemory(std::string memory, DefaultTextureType fallback, bool sRGB);
+	void CreateFromFile(std::wstring filePath, DefaultTextureType fallback, bool sRGB);
 
 private:
 	bool IsValid(void) const { return m_isValid; }

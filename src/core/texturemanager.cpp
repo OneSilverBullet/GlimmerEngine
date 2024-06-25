@@ -37,68 +37,33 @@ std::wstring String2Wstring(std::string wstr)
 	return res;
 }
 
-void ManagedTexture::CreateFromMemory(std::string memory, DefaultTextureType fallback, bool sRGB)
-{
-	std::wstring filePath = String2Wstring(memory);
-
-	if (memory.size() == 0)
+void ManagedTexture::CreateFromFile(std::wstring filePath, DefaultTextureType fallback, bool sRGB) {
+	if (filePath.size() == 0)
 	{
-		m_hCpuDescriptorHandle = GRAPHICS_CORE::g_textureManager.GetDefaultTexture(fallback);
+		//m_hCpuDescriptorHandle = (fallback);
 	}
-	else {
+	else
+	{
 		m_hCpuDescriptorHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		std::unique_ptr<uint8_t[]> ddsData;
-		std::vector<D3D12_SUBRESOURCE_DATA> subresouceData;
-		if (LoadDDSTextureFromFile(GRAPHICS_CORE::g_device,
-			L"resource/textures/spnza_bricks_a.DDS",
-			&m_resource,
-			ddsData,
-			subresouceData) == S_OK)
+
+		if (SUCCEEDED(CreateDDSTextureFromFile(GRAPHICS_CORE::g_device, filePath.data(), 0, sRGB,
+			GetAddressOf(), m_hCpuDescriptorHandle)))
 		{
-
-			GPUResource destTexture(m_resource, D3D12_RESOURCE_STATE_COPY_DEST);
-			GlobalContext::InitializeTexture(destTexture, (UINT)subresouceData.size(), subresouceData.data());
-
-
-			m_isValid = true;
-			D3D12_RESOURCE_DESC desc = GetResource()->GetDesc();
-			m_Width = desc.Width;
+			m_isLoading = true;
+			D3D12_RESOURCE_DESC desc = m_resource->GetDesc();
+			m_Width = (uint32_t)desc.Width;
 			m_Height = desc.Height;
 			m_Depth = desc.DepthOrArraySize;
-
-			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-			srvDesc.Format = desc.Format;
-			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-			srvDesc.Texture2D.MipLevels = desc.MipLevels;
-
-			GRAPHICS_CORE::g_device->CreateShaderResourceView(m_resource, &srvDesc, m_hCpuDescriptorHandle);
-
-			/*
-			CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle0(m_srvUavHeap->GetCPUDescriptorHandleForHeapStart(), SrvParticlePosVelo0 + index, m_srvUavDescriptorSize);
-			CD3DX12_CPU_DESCRIPTOR_HANDLE srvHandle1(m_srvUavHeap->GetCPUDescriptorHandleForHeapStart(), SrvParticlePosVelo1 + index, m_srvUavDescriptorSize);
-
-			m_device->CreateShaderResourceView(m_particleBuffer1[index].Get(), &srvDesc, srvHandle1);
-
-
-			D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-			srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-			srvDesc.Format = desc.Format;
-			srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-			srvDesc.Texture2D.MipLevels = desc.MipLevels;
-			GRAPHICS_CORE::g_device->CreateShaderResourceView(m_resource,
-				&srvDesc,
-				m_hCpuDescriptorHandle);
-				*/
 		}
-		else {
-			GRAPHICS_CORE::g_device->CopyDescriptorsSimple(1, m_hCpuDescriptorHandle,
-				GRAPHICS_CORE::g_textureManager.GetDefaultTexture(fallback), 
-				D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		else
+		{
+			//g_Device->CopyDescriptorsSimple(1, m_hCpuDescriptorHandle, GetDefaultTexture(fallback),
+			//	D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		}
 	}
-	m_isLoading = true;
+
+	m_isLoading = false;
 }
 
 void ManagedTexture::Unload()
@@ -176,7 +141,7 @@ ManagedTexture* TextureManager::FindOrLoadTexture(const std::string& filename,
 	}
 
 	std::string filenameLoaded = m_rootPath + filename + ".dds";
-	tex->CreateFromMemory(filenameLoaded.c_str(), texType, forceSRGB);
+	tex->CreateFromFile(L"resource/textures/spnza_bricks_a.DDS", texType, false);
 
 	return tex;
 }
