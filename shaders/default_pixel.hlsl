@@ -10,7 +10,7 @@ struct PixelInputAttributes
 
 float4 PSMain(PixelInputAttributes input) : SV_Target
 {
-    float4 sampleColor = baseColorTexture.Sample(baseColorSampler, input.uv);
-    return sampleColor;
+    float3 sampleColor = baseColorTexture.Sample(baseColorSampler, input.uv).rgb;
+    return float4(sampleColor, 1.0f);
     //return float4(input.uv, sampleColor.r, 1.0f);
 }

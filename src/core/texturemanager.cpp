@@ -46,7 +46,6 @@ void ManagedTexture::CreateFromFile(std::wstring filePath, DefaultTextureType fa
 	{
 		m_hCpuDescriptorHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-
 		if (SUCCEEDED(CreateDDSTextureFromFile(GRAPHICS_CORE::g_device, filePath.data(), 0, sRGB,
 			GetAddressOf(), m_hCpuDescriptorHandle)))
 		{

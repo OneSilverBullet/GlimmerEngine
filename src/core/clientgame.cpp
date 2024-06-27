@@ -236,11 +236,20 @@ void ClientGame::OnRender(RenderEventArgs& e) {
     }
 
 
+    //set the descriptor heap
+    {
+        graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap());
+        graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap());
+    }
+
     //set the constant array 
     {
         //Update Constant buffer
         XMMATRIX mvpMatrix = XMMatrixMultiply(XMMatrixMultiply(m_worldMatrix, m_viewMatrix), m_projMatrix);
         graphicsContext.SetConstantArray(0, sizeof(XMMATRIX) / 4, &mvpMatrix);
+        graphicsContext.SetDescriptorTable(1, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+        graphicsContext.SetDescriptorTable(2, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+
         XMFLOAT4X4 mvp;
         XMStoreFloat4x4(&mvp, mvpMatrix);
         std::ofstream fout;
@@ -253,25 +262,11 @@ void ClientGame::OnRender(RenderEventArgs& e) {
         graphicsContext.DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);        
     }
 
-    //set the texture array buffer
-    {
-        graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap());
-        graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap());
-
-        //ID3D12Resource* tex = m_testTextureRef.Get()->GetResource();
-        //CD3DX12_GPU_DESCRIPTOR_HANDLE handle = CD3DX12_GPU_DESCRIPTOR_HANDLE();
-        //D3D12_GPU_DESCRIPTOR_HANDLE gpuPtr;
-        //gpuPtr.ptr = tex->GetGPUVirtualAddress();
-        graphicsContext.SetDescriptorTable(1, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
-        graphicsContext.SetDescriptorTable(2, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
-    }
-
     // Present
     {
         graphicsContext.TransitionResource(currentBackbuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT, true);
         uint64_t fenceValue = graphicsContext.Finish(true);
         m_window->Present();
-        //std::cout << "current frame:" << fenceValue << std::endl;
     }
 }
 
