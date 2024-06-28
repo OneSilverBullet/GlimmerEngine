@@ -92,6 +92,11 @@ FILE(GLOB SRCS_RESOURCES_ALLOCATOR
    src/core/resources/memoryallocator/linearallocator.cpp
 )
 
+FILE(GLOB SRCS_GEOMETRY
+   src/core/geometry/objloader.h
+   src/core/geometry/objloader.cpp
+)
+
 FILE(GLOB SRCS_MATH
    src/core/mathematics/bitoperation.h
 )
@@ -111,6 +116,7 @@ ${SRCS_RESOURCES_ALLOCATOR}
 ${SRCS_TYPES}  
 ${SRCS_MATH}  
 ${SRCS_RESOURCES} 
+${SRCS_GEOMETRY} 
 ${SHADER_FILES})
 
 source_group("source" FILES ${SRCS_MAIN})
@@ -119,6 +125,7 @@ source_group("source\\core\\resources" FILES ${SRCS_RESOURCES})
 source_group("source\\core\\resources\\memoryallocator" FILES ${SRCS_RESOURCES_ALLOCATOR})
 source_group( "source\\core\\types" FILES ${SRCS_TYPES} )
 source_group( "source\\core\\mathematics" FILES ${SRCS_MATH} )
+source_group( "source\\core\\geometry" FILES ${SRCS_GEOMETRY} )
 source_group( "resources\\shaders" FILES ${SHADER_FILES} )
 
 
