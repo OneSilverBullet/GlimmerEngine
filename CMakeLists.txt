@@ -95,6 +95,14 @@ FILE(GLOB SRCS_RESOURCES_ALLOCATOR
 FILE(GLOB SRCS_GEOMETRY
    src/core/geometry/objloader.h
    src/core/geometry/objloader.cpp
+   src/core/geometry/vertexformat.h
+   src/core/geometry/vertexformat.cpp
+   src/core/geometry/mesh.h
+   src/core/geometry/mesh.cpp
+   src/core/geometry/material.h
+   src/core/geometry/material.cpp
+   src/core/geometry/model.h
+   src/core/geometry/model.cpp
 )
 
 FILE(GLOB SRCS_MATH

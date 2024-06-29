@@ -1,98 +1,97 @@
-#include "ModelLoader.h"
+#include "objloader.h"
 
 
-
-void ModelLoader::LoadModel(string path)
-{
-	ifstream file;
-	file.open(path.c_str()); //加载model文件
-
-	string line, type, x, y, z;
-	float tempU, tempV, intpart;
-
-	while (!file.eof()) {
-		getline(file, line);
-		istringstream loader(line);
-		//先读取当前文件的type
-		loader >> type;
-		if (type == "v") { //position
-			loader >> x >> y >> z;
-			//注意：obj模型是左手坐标系，DX是右手坐标系
-			XMFLOAT3 temp_pos = XMFLOAT3(stof(x), stof(y), -stof(z));
-			modelloader_positions.push_back(temp_pos);
-		}
-		else if (type == "vn") { //normal
-			loader >> x >> y >> z;
-			//注意：obj模型是左手坐标系，DX是右手坐标系
-			XMFLOAT3 temp_normal = XMFLOAT3(stof(x), stof(y), -stof(z));
-			modelloader_normals.push_back(temp_normal);
-		}
-		else if (type == "vt") //uv
-		{
-			loader >> x >> y;
-			XMFLOAT2 temp_uv = XMFLOAT2(stof(x), 1.0 - stof(y));
-			modelloader_uvs.push_back(temp_uv);
-		}
-		else if (type == "f") {//面
-			loader >> x >> y >> z;
-			PBRVertex first_vertex = PBRVertexBuilder(x);
-			PBRVertex second_vertex = PBRVertexBuilder(y);
-			PBRVertex third_vertex = PBRVertexBuilder(z);
-			//加载第一个顶点
-			modelloader_vertices.push_back(first_vertex);
-			UINT current_index = modelloader_vertices.size() - 1;
-			modelloader_indices.push_back(current_index);
-			//加载第二个顶点
-			modelloader_vertices.push_back(second_vertex);
-			current_index = modelloader_vertices.size() - 1;
-			modelloader_indices.push_back(current_index);
-			//加载第三个顶点
-			modelloader_vertices.push_back(third_vertex);
-			current_index = modelloader_vertices.size() - 1;
-			modelloader_indices.push_back(current_index);
-		}
-	}
-	file.clear();
-	file.seekg(0, file.beg); //归位
-}
-
-PBRVertex ModelLoader::PBRVertexBuilder(string face_frag)
-{
-	vector<string> vertex_index_str_vec;
-	for (int i = 0; i < 2; ++i) {
-		int split_point = face_frag.find('/');
-		string index_value = face_frag.substr(0, split_point);
-		face_frag = face_frag.substr(split_point + 1);
-		vertex_index_str_vec.push_back(index_value);
-	}
-	vertex_index_str_vec.push_back(face_frag);
-	//
-	vector<int> vertex_index_int_vec;
-	for (int i = 0; i < 3; ++i) {
-		vertex_index_int_vec.push_back(string_to_int(vertex_index_str_vec[i]));
-	}
-	PBRVertex res_vertex(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-	//注意:索引从1开始
-	res_vertex.position = modelloader_positions[vertex_index_int_vec[0] - 1];
-	res_vertex.uv = modelloader_uvs[vertex_index_int_vec[1] - 1];
-	res_vertex.normal = modelloader_normals[vertex_index_int_vec[2] - 1];
-	return res_vertex;
-}
-
-BaseMesh<PBRVertex> ModelLoader::MeshBuilder(string path)
-{
-	LoadModel(path);
-	BaseMesh<PBRVertex> res;
-	res.indexArray = modelloader_indices;
-	res.vertexArray = modelloader_vertices;
-	return res;
-}
-
-int string_to_int(string value)
+int StringToInt(std::string value)
 {
 	int res = 0;
 	for (int i = 0; i < value.size(); ++i) {
 		res = res * 10 + int(value[i] - '0');
 	}
 	return res;
+}
+
+BaseVertex ObjModelLoader::OBJVertexBuilder(std::string faceFrag, 
+	std::vector<DirectX::XMFLOAT3>& position, 
+	std::vector<DirectX::XMFLOAT2>& uvs)
+{
+	std::vector<std::string> vertexIndexStrVec;
+	for (int i = 0; i < 2; ++i) {
+		int splitPoint = faceFrag.find('/');
+		std::string indexValue = faceFrag.substr(0, splitPoint);
+		faceFrag = faceFrag.substr(splitPoint + 1);
+		vertexIndexStrVec.push_back(indexValue);
+	}
+	vertexIndexStrVec.push_back(faceFrag);
+
+	std::vector<int> vertexIndexIntVec;
+	for (int i = 0; i < 3; ++i) {
+		vertexIndexIntVec.push_back(StringToInt(vertexIndexStrVec[i]));
+	}
+
+	BaseVertex vertexInstance(0.0, 0.0, 0.0, 0.0, 0.0);
+
+	vertexInstance.position = position[vertexIndexIntVec[0] - 1];
+	vertexInstance.uv = uvs[vertexIndexIntVec[1] - 1];
+	return vertexInstance;
+}
+
+void ObjModelLoader::LoadModel(std::string path, 
+	std::vector<BaseVertex>& outputVertices,
+	std::vector<DWORD>& outputIndices)
+{
+	std::ifstream file;
+	file.open(path.c_str()); //loading the model in obj type
+
+	std::string line, type, x, y, z;
+	float tempU, tempV, intpart;
+
+	std::vector<DirectX::XMFLOAT3> positions;
+	std::vector<DirectX::XMFLOAT3> normals;
+	std::vector<DirectX::XMFLOAT2> uvs;
+
+	while (!file.eof()) {
+		getline(file, line);
+		std::istringstream loader(line);
+		loader >> type;
+		if (type == "v") { //position
+			loader >> x >> y >> z;
+			//Attention: the obj model has the left-hand coordination system
+			//dx is the right-hand coordination system
+			DirectX::XMFLOAT3 tempPos = DirectX::XMFLOAT3(stof(x), stof(y), -stof(z));
+			positions.push_back(tempPos);
+		}
+		else if (type == "vn") { //normal
+			loader >> x >> y >> z;
+			//Attention: the obj model has the left-hand coordination system
+			//dx is the right-hand coordination system
+			DirectX::XMFLOAT3 tempNormal = DirectX::XMFLOAT3(stof(x), stof(y), -stof(z));
+			normals.push_back(tempNormal);
+		}
+		else if (type == "vt") //uv
+		{
+			loader >> x >> y;
+			DirectX::XMFLOAT2 tempUV = DirectX::XMFLOAT2(stof(x), 1.0 - stof(y));
+			uvs.push_back(tempUV);
+		}
+		else if (type == "f") {//face
+			loader >> x >> y >> z;
+			BaseVertex firstVertex = ObjModelLoader::OBJVertexBuilder(x, positions, uvs);
+			BaseVertex secondVertex = ObjModelLoader::OBJVertexBuilder(y, positions, uvs);
+			BaseVertex thirdVertex = ObjModelLoader::OBJVertexBuilder(z, positions, uvs);
+			//loading the first vertex
+			outputVertices.push_back(firstVertex);
+			size_t curIndex = outputVertices.size() - 1;
+			outputIndices.push_back(curIndex);
+			//loading the second vertex
+			outputVertices.push_back(secondVertex);
+			curIndex = outputVertices.size() - 1;
+			outputIndices.push_back(curIndex);
+			//loading the third vertex
+			outputVertices.push_back(thirdVertex);
+			curIndex = outputVertices.size() - 1;
+			outputIndices.push_back(curIndex);
+		}
+	}
+	file.clear();
+	file.seekg(0, file.beg); 
 }

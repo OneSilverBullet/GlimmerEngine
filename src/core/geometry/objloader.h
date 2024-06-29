@@ -1,25 +1,26 @@
 #pragma once
 
 #include <string>
+#include <wtypes.h>
+#include <DirectXMath.h>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <sstream>
 
-//value必须是数字的string
-int string_to_int(string value);
+#include "vertexformat.h"
 
 class ObjModelLoader
 {
 public:
-	BaseMesh<PBRVertex> MeshBuilder(string path);
+
+	static void LoadModel(std::string path, 
+		std::vector<BaseVertex>& outputVertices,
+		std::vector<DWORD>& outputIndices);
 
 
-	void LoadModel(string path);
-	//格式类似 x/x/x
-	PBRVertex PBRVertexBuilder(string face_frag);
-
-private:
-	vector<XMFLOAT3> modelloader_positions;
-	vector<XMFLOAT2> modelloader_uvs;
-	vector<XMFLOAT3> modelloader_normals;
-	vector<PBRVertex> modelloader_vertices;
-	vector<UINT> modelloader_indices;
+	static BaseVertex OBJVertexBuilder(std::string faceFrag,
+		std::vector<DirectX::XMFLOAT3>& position,
+		std::vector<DirectX::XMFLOAT2>& uvs);
 };
 

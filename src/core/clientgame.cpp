@@ -8,19 +8,22 @@
 #include "graphicscore.h"
 #include "d3dx12.h"
 #include "context.h"
+#include "geometry/objloader.h"
+#include "geometry/vertexformat.h"
 #include <DirectXMath.h>
 #include <fstream>
 #include <iostream>
 #include <string>
 
 using namespace DirectX;
-
+/*
 struct VertexPosColor
 {
 	XMFLOAT3 Position;
 	XMFLOAT3 Color;
     XMFLOAT2 UV;
 };
+
 
 static VertexPosColor g_Vertices[8] = {
     { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f)}, // 0
@@ -42,6 +45,10 @@ static WORD g_Indicies[36] =
     1, 5, 6, 1, 6, 2,
     4, 0, 3, 4, 3, 7
 };
+*/
+
+std::vector<BaseVertex> g_Vertices;
+std::vector<DWORD> g_Indicies;
 
 template<typename T>
 constexpr const T& clamp(const T& v, const T& lo, const T& hi)
@@ -67,28 +74,33 @@ ClientGame::~ClientGame() {
 bool ClientGame::LoadContent() {
     auto device = GRAPHICS_CORE::g_device;
 
-
-    
     //Upload vertex buffer data
     GraphicsContext& initContext = GRAPHICS_CORE::g_contextManager.GetAvailableGraphicsContext();
     ID3D12GraphicsCommandList* initCommandList = (ID3D12GraphicsCommandList*)initContext.GetCommandList();
 
+    //loading model data 
+
+    ObjModelLoader::LoadModel("resource/models/Cerberus.obj", g_Vertices, g_Indicies);
+
+
+
     ComPtr<ID3D12Resource> intermediateVertexBuffer;
     UpdateBufferResource(initCommandList,
         &m_vertexBuffer, &intermediateVertexBuffer,
-        _countof(g_Vertices), sizeof(VertexPosColor), g_Vertices);
+        g_Vertices.size(), sizeof(BaseVertex), g_Vertices.data());
     m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-    m_vertexBufferView.SizeInBytes = sizeof(g_Vertices);
-    m_vertexBufferView.StrideInBytes = sizeof(VertexPosColor);
+    m_vertexBufferView.SizeInBytes = g_Vertices.size() * sizeof(BaseVertex);
+    m_vertexBufferView.StrideInBytes = sizeof(BaseVertex);
 
     //Upload index buffer data
     ComPtr<ID3D12Resource> intermediateIndexBuffer;
     UpdateBufferResource(initCommandList,
         &m_indexBuffer, &intermediateIndexBuffer,
-        		_countof(g_Indicies), sizeof(WORD), g_Indicies);
+        g_Indicies.size(), sizeof(DWORD), g_Indicies.data());
+
     m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
-    m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
-    m_indexBufferView.SizeInBytes = sizeof(g_Indicies);
+    m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+    m_indexBufferView.SizeInBytes = g_Indicies.size() * sizeof(DWORD);
     
     initContext.Finish();
 
@@ -128,15 +140,13 @@ bool ClientGame::LoadContent() {
         {"POSITION",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
         {"COLOR_IN",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
         {"TEXCOORD",  0, DXGI_FORMAT_R16G16_FLOAT, 0, 8, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
-    };*/
+    };
 
     D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
     { "POSITION",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     { "COLOR_IN",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     { "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    };
-
-  
+    };*/
 
     //Create Rasterizer State
     D3D12_RASTERIZER_DESC rasterizerDesc = {};
@@ -159,7 +169,7 @@ bool ClientGame::LoadContent() {
     m_pso->SetRasterizerState(rasterizerDesc);
     m_pso->SetBlendState(blendDesc);
     m_pso->SetRootSignature(m_rootSignature);
-    m_pso->SetInputLayout(_countof(inputLayout), inputLayout);
+    m_pso->SetInputLayout(_countof(BaseVertexLayout), BaseVertexLayout);
     m_pso->SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
     m_pso->SetRenderTargetFormats(1, &rtvFormats.RTFormats[0], DXGI_FORMAT_D32_FLOAT);
     m_pso->SetVertexShader(vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize());
@@ -259,7 +269,7 @@ void ClientGame::OnRender(RenderEventArgs& e) {
             << std::to_string(mvp._31) << " " << std::to_string(mvp._32) << " " << std::to_string(mvp._33) << " " << std::to_string(mvp._34) << std::endl
             << std::to_string(mvp._41) << " " << std::to_string(mvp._42) << " " << std::to_string(mvp._43) << " " << std::to_string(mvp._44) << std::endl;
 
-        graphicsContext.DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);        
+        graphicsContext.DrawIndexedInstanced(g_Indicies.size(), 1, 0, 0, 0);
     }
 
     // Present
@@ -279,14 +289,14 @@ void ClientGame::OnUpdate(UpdateEventArgs& e) {
     m_worldMatrix = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
 
     //Update the view matrix
-    const XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);
+    const XMVECTOR eyePosition = XMVectorSet(0, 0, -300, 1);
     const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
     const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
     m_viewMatrix = XMMatrixLookAtLH(eyePosition, focusPoint, upDirection);
 
     //update project matrix
     float aspectRatio = GetClientWidth()/ static_cast<float>(GetClientHeight());
-    m_projMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_fov), aspectRatio, 0.1f, 100.0f);
+    m_projMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_fov), aspectRatio, 0.1f, 1000.0f);
 
 }
 
