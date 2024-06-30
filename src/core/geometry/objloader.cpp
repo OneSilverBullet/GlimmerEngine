@@ -10,9 +10,10 @@ int StringToInt(std::string value)
 	return res;
 }
 
-BaseVertex ObjModelLoader::OBJVertexBuilder(std::string faceFrag, 
+PBRVertex ObjModelLoader::OBJVertexBuilder(std::string faceFrag,
 	std::vector<DirectX::XMFLOAT3>& position, 
-	std::vector<DirectX::XMFLOAT2>& uvs)
+	std::vector<DirectX::XMFLOAT2>& uvs,
+	std::vector<DirectX::XMFLOAT3>& normals)
 {
 	std::vector<std::string> vertexIndexStrVec;
 	for (int i = 0; i < 2; ++i) {
@@ -28,15 +29,16 @@ BaseVertex ObjModelLoader::OBJVertexBuilder(std::string faceFrag,
 		vertexIndexIntVec.push_back(StringToInt(vertexIndexStrVec[i]));
 	}
 
-	BaseVertex vertexInstance(0.0, 0.0, 0.0, 0.0, 0.0);
+	PBRVertex vertexInstance(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
 	vertexInstance.position = position[vertexIndexIntVec[0] - 1];
 	vertexInstance.uv = uvs[vertexIndexIntVec[1] - 1];
+	vertexInstance.normal = normals[vertexIndexIntVec[1] - 1];
 	return vertexInstance;
 }
 
 void ObjModelLoader::LoadModel(std::string path, 
-	std::vector<BaseVertex>& outputVertices,
+	std::vector<PBRVertex>& outputVertices,
 	std::vector<DWORD>& outputIndices)
 {
 	std::ifstream file;
@@ -75,9 +77,9 @@ void ObjModelLoader::LoadModel(std::string path,
 		}
 		else if (type == "f") {//face
 			loader >> x >> y >> z;
-			BaseVertex firstVertex = ObjModelLoader::OBJVertexBuilder(x, positions, uvs);
-			BaseVertex secondVertex = ObjModelLoader::OBJVertexBuilder(y, positions, uvs);
-			BaseVertex thirdVertex = ObjModelLoader::OBJVertexBuilder(z, positions, uvs);
+			PBRVertex firstVertex = ObjModelLoader::OBJVertexBuilder(x, positions, uvs, normals);
+			PBRVertex secondVertex = ObjModelLoader::OBJVertexBuilder(y, positions, uvs, normals);
+			PBRVertex thirdVertex = ObjModelLoader::OBJVertexBuilder(z, positions, uvs, normals);
 			//loading the first vertex
 			outputVertices.push_back(firstVertex);
 			size_t curIndex = outputVertices.size() - 1;

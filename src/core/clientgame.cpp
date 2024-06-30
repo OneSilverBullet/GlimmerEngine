@@ -47,7 +47,7 @@ static WORD g_Indicies[36] =
 };
 */
 
-std::vector<BaseVertex> g_Vertices;
+std::vector<PBRVertex> g_Vertices;
 std::vector<DWORD> g_Indicies;
 
 template<typename T>
@@ -87,10 +87,10 @@ bool ClientGame::LoadContent() {
     ComPtr<ID3D12Resource> intermediateVertexBuffer;
     UpdateBufferResource(initCommandList,
         &m_vertexBuffer, &intermediateVertexBuffer,
-        g_Vertices.size(), sizeof(BaseVertex), g_Vertices.data());
+        g_Vertices.size(), sizeof(PBRVertex), g_Vertices.data());
     m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-    m_vertexBufferView.SizeInBytes = g_Vertices.size() * sizeof(BaseVertex);
-    m_vertexBufferView.StrideInBytes = sizeof(BaseVertex);
+    m_vertexBufferView.SizeInBytes = g_Vertices.size() * sizeof(PBRVertex);
+    m_vertexBufferView.StrideInBytes = sizeof(PBRVertex);
 
     //Upload index buffer data
     ComPtr<ID3D12Resource> intermediateIndexBuffer;
@@ -169,7 +169,7 @@ bool ClientGame::LoadContent() {
     m_pso->SetRasterizerState(rasterizerDesc);
     m_pso->SetBlendState(blendDesc);
     m_pso->SetRootSignature(m_rootSignature);
-    m_pso->SetInputLayout(_countof(BaseVertexLayout), BaseVertexLayout);
+    m_pso->SetInputLayout(_countof(PBRVertexLayout), PBRVertexLayout);
     m_pso->SetPrimitiveTopologyType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
     m_pso->SetRenderTargetFormats(1, &rtvFormats.RTFormats[0], DXGI_FORMAT_D32_FLOAT);
     m_pso->SetVertexShader(vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize());

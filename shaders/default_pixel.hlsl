@@ -4,7 +4,7 @@ SamplerState baseColorSampler : register(s0);
 struct PixelInputAttributes
 {
     float4 position : SV_POSITION;
-    //float4 color : COLOR_OUT;
+    float3 normal : NORMAL0;
     float2 uv : TEXCOORD0;
 };
 
