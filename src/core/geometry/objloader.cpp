@@ -78,20 +78,20 @@ void ObjModelLoader::LoadModel(std::string path,
 		else if (type == "f") {//face
 			loader >> x >> y >> z;
 			PBRVertex firstVertex = ObjModelLoader::OBJVertexBuilder(x, positions, uvs, normals);
+			size_t firstIndex = outputVertices.size();
 			PBRVertex secondVertex = ObjModelLoader::OBJVertexBuilder(y, positions, uvs, normals);
+			size_t secondIndex = firstIndex + 1;
 			PBRVertex thirdVertex = ObjModelLoader::OBJVertexBuilder(z, positions, uvs, normals);
+			size_t thirdIndex = firstIndex + 2;
 			//loading the first vertex
 			outputVertices.push_back(firstVertex);
-			size_t curIndex = outputVertices.size() - 1;
-			outputIndices.push_back(curIndex);
+			outputIndices.push_back(firstIndex);
 			//loading the second vertex
 			outputVertices.push_back(secondVertex);
-			curIndex = outputVertices.size() - 1;
-			outputIndices.push_back(curIndex);
+			outputIndices.push_back(secondIndex);
 			//loading the third vertex
 			outputVertices.push_back(thirdVertex);
-			curIndex = outputVertices.size() - 1;
-			outputIndices.push_back(curIndex);
+			outputIndices.push_back(thirdIndex);
 		}
 	}
 	file.clear();

@@ -99,7 +99,6 @@ void TextureManager::Release()
 
 TextureRef TextureManager::LoadDDSFromFile(const std::string& filePath, DefaultTextureType defaultTex, bool sRGB)
 {
-	//ManagedTexture* loadedTexture = 
 	return FindOrLoadTexture(filePath, defaultTex, sRGB);
 }
 
@@ -140,7 +139,8 @@ ManagedTexture* TextureManager::FindOrLoadTexture(const std::string& filename,
 	}
 
 	std::string filenameLoaded = m_rootPath + filename + ".dds";
-	tex->CreateFromFile(L"resource/textures/spnza_bricks_a.DDS", texType, false);
+	std::wstring filenameExchanged = String2Wstring(filenameLoaded);
+	tex->CreateFromFile(filenameExchanged, texType, false);
 
 	return tex;
 }

@@ -45,7 +45,6 @@ void DefaultGeometry::DefaultSphereMesh(float radius, std::vector<BaseVertex>& o
 
 void DefaultGeometry::DefaultSphereMesh(float radius, std::vector<PBRVertex>& outputVertices, std::vector<DWORD>& outputIndices)
 {
-
 	int x_segment_num = 16;
 	int y_segment_num = 16;
 	float pi = 3.14159265359;

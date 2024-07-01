@@ -10,6 +10,7 @@
 #include "context.h"
 #include "geometry/objloader.h"
 #include "geometry/vertexformat.h"
+#include "geometry/defaultgeometry.h"
 #include <DirectXMath.h>
 #include <fstream>
 #include <iostream>
@@ -80,8 +81,9 @@ bool ClientGame::LoadContent() {
 
     //loading model data 
 
-    ObjModelLoader::LoadModel("resource/models/Cerberus.obj", g_Vertices, g_Indicies);
+    //ObjModelLoader::LoadModel("resource/models/Cerberus.obj", g_Vertices, g_Indicies);
 
+    DefaultGeometry::DefaultSphereMesh(40.0f, g_Vertices, g_Indicies);
 
 
     ComPtr<ID3D12Resource> intermediateVertexBuffer;
@@ -134,19 +136,7 @@ bool ClientGame::LoadContent() {
     rtvFormats.NumRenderTargets = 1;
     rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-    //Create input layout
-    /*
-    D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-        {"POSITION",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        {"COLOR_IN",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        {"TEXCOORD",  0, DXGI_FORMAT_R16G16_FLOAT, 0, 8, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
-    };
 
-    D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-    { "POSITION",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    { "COLOR_IN",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    { "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    };*/
 
     //Create Rasterizer State
     D3D12_RASTERIZER_DESC rasterizerDesc = {};
@@ -177,7 +167,8 @@ bool ClientGame::LoadContent() {
     m_pso->Finalize();
 
     //generate texture
-    m_testTextureRef = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("spnza_bricks_a.DDS", WhiteOpaque2D, true);
+    //m_testTextureRef = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("spnza_bricks_a", WhiteOpaque2D, true);
+    m_testTextureRef = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("skybox", BlackCubeMap, true);
 
     m_testTextures = GRAPHICS_CORE::g_texturesDescriptorHeap.Alloc(1);
     m_testSamplers = GRAPHICS_CORE::g_samplersDescriptorHeap.Alloc(1);
@@ -237,7 +228,7 @@ void ClientGame::OnRender(RenderEventArgs& e) {
     {
         graphicsContext.SetPiplelineObject(*m_pso);
         graphicsContext.SetRootSignature(*m_rootSignature);
-        graphicsContext.SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        graphicsContext.SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
         graphicsContext.SetVertexBuffer(0, m_vertexBufferView);
         graphicsContext.SetIndexBuffer(m_indexBufferView);
         graphicsContext.SetViewportAndScissor(m_viewport, m_scissorRect);

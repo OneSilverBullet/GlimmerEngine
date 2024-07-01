@@ -153,7 +153,7 @@ namespace GRAPHICS_CORE
 		if (GRAPHICS_CORE::g_device) {
 			//Update essential d3d12 device
 			GRAPHICS_CORE::g_commandManager.Initialize(GRAPHICS_CORE::g_device);
-			GRAPHICS_CORE::g_textureManager.Initialize("");
+			GRAPHICS_CORE::g_textureManager.Initialize("resource/textures/");
 			SamplersInitialize();
 
 			//Create the descriptor heap for textures and samplers
