@@ -116,6 +116,11 @@ FILE(GLOB SRCS_TYPES
    src/core/types/commontypes.h
 )
 
+FILE(GLOB SRCS_COMPONENTS
+   src/core/components/skybox.h
+   src/core/components/skybox.cpp
+)
+
 set(SRCS_MAIN  
    src/main.cpp
 )
@@ -127,6 +132,7 @@ ${SRCS_TYPES}
 ${SRCS_MATH}  
 ${SRCS_RESOURCES} 
 ${SRCS_GEOMETRY} 
+${SRCS_COMPONENTS} 
 ${SHADER_FILES})
 
 source_group("source" FILES ${SRCS_MAIN})
@@ -136,6 +142,7 @@ source_group("source\\core\\resources\\memoryallocator" FILES ${SRCS_RESOURCES_A
 source_group( "source\\core\\types" FILES ${SRCS_TYPES} )
 source_group( "source\\core\\mathematics" FILES ${SRCS_MATH} )
 source_group( "source\\core\\geometry" FILES ${SRCS_GEOMETRY} )
+source_group( "source\\core\\components" FILES ${SRCS_COMPONENTS} )
 source_group( "resources\\shaders" FILES ${SHADER_FILES} )
 
 
