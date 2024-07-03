@@ -6,6 +6,7 @@
 #include "mathematics/bitoperation.h"
 #include "d3dx12.h"
 
+#include <algorithm>
 
 /*
 * ContextManager
@@ -19,7 +20,7 @@ Context* ContextManager::AllocateContext(D3D12_COMMAND_LIST_TYPE type)
 	Context* ret = nullptr;
 	if (availableContexts.empty()) {
 		ret = new Context(type);
-		m_availableContextPool[type].push(ret);
+		m_contextPool[type].emplace_back(ret);
 		ret->Initialize();
 	}
 	else {
@@ -321,7 +322,7 @@ void GlobalContext::InitializeBuffer(GPUResource& dest, const void* data, size_t
 {
 	Context& initContext = GRAPHICS_CORE::g_contextManager.GetAvailableContext();
 	
-	DynamicAlloc uploadBufferMem = initContext.ReserverUploadMemory(153344);
+	DynamicAlloc uploadBufferMem = initContext.ReserverUploadMemory(numBytes);
 	memcpy(uploadBufferMem.m_cpuVirtualAddress, data, Mathematics::DivideByMultiple(numBytes, 16));
 
 	initContext.TransitionResource(dest, D3D12_RESOURCE_STATE_COPY_DEST, true);
@@ -331,8 +332,20 @@ void GlobalContext::InitializeBuffer(GPUResource& dest, const void* data, size_t
 	initContext.Finish();
 }
 
-void GlobalContext::InitializeBuffer(GPUResource& dest, const UploadBuffer& src, size_t srcOffset, size_t destOffset)
+void GlobalContext::InitializeBuffer(GPUBuffer& dest, const UploadBuffer& src, size_t srcOffset, size_t numBytes, size_t destOffset)
 {
+	Context& initContext = GRAPHICS_CORE::g_contextManager.GetAvailableContext();
+
+	size_t maxBytes = std::min<size_t>(dest.GetBufferSize() - destOffset, src.GetBufferSize() - srcOffset);
+	numBytes = std::min<size_t>(numBytes, maxBytes);
+
+	initContext.TransitionResource(dest, D3D12_RESOURCE_STATE_COPY_DEST, true);
+	initContext.GetGraphicCommandList()->CopyBufferRegion(dest.GetResource(), 
+		destOffset, (ID3D12Resource*)src.GetResource(), srcOffset, numBytes);
+	initContext.TransitionResource(dest, D3D12_RESOURCE_STATE_GENERIC_READ, true);
+
+	initContext.Finish(true);
+
 }
 
 
@@ -579,6 +592,10 @@ void GraphicsContext::SetVertexBuffer(UINT slot, const D3D12_VERTEX_BUFFER_VIEW&
 void GraphicsContext::SetVertexBuffers(UINT startSlot, UINT count, const D3D12_VERTEX_BUFFER_VIEW vbViews[])
 {
 	m_graphicsCommandList->IASetVertexBuffers(startSlot, count, vbViews);
+}
+
+void GraphicsContext::SetStaticVB(UINT slot, size_t numVertices, size_t vertexStride, const void* vbData) {
+
 }
 
 void GraphicsContext::SetDynamicVB(UINT slot, size_t numVertices, size_t vertexStride, const void* vbData)

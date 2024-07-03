@@ -3,6 +3,7 @@
 
 class UploadBuffer;
 
+//the geometry data encapsulation in GPU
 class GPUBuffer : public GPUResource
 {
 public:

@@ -3,8 +3,10 @@
 #include "window.h"
 #include <DirectXMath.h>
 #include "resources/depthbuffer.h"
+#include "resources/byteaddressbuffer.h"
 #include "texturemanager.h"
 #include "staticdecriptorheap.h"
+
 
 class RootSignature;
 class GraphicsPSO;
@@ -31,21 +33,6 @@ protected:
 	virtual void OnWindowDestroy() override;
 
 private:
-	void UpdateBufferResource(
-				ID3D12GraphicsCommandList* commandList,
-				ID3D12Resource** pDestinationResource, ID3D12Resource** pIntermediateResource,
-				size_t numElements, size_t elementSize, const void* bufferData,
-				D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
-
-	void TransitionResource(ID3D12GraphicsCommandList* commandList,
-		ID3D12Resource* resource,
-		D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
-
-	void ClearRTV(ID3D12GraphicsCommandList* commandList,
-		D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor);
-
-	void ClearDepth(ID3D12GraphicsCommandList* commandList,
-		D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 1.0f);
 
 
 	void ResizeDepthBuffer(int width, int height);
@@ -59,9 +46,6 @@ private:
 
 	DepthBuffer m_depthBuffer;
 
-	//ComPtr<ID3D12Resource> m_depthBuffer; //samilar with the back buffer
-	//D3D12_CPU_DESCRIPTOR_HANDLE m_dsvDescriptorHandle;
-
 	RootSignature* m_rootSignature = nullptr;
 	GraphicsPSO* m_pso = nullptr;
 
@@ -72,9 +56,7 @@ private:
 	DescriptorHandle m_testSamplers;
 
 
-	//the command is temporary
-	//todo: encapsulate a graphics context
-	//ID3D12GraphicsCommandList* m_commandList = nullptr;
+	ByteAddressBuffer m_geometryBuffer;
 
 
 	D3D12_VIEWPORT m_viewport;

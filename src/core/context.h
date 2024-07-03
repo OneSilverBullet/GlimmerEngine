@@ -9,10 +9,12 @@
 #include "commandmanager.h"
 #include "resources/memoryallocator/linearallocator.h"
 #include "resources/gpuresource.h"
+#include "resources/gpubuffer.h"
 #include "resources/readbackbuffer.h"
 #include "resources/pixelbuffer.h"
 #include "resources/colorbuffer.h"
 #include "resources/depthbuffer.h"
+#include "resources/uploadbuffer.h"
 #include "types/commontypes.h"
 #include "pso.h"
 
@@ -46,7 +48,9 @@ public:
 	//initialize a texture
 	static void InitializeTexture(GPUResource& dest, UINT numSubresources, D3D12_SUBRESOURCE_DATA subData[]);
 	static void InitializeBuffer(GPUResource& dest, const void* data, size_t numBytes, size_t offset = 0);
-	static void InitializeBuffer(GPUResource& dest, const UploadBuffer& src, size_t srcOffset, size_t destOffset);
+	static void InitializeBuffer(GPUBuffer& dest, const UploadBuffer& src, 
+		size_t srcOffset, size_t numBytes = -1, size_t destOffset = 0);
+
 
 };
 
@@ -205,6 +209,7 @@ public:
 	void SetIndexBuffer(const D3D12_INDEX_BUFFER_VIEW& ibView);
 	void SetVertexBuffer(UINT slot, const D3D12_VERTEX_BUFFER_VIEW& vbView);
 	void SetVertexBuffers(UINT startSlot, UINT count, const D3D12_VERTEX_BUFFER_VIEW vbViews[]);
+	void SetStaticVB(UINT slot, size_t numVertices, size_t vertexStride, const void* vbData);
 	void SetDynamicVB(UINT slot, size_t numVertices, size_t vertexStride, const void* vbData);
 	void SetDynamicIB(size_t indexCount, const uint16_t* IBData);
 	void SetDynamicSRV(UINT rootIndex, size_t bufferSize, const void* bufferData);

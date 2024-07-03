@@ -2,6 +2,7 @@
 #include "gpubuffer.h"
 #include "graphicscore.h"
 #include "mathematics/bitoperation.h"
+#include "context.h"
 
 void GPUBuffer::Create(const std::wstring& name, uint32_t elements, 
 	uint32_t elementSize, const void* data) {
@@ -31,9 +32,45 @@ void GPUBuffer::Create(const std::wstring& name, uint32_t elements,
 	m_resource->SetName(name.c_str());
 	m_gpuAddress = m_resource->GetGPUVirtualAddress();
 
-	//TODO: copy the data to current gpu buffer, linear memory system allocate memory to current buffer
+	if (data) {
+		//upload the data to the gpu end
+		GlobalContext::InitializeBuffer(*this, data, m_bufferSize);
+	}
 
+	//create related views 
+	CreateDerivedViews();
+}
 
+void GPUBuffer::Create(const std::wstring& name, uint32_t elements, uint32_t elementSize,
+	const UploadBuffer& srcData, uint32_t srcOffset) {
+	//clear previous resource
+	Destroy();
+
+	m_elementCount = elements;
+	m_elementSize = elementSize;
+	m_bufferSize = m_elementCount * m_elementSize;
+	m_usageState = D3D12_RESOURCE_STATE_COMMON;
+
+	//describe the default gpu buffer 
+	D3D12_RESOURCE_DESC m_resourceDesc = DescribeBuffer();
+
+	//create the heap for current buffer
+	D3D12_HEAP_PROPERTIES heapProp;
+	heapProp.Type = D3D12_HEAP_TYPE_DEFAULT;
+	heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+	heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	heapProp.CreationNodeMask = 0;
+	heapProp.VisibleNodeMask = 0;
+
+	//create buffer
+	ThrowIfFailed(GRAPHICS_CORE::g_device->CreateCommittedResource(
+		&heapProp, D3D12_HEAP_FLAG_NONE, &m_resourceDesc, m_usageState, nullptr, IID_PPV_ARGS(&m_resource)
+	));
+	m_resource->SetName(name.c_str());
+	m_gpuAddress = m_resource->GetGPUVirtualAddress();
+
+	//upload the data to the gpu end
+	GlobalContext::InitializeBuffer(*this, srcData, srcOffset);
 
 	//create related views 
 	CreateDerivedViews();

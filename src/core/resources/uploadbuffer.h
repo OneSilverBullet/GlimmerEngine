@@ -10,7 +10,7 @@ public:
 	void* Map();
 	void Unmap(size_t begin = 0, size_t end = -1);
 
-	size_t GetBufferSize() { return m_bufferSize; }
+	size_t GetBufferSize() const { return m_bufferSize; }
 
 private:
 	size_t m_bufferSize;

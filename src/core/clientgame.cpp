@@ -8,6 +8,7 @@
 #include "graphicscore.h"
 #include "d3dx12.h"
 #include "context.h"
+#include "resources/uploadbuffer.h"
 #include "geometry/objloader.h"
 #include "geometry/vertexformat.h"
 #include "geometry/defaultgeometry.h"
@@ -17,36 +18,7 @@
 #include <string>
 
 using namespace DirectX;
-/*
-struct VertexPosColor
-{
-	XMFLOAT3 Position;
-	XMFLOAT3 Color;
-    XMFLOAT2 UV;
-};
 
-
-static VertexPosColor g_Vertices[8] = {
-    { XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f)}, // 0
-    { XMFLOAT3(-1.0f,  1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) }, // 1
-    { XMFLOAT3(1.0f,  1.0f, -1.0f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) }, // 2
-    { XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) }, // 3
-    { XMFLOAT3(-1.0f, -1.0f,  1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) }, // 4
-    { XMFLOAT3(-1.0f,  1.0f,  1.0f), XMFLOAT3(0.0f, 1.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) }, // 5
-    { XMFLOAT3(1.0f,  1.0f,  1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) }, // 6
-    { XMFLOAT3(1.0f, -1.0f,  1.0f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) }  // 7
-};
-
-static WORD g_Indicies[36] =
-{
-    0, 1, 2, 0, 2, 3,
-    4, 6, 5, 4, 7, 6,
-    4, 5, 1, 4, 1, 0,
-    3, 2, 6, 3, 6, 7,
-    1, 5, 6, 1, 6, 2,
-    4, 0, 3, 4, 3, 7
-};
-*/
 
 std::vector<PBRVertex> g_Vertices;
 std::vector<DWORD> g_Indicies;
@@ -77,7 +49,7 @@ bool ClientGame::LoadContent() {
 
     //Upload vertex buffer data
     GraphicsContext& initContext = GRAPHICS_CORE::g_contextManager.GetAvailableGraphicsContext();
-    ID3D12GraphicsCommandList* initCommandList = (ID3D12GraphicsCommandList*)initContext.GetCommandList();
+    
 
     //loading model data 
 
@@ -85,26 +57,22 @@ bool ClientGame::LoadContent() {
 
     DefaultGeometry::DefaultSphereMesh(40.0f, g_Vertices, g_Indicies);
 
+    uint32_t vertexOffset = g_Vertices.size() * sizeof(PBRVertex);
+    uint32_t indexOffset = g_Indicies.size() * sizeof(DWORD);
+    uint32_t uploadBufferSize = g_Vertices.size() * sizeof(PBRVertex) + g_Indicies.size() * sizeof(DWORD);
 
-    ComPtr<ID3D12Resource> intermediateVertexBuffer;
-    UpdateBufferResource(initCommandList,
-        &m_vertexBuffer, &intermediateVertexBuffer,
-        g_Vertices.size(), sizeof(PBRVertex), g_Vertices.data());
-    m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-    m_vertexBufferView.SizeInBytes = g_Vertices.size() * sizeof(PBRVertex);
-    m_vertexBufferView.StrideInBytes = sizeof(PBRVertex);
+    UploadBuffer uploadBuffer;
+    uploadBuffer.Create(L"Upload Buffer", uploadBufferSize);
 
-    //Upload index buffer data
-    ComPtr<ID3D12Resource> intermediateIndexBuffer;
-    UpdateBufferResource(initCommandList,
-        &m_indexBuffer, &intermediateIndexBuffer,
-        g_Indicies.size(), sizeof(DWORD), g_Indicies.data());
+    uint8_t* uploadMem = (uint8_t*)uploadBuffer.Map();
 
-    m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
-    m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
-    m_indexBufferView.SizeInBytes = g_Indicies.size() * sizeof(DWORD);
-    
-    initContext.Finish();
+    memcpy(uploadMem, g_Vertices.data(), vertexOffset);
+    memcpy(uploadMem + vertexOffset, g_Indicies.data(), indexOffset);
+
+    m_geometryBuffer.Create(L"Geometry Buffer", uploadBufferSize, 1, uploadBuffer);
+
+    m_vertexBufferView = m_geometryBuffer.VertexBufferView(0, vertexOffset, sizeof(PBRVertex));
+    m_indexBufferView = m_geometryBuffer.IndexBufferView(vertexOffset, indexOffset, true);
 
     //Load Shader
     ComPtr<ID3DBlob> vertexShaderBlob;
@@ -321,67 +289,6 @@ void ClientGame::OnWindowDestroy() {
 	Application::GetInstance().Quit();
 }
 
-void ClientGame::UpdateBufferResource(
-    ID3D12GraphicsCommandList* commandList,
-    ID3D12Resource** pDestinationResource, //destination resource
-    ID3D12Resource** pIntermediateResource, //intermediate resource
-    size_t numElements, size_t elementSize, const void* bufferData,
-    D3D12_RESOURCE_FLAGS flags) {
-
-    auto device = GRAPHICS_CORE::g_device;
-    size_t bufferSize = numElements * elementSize;
-
-    // Create a committed resource for the GPU resource in a default heap.
-    ThrowIfFailed(device->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
-			D3D12_HEAP_FLAG_NONE, // no flags
-			&CD3DX12_RESOURCE_DESC::Buffer(bufferSize, flags), // resource description for a buffer
-			D3D12_RESOURCE_STATE_COPY_DEST, // we will start this heap in the copy destination state since we will copy data
-			nullptr, // optimized clear value must be null for this type of resource. used for render targets and depth/stencil buffers
-			IID_PPV_ARGS(pDestinationResource)));
-
-    if (bufferData != nullptr) {
-        ThrowIfFailed(device->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // upload heap
-            D3D12_HEAP_FLAG_NONE, // no flags
-            &CD3DX12_RESOURCE_DESC::Buffer(bufferSize), // resource description for a buffer
-            D3D12_RESOURCE_STATE_GENERIC_READ, // GPU will read from this buffer and copy its contents to the default heap
-            nullptr,
-            IID_PPV_ARGS(pIntermediateResource)));
-        
-        //Upload the buffer data to the GPU
-        D3D12_SUBRESOURCE_DATA subresourceData = {};
-        subresourceData.pData = bufferData;
-        subresourceData.RowPitch = bufferSize;
-        subresourceData.SlicePitch = subresourceData.RowPitch;
-        UpdateSubresources(commandList, 
-            *pDestinationResource, *pIntermediateResource,
-            0, 0, 1, &subresourceData);
-    }
-}
-
-void ClientGame::TransitionResource(ID3D12GraphicsCommandList* commandList,
-    ID3D12Resource* resource,
-    D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState) {
-
-    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        resource,
-        beforeState, afterState);
-
-    commandList->ResourceBarrier(1, &barrier);
-}
-
-
-void ClientGame::ClearRTV(ID3D12GraphicsCommandList* commandList,
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor) {
-    commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-}
-
-void ClientGame::ClearDepth(ID3D12GraphicsCommandList* commandList,
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth) {
-    commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
-}
-
 void ClientGame::ResizeDepthBuffer(int width, int height) {
     if (m_contentLoaded) {
         GRAPHICS_CORE::g_commandManager.Flush();
@@ -395,25 +302,5 @@ void ClientGame::ResizeDepthBuffer(int width, int height) {
 
 
         m_depthBuffer.Create(L"depthBuffer", width, height, D3D12_RESOURCE_STATE_DEPTH_WRITE, DXGI_FORMAT_D32_FLOAT);
-
-        /*
-        ThrowIfFailed(device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), // a default heap
-			D3D12_HEAP_FLAG_NONE, // no flags
-			&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height,
-                				1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), // resource description for a depth buffer
-			D3D12_RESOURCE_STATE_DEPTH_WRITE, // we will start this heap in the generic read state as a copy destination
-			&optimizedClearValue, // the optimized clear value for depth buffers
-			IID_PPV_ARGS(&m_depthBuffer)));
-    
-        // 
-        D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-		dsv.Format = DXGI_FORMAT_D32_FLOAT;
-		dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		dsv.Texture2D.MipSlice = 0;
-		dsv.Flags = D3D12_DSV_FLAG_NONE;
-
-		device->CreateDepthStencilView(m_depthBuffer.Get(), &dsv, 
-            m_dsvDescriptorHandle);*/
     }
 }
