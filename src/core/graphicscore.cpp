@@ -10,6 +10,7 @@ namespace GRAPHICS_CORE
 	TextureManager g_textureManager;
 	CommandManager g_commandManager;
 	ContextManager g_contextManager;
+	//the following two descriptor heaps will be binded into related context 
 	StaticDescriptorHeap g_texturesDescriptorHeap;
 	StaticDescriptorHeap g_samplersDescriptorHeap;
 	ID3D12Device* g_device = nullptr;

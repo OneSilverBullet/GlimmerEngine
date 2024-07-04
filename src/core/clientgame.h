@@ -6,7 +6,7 @@
 #include "resources/byteaddressbuffer.h"
 #include "texturemanager.h"
 #include "staticdecriptorheap.h"
-
+#include "components/skybox.h"
 
 class RootSignature;
 class GraphicsPSO;
@@ -38,27 +38,10 @@ private:
 	void ResizeDepthBuffer(int width, int height);
 
 
-	ComPtr<ID3D12Resource> m_vertexBuffer;
-	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-	ComPtr<ID3D12Resource> m_indexBuffer;
-	D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
-
+	SkyBox m_skybox;
+	
 
 	DepthBuffer m_depthBuffer;
-
-	RootSignature* m_rootSignature = nullptr;
-	GraphicsPSO* m_pso = nullptr;
-
-	TextureRef m_testTextureRef;
-
-
-	DescriptorHandle m_testTextures;
-	DescriptorHandle m_testSamplers;
-
-
-	ByteAddressBuffer m_geometryBuffer;
-
-
 	D3D12_VIEWPORT m_viewport;
 	D3D12_RECT m_scissorRect;
 

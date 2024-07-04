@@ -16,7 +16,9 @@ struct VertexOutputAttributes
 
 struct ModelViewProjection
 {
-    matrix MVP;
+    matrix model;
+    matrix view;
+    matrix proj;
 };
 
 ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);
@@ -25,7 +27,9 @@ VertexOutputAttributes VSMain(VertexInputAttributes input)
 {
     VertexOutputAttributes output;
     output.uvcube = input.position;
-    output.position = mul(ModelViewProjectionCB.MVP, float4(input.position, 1.0f)); 
+    output.position = mul(ModelViewProjectionCB.proj, mul(ModelViewProjectionCB.view, mul(ModelViewProjectionCB.model, float4(input.position, 1.0f))));
+    output.position = output.position.xyww; //the key of the sky box 
+    
     output.normal = input.normal;
     output.uv = input.uv;
     return output;
