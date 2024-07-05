@@ -53,7 +53,7 @@ void SkyBox::InitializeRootSignature() {
         D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
     m_rootSignature = new RootSignature(3, 0);
-    (*m_rootSignature)[0].InitAsConstant32(0, sizeof(XMMATRIX) / 4, D3D12_SHADER_VISIBILITY_VERTEX);
+    (*m_rootSignature)[0].InitAsConstantBuffer(0, D3D12_SHADER_VISIBILITY_VERTEX);
     (*m_rootSignature)[1].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 1, D3D12_SHADER_VISIBILITY_ALL);
     (*m_rootSignature)[2].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 0, 1, D3D12_SHADER_VISIBILITY_ALL);
     m_rootSignature->Finalize(L"", rootSignatureFlag);
@@ -142,7 +142,8 @@ void SkyBox::Render(
     DepthBuffer& depthbuffer,
     D3D12_VIEWPORT viewport,
     D3D12_RECT scissorrect,
-    XMMATRIX& model, XMMATRIX& view, XMMATRIX& proj) {
+    XMMATRIX& model, XMMATRIX& view, XMMATRIX& proj,
+    XMFLOAT3& eyepos) {
 
     GraphicsContext& graphicsContext = GRAPHICS_CORE::g_contextManager.GetAvailableGraphicsContext();
 
@@ -178,12 +179,13 @@ void SkyBox::Render(
             XMMATRIX model;
             XMMATRIX view;
             XMMATRIX proj;
+            XMFLOAT3 eyepos;
         } skyboxcbuffer;
         
         skyboxcbuffer.model = model;
         skyboxcbuffer.view = view;
         skyboxcbuffer.proj = proj;
-
+        skyboxcbuffer.eyepos = eyepos;
 
         graphicsContext.SetDynamicConstantBufferView(0, sizeof(SkyboxCB), &skyboxcbuffer);
         graphicsContext.SetDescriptorTable(1, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());

@@ -41,8 +41,8 @@ public:
 	{
 		m_resource = pResource;
 		m_usageState = usage;
-		m_gpuAddress = m_resource->GetGPUVirtualAddress();
 		m_resource->Map(0, nullptr, &m_cpuVirtualAddress);
+		m_gpuVirtualAddress = m_resource->GetGPUVirtualAddress();
 	}
 
 	~LinearPage(){}
@@ -59,7 +59,7 @@ public:
 		}
 	}
 
-	void* m_cpuVirtualAddress;
+	void* m_cpuVirtualAddress = nullptr;
 	D3D12_GPU_VIRTUAL_ADDRESS m_gpuVirtualAddress;
 };
 

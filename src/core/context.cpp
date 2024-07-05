@@ -540,6 +540,7 @@ void GraphicsContext::SetDynamicConstantBufferView(UINT rootIndex, size_t buffer
 	//allocate the constant buffer
 	DynamicAlloc cb = m_cpuLinearAllocator.Allocate(bufferSize);
 	memcpy(cb.m_cpuVirtualAddress, bufferData, bufferSize);
+
 	//binding the constant buffer view 
 	m_graphicsCommandList->SetGraphicsRootConstantBufferView(rootIndex, cb.m_gpuVirtualAddress);
 }

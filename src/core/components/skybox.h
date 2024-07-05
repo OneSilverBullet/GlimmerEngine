@@ -21,7 +21,7 @@ public:
 	void Render(D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv,
 		ColorBuffer& backBuffer, DepthBuffer& depthBuffer,
 		D3D12_VIEWPORT viewport, D3D12_RECT scissorrect,
-		XMMATRIX& model, XMMATRIX& view, XMMATRIX& proj);
+		XMMATRIX& model, XMMATRIX& view, XMMATRIX& proj, XMFLOAT3& eyepos);
 
 private:
 	void InitializeGeometry();

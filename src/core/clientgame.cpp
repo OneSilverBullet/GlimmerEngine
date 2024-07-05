@@ -68,9 +68,12 @@ void ClientGame::OnRender(RenderEventArgs& e) {
     auto dsv = m_depthBuffer.GetDSV();
 
     XMMATRIX mvpMatrix =  XMMatrixMultiply(XMMatrixMultiply(m_worldMatrix, m_viewMatrix), m_projMatrix);
+    XMFLOAT3 eyepos = { 0, 0, -1 };
+
 
     //render sky box 
-    m_skybox.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect, m_worldMatrix, m_viewMatrix, m_projMatrix);
+    m_skybox.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect, 
+        m_worldMatrix, m_viewMatrix, m_projMatrix, eyepos);
 
     // Present
     {
@@ -82,8 +85,8 @@ void ClientGame::OnUpdate(UpdateEventArgs& e) {
     super::OnUpdate(e);
 
     //Update the model matrix
-    float angle = static_cast<float>(e.TotalTime * 90.0f);
-    const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
+    float angle = static_cast<float>(e.TotalTime * 10.0f);
+    const XMVECTOR rotationAxis = XMVectorSet(0, 1, 0, 0);
     m_worldMatrix = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
 
     //Update the view matrix

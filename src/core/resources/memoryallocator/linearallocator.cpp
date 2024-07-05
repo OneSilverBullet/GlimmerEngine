@@ -39,8 +39,8 @@ LinearPage* LinearAllocationPageManager::CreateNewPage(size_t pageSize)
 	D3D12_HEAP_PROPERTIES heapProp;
 	heapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
 	heapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-	heapProp.CreationNodeMask = 0;
-	heapProp.VisibleNodeMask = 0;
+	heapProp.CreationNodeMask = 1;
+	heapProp.VisibleNodeMask = 1;
 
 	//create gpu resource description
 	D3D12_RESOURCE_DESC gpuResourceDesc;
