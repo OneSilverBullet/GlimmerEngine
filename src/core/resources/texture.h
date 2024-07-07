@@ -10,7 +10,7 @@ public:
 
 	//create a textures
 	void Create2D(size_t rowPitchBytes, size_t width, size_t height, DXGI_FORMAT format, const void* initData);
-	void CreateCube(size_t rowPitchBytes, size_t width, size_t height, DXGI_FORMAT format, const void* initData);
+	void CreateCube(size_t rowPitchBytes, size_t width, size_t height, DXGI_FORMAT format, const void* initData, D3D12_RESOURCE_STATES usage = D3D12_RESOURCE_STATE_GENERIC_READ);
 
 
 	bool CreateDDSFromMemory(const void* memBuffer, size_t fillSize, bool sRGB);

@@ -48,7 +48,7 @@ bool ClientGame::LoadContent() {
     auto device = GRAPHICS_CORE::g_device;
 
     //initialize the skybox
-    m_skybox.Initialize("skybox");
+    //m_skybox.Initialize("skybox");
     m_hdrLoader.Initialize();
 
     m_contentLoaded = true;
@@ -72,11 +72,10 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 
 
     //render sky box 
-    m_skybox.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect, 
-        m_worldMatrix, m_viewMatrix, m_projMatrix, eyepos);
+    //m_skybox.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect, 
+    //    m_worldMatrix, m_viewMatrix, m_projMatrix, eyepos);
 
-    m_hdrLoader.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect,
-        m_worldMatrix, m_viewMatrix, m_projMatrix);
+    m_hdrLoader.Render(m_viewport, m_scissorRect);
 
     // Present
     {
@@ -88,13 +87,13 @@ void ClientGame::OnUpdate(UpdateEventArgs& e) {
     super::OnUpdate(e);
 
     //Update the model matrix
-    float angle = static_cast<float>(e.TotalTime * 10.0f);
+    float angle = static_cast<float>(e.TotalTime * 90.0f);
     const XMVECTOR rotationAxis = XMVectorSet(0, 1, 0, 0);
     m_worldMatrix = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
 
     //Update the view matrix
-    const XMVECTOR eyePosition = XMVectorSet(0, 0, -1, 1);
-    const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
+    const XMVECTOR eyePosition = XMVectorSet(0, 0, 0, 1);
+    const XMVECTOR focusPoint = XMVectorSet(0, 0, 1, 1);
     const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
     m_viewMatrix = XMMatrixLookAtLH(eyePosition, focusPoint, upDirection);
 

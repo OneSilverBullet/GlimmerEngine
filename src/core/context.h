@@ -46,7 +46,7 @@ class GlobalContext
 {
 public:
 	//initialize a texture
-	static void InitializeTexture(GPUResource& dest, UINT numSubresources, D3D12_SUBRESOURCE_DATA subData[]);
+	static void InitializeTexture(GPUResource& dest, UINT numSubresources, D3D12_SUBRESOURCE_DATA subData[], D3D12_RESOURCE_STATES usage = D3D12_RESOURCE_STATE_GENERIC_READ);
 	static void InitializeBuffer(GPUResource& dest, const void* data, size_t numBytes, size_t offset = 0);
 	static void InitializeBuffer(GPUBuffer& dest, const UploadBuffer& src, 
 		size_t srcOffset, size_t numBytes = -1, size_t destOffset = 0);

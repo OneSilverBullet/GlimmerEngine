@@ -30,6 +30,11 @@ namespace GRAPHICS_CORE
 		D3D12_DESCRIPTOR_HEAP_TYPE_DSV
 	};
 
+	UINT32 GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE type)
+	{
+		return GRAPHICS_CORE::g_device->GetDescriptorHandleIncrementSize(type);
+	}
+
 	D3D12_CPU_DESCRIPTOR_HANDLE AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE type, UINT count)
 	{
 		return g_descriptorHeapAllocator[type].Allocator(count);

@@ -34,10 +34,7 @@ protected:
 	virtual void OnWindowDestroy() override;
 
 private:
-
-
 	void ResizeDepthBuffer(int width, int height);
-
 
 	SkyBox m_skybox;
 	HDRLoader m_hdrLoader;

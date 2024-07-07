@@ -103,7 +103,16 @@ void SkyBox::InitializePSO() {
 void SkyBox::InitializeCubemap() {
     //generate texture
     //m_testTextureRef = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("spnza_bricks_a", WhiteOpaque2D, true);
-    m_cubemap = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile(m_cubemapName, BlackCubeMap, true);
+    
+    //m_cubemap = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile(m_cubemapName, BlackCubeMap, true);
+
+    uint32_t* formattedData = new uint32_t[512 * 512];
+    //uint32_t blackCubeTexels[96] = { 0x00FFFF80 };
+
+    ManagedTexture* texInstance = nullptr;
+    texInstance = new ManagedTexture("file");
+    texInstance->CreateCube(4 * 512, 512, 512, DXGI_FORMAT_R8G8B8A8_UNORM, formattedData);
+    m_cubemap = TextureRef(texInstance);
 
     //allocate descriptor handle
     m_textureHandle = GRAPHICS_CORE::g_texturesDescriptorHeap.Alloc(1);
@@ -135,10 +144,6 @@ void SkyBox::Initialize(std::string skyboxName) {
     InitializeCubemap();
 
 
-
-
-
-
 }
 
 void SkyBox::Render(
@@ -164,8 +169,8 @@ void SkyBox::Render(
 
     {
         graphicsContext.SetPiplelineObject(*m_pso);
-        graphicsContext.SetRootSignature(*m_rootSignature);
-        graphicsContext.SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        graphicsContext.SetRootSignature(*m_rootSignature);//D3D12_PRIMITIVE_TOPOLOGY_TRI
+        graphicsContext.SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
         graphicsContext.SetVertexBuffer(0, m_vertexBufferView);
         graphicsContext.SetIndexBuffer(m_indexBufferView);
         graphicsContext.SetViewportAndScissor(viewport, scissorrect);

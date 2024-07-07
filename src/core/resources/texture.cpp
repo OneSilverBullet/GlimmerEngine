@@ -57,7 +57,7 @@ void Texture::Create2D(size_t rowPitchBytes, size_t width, size_t height, DXGI_F
     GRAPHICS_CORE::g_device->CreateShaderResourceView(m_resource, nullptr, m_hCpuDescriptorHandle);
 }
 
-void Texture::CreateCube(size_t rowPitchBytes, size_t width, size_t height, DXGI_FORMAT format, const void* initData)
+void Texture::CreateCube(size_t rowPitchBytes, size_t width, size_t height, DXGI_FORMAT format, const void* initData, D3D12_RESOURCE_STATES usage)
 {
     Destroy();
 
@@ -77,7 +77,7 @@ void Texture::CreateCube(size_t rowPitchBytes, size_t width, size_t height, DXGI
     desc.SampleDesc.Count = 1;
     desc.SampleDesc.Quality = 0;
     desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    desc.Flags = D3D12_RESOURCE_FLAG_NONE | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
 
     D3D12_HEAP_PROPERTIES heapProps;
     heapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
@@ -100,7 +100,8 @@ void Texture::CreateCube(size_t rowPitchBytes, size_t width, size_t height, DXGI
     texResource.SlicePitch = rowPitchBytes * height;
 
     //update the texture data from cpu to gpu resource
-    GlobalContext::InitializeTexture(*this, 1, &texResource);
+    GlobalContext::InitializeTexture(*this, 1, &texResource, usage);
+    m_usageState = usage;
 
     //generate the srv
     if (m_hCpuDescriptorHandle.ptr == D3D12_GPU_VIRTUAL_ADDRESS_UNKNOWN) {

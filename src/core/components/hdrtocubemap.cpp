@@ -24,69 +24,70 @@ void HDRLoader::Initialize() {
     InitializeRootSignature();
     InitializePSO();
     InitializeHDRmap();
+    InitializeCubemapRenderTargets();
 }
 
-void HDRLoader::Render(D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv,
-    ColorBuffer& backBuffer, DepthBuffer& depthBuffer,
-    D3D12_VIEWPORT viewport, D3D12_RECT scissorrect,
-    XMMATRIX& model, XMMATRIX& view, XMMATRIX& proj) {
+void HDRLoader::Render(D3D12_VIEWPORT viewport, D3D12_RECT scissorrect) {
+
+    __declspec(align(16)) struct HDRLoaderCB
+    {
+        XMMATRIX model;
+        XMMATRIX view;
+        XMMATRIX proj;
+    } hdrloadercbuffer;
+
+    //update project matrix
+    XMMATRIX model = XMMatrixIdentity();
+    XMMATRIX projMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(90.0f), 1.0f, 0.1f, 1000.0f);
+    XMMATRIX viewMatrix[] =
+    {
+         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(1.0f,  0.0f,  0.0f, 1.0f), XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f)),
+         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(-1.0f,  0.0f,  0.0f, 1.0f), XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f)),
+         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(0.0f,  1.0f,  0.0f, 1.0f), XMVectorSet(0.0f,  0.0f,  1.0f, 0.0f)),
+         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(0.0f,  -1.0f,  0.0f, 1.0f), XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f)),
+         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(0.0f,  0.0f,  1.0f, 1.0f), XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f)),
+         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(0.0f,  0.0f, -1.0f, 1.0f), XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f)),
+    };
 
     GraphicsContext& graphicsContext = GRAPHICS_CORE::g_contextManager.GetAvailableGraphicsContext();
 
-    // Clear the render target.
-    {
-        D3D12_RESOURCE_STATES state = backBuffer.GetUsageState();
-        graphicsContext.TransitionResource(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
-        //FLOAT clearColor[4] = { 0.4f, 0.6f, 0.9f, 1.0f };
-        //graphicsContext.ClearColor(rtv, clearColor);
-        //graphicsContext.ClearDepth(depthBuffer);
-    }
+    //D3D12_RESOURCE_STATES state = backBuffer.GetUsageState();
+    //graphicsContext.TransitionResource(backBuffer, state, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 
-    {
-        graphicsContext.SetPiplelineObject(*m_pso);
-        graphicsContext.SetRootSignature(*m_rootSignature);
-        graphicsContext.SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-        graphicsContext.SetVertexBuffer(0, m_vertexBufferView);
-        graphicsContext.SetIndexBuffer(m_indexBufferView);
-        graphicsContext.SetViewportAndScissor(viewport, scissorrect);
-        graphicsContext.SetRenderTargets(1, &rtv, dsv);
-    }
+    //initialize the graphics context
+    graphicsContext.SetPiplelineObject(*m_pso);
+    graphicsContext.SetRootSignature(*m_rootSignature);
+    graphicsContext.SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    graphicsContext.SetVertexBuffer(0, m_vertexBufferView);
+    graphicsContext.SetIndexBuffer(m_indexBufferView);
+    graphicsContext.SetViewportAndScissor(viewport, scissorrect);
+    graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap());
+    graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap());
 
-    //set the descriptor heap
-    {
-        graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap());
-        graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap());
-    }
+    for (int i = 0; i < 6; ++i) {
+        //clear the render target
+        graphicsContext.SetRenderTargets(1, &m_cubemapRTV[i]);
+        FLOAT clearColor[4] = { 0.4f, 0.6f, 0.9f, 1.0f };
+        graphicsContext.ClearColor(m_cubemapRTV[i], clearColor);
 
-    //bind the shader visible resource
-    {
-        __declspec(align(16)) struct SkyboxCB
-        {
-            XMMATRIX model;
-            XMMATRIX view;
-            XMMATRIX proj;
-        } skyboxcbuffer;
 
-        skyboxcbuffer.model = model;
-        skyboxcbuffer.view = view;
-        skyboxcbuffer.proj = proj;
+        hdrloadercbuffer.model = model;
+        hdrloadercbuffer.view = viewMatrix[i];
+        hdrloadercbuffer.proj = projMatrix;
+        
 
-        graphicsContext.SetDynamicConstantBufferView(0, sizeof(SkyboxCB), &skyboxcbuffer);
+        graphicsContext.SetDynamicConstantBufferView(0, sizeof(HDRLoaderCB), &hdrloadercbuffer);
         graphicsContext.SetDescriptorTable(1, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
         graphicsContext.SetDescriptorTable(2, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
         graphicsContext.DrawIndexedInstanced(m_indicies.size(), 1, 0, 0, 0);
     }
 
-    // execute the sky box render pass
-    {
-        graphicsContext.TransitionResource(backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT, true);
-        uint64_t fenceValue = graphicsContext.Finish(true);
-    }
+    uint64_t fenceValue = graphicsContext.Finish(true);
 }
 
 void HDRLoader::InitializeGeometry()
 {
-    DefaultGeometry::DefaultBoxMesh(10.0f, m_vertices, m_indicies);
+    DefaultGeometry::DefaultBoxMesh(0.5f, m_vertices, m_indicies);
 
     uint32_t vertexOffset = m_vertices.size() * sizeof(PBRVertex);
     uint32_t indexOffset = m_indicies.size() * sizeof(DWORD);
@@ -171,18 +172,39 @@ void HDRLoader::InitializePSO()
     m_pso->Finalize();
 }
 
+void HDRLoader::InitializeCubemapRenderTargets() {
+    uint32_t* formattedData = new uint32_t[m_textureSize * m_textureSize];
+
+    ManagedTexture* texInstance = nullptr;
+    texInstance = new ManagedTexture("file");
+    texInstance->CreateCube(4 * m_textureSize, m_textureSize, m_textureSize, DXGI_FORMAT_R8G8B8A8_UNORM, formattedData, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    m_cubmapGenerated = TextureRef(texInstance);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE cubeRTVHandles = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 6);
+
+    D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+    rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+    rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    rtvDesc.Texture2DArray.MipSlice = 0;
+    rtvDesc.Texture2DArray.FirstArraySlice = 0; 
+    rtvDesc.Texture2DArray.ArraySize = 1;
+    rtvDesc.Texture2DArray.PlaneSlice = 0;
+
+    UINT32 descriptorSize = GRAPHICS_CORE::GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    for (int cubemapIndex = 0; cubemapIndex < 6; ++cubemapIndex) {
+        D3D12_CPU_DESCRIPTOR_HANDLE tmpRTVHandle = cubeRTVHandles;
+        tmpRTVHandle.ptr = cubeRTVHandles.ptr + cubemapIndex * descriptorSize;
+        m_cubemapRTV[cubemapIndex] = CD3DX12_CPU_DESCRIPTOR_HANDLE(tmpRTVHandle);
+        //change the render target of the cube map
+        rtvDesc.Texture2DArray.FirstArraySlice = cubemapIndex;
+        GRAPHICS_CORE::g_device->CreateRenderTargetView(m_cubmapGenerated.Get()->GetResource(), &rtvDesc, m_cubemapRTV[cubemapIndex]);
+    }
+}
+
 void HDRLoader::InitializeHDRmap()
 {
     //loading hdr texture
-
-    stbi_set_flip_vertically_on_load(true);
-    int width, height, nrComponents;
-    float* data = stbi_loadf("resource/textures/hdr/hdrsky.hdr", &width, &height, &nrComponents, 0);
-
-
-   
-    m_hdrmap->Create2D(4 * 3 * width, width, height, DXGI_FORMAT_R32G32B32_FLOAT, data);
-
+    m_hdrmap = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("hdr/hdrsky", BlackCubeMap, true);
 
     //allocate descriptor handle
     m_textureHandle = GRAPHICS_CORE::g_texturesDescriptorHeap.Alloc(1);

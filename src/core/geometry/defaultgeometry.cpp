@@ -121,38 +121,41 @@ void DefaultGeometry::DefaultBoxMesh(float length, std::vector<BaseVertex>& outp
 void DefaultGeometry::DefaultBoxMesh(float length, std::vector<PBRVertex>& outputVertices, std::vector<DWORD>& outputIndices) 
 {
 	outputVertices = {
-		// 0 1 0
-		PBRVertex(XMFLOAT3(-length, length, -length), XMFLOAT2(0.0f, 0.0f), XMFLOAT3(0.0, 1.0, 0.0)),
-		PBRVertex(XMFLOAT3(length, length, -length), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(0.0, 1.0, 0.0)),
-		PBRVertex(XMFLOAT3(length, length, length), XMFLOAT2(1.0f, 1.0f), XMFLOAT3(0.0, 1.0, 0.0)),
-		PBRVertex(XMFLOAT3(-length, length, length), XMFLOAT2(0.0f, 1.0f), XMFLOAT3(0.0, 1.0, 0.0)),
-		//0 -1 0
 		PBRVertex(XMFLOAT3(-length, -length, -length), XMFLOAT2(0.0f, 0.0f), XMFLOAT3(0.0, -1.0, 0.0)),
-		PBRVertex(XMFLOAT3(length, -length, -length), XMFLOAT2(1.0f, 0.0f),XMFLOAT3(0.0, -1.0, 0.0)),
-		PBRVertex(XMFLOAT3(length, -length, length), XMFLOAT2(1.0f, 1.0f),XMFLOAT3(0.0, -1.0, 0.0)),
-		PBRVertex(XMFLOAT3(-length, -length, length), XMFLOAT2(0.0f, 1.0f),XMFLOAT3(0.0, -1.0, 0.0)),
-		//-1 0 0
-		PBRVertex(XMFLOAT3(-length, -length, length), XMFLOAT2(0.0f, 0.0f), XMFLOAT3(-1.0, 0.0, 0.0)),
-		PBRVertex(XMFLOAT3(-length, -length, -length), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(-1.0, 0.0, 0.0)),
-		PBRVertex(XMFLOAT3(-length, length, -length), XMFLOAT2(1.0f, 1.0f), XMFLOAT3(-1.0, 0.0, 0.0)),
-		PBRVertex(XMFLOAT3(-length, length, length), XMFLOAT2(0.0f, 1.0f), XMFLOAT3(-1.0, 0.0, 0.0)),
-		//1 0 0
-		PBRVertex(XMFLOAT3(length, -length, length), XMFLOAT2(0.0f, 0.0f), XMFLOAT3(1.0, 0.0, 0.0)),
-		PBRVertex(XMFLOAT3(length, -length, -length), XMFLOAT2(1.0f, 0.0f) , XMFLOAT3(1.0, 0.0, 0.0)),
+		PBRVertex(XMFLOAT3(length, -length, -length), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(0.0, -1.0, 0.0)),
 		PBRVertex(XMFLOAT3(length, length, -length), XMFLOAT2(1.0f, 1.0f), XMFLOAT3(1.0, 0.0, 0.0)),
+		PBRVertex(XMFLOAT3(-length, length, -length), XMFLOAT2(0.0f, 0.0f), XMFLOAT3(0.0, 1.0, 0.0)),
+		PBRVertex(XMFLOAT3(-length, -length, length), XMFLOAT2(0.0f, 1.0f),XMFLOAT3(0.0, -1.0, 0.0)),
+		PBRVertex(XMFLOAT3(length, -length, length), XMFLOAT2(1.0f, 1.0f),XMFLOAT3(0.0, -1.0, 0.0)),
 		PBRVertex(XMFLOAT3(length, length, length), XMFLOAT2(0.0f, 1.0f), XMFLOAT3(1.0, 0.0, 0.0)),
-		//0 0 -1
-		PBRVertex(XMFLOAT3(-length, -length, -length), XMFLOAT2(0.0f, 0.0f), XMFLOAT3(0.0, 0.0, -1.0)),
-		PBRVertex(XMFLOAT3(length, -length, -length), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(0.0, 0.0, -1.0)),
-		PBRVertex(XMFLOAT3(length, length, -length), XMFLOAT2(1.0f, 1.0f), XMFLOAT3(0.0, 0.0, -1.0)),
-		PBRVertex(XMFLOAT3(-length, length, -length), XMFLOAT2(0.0f, 1.0f), XMFLOAT3(0.0, 0.0, -1.0)),
-		//0 0 1
-		PBRVertex(XMFLOAT3(-length, -length, length), XMFLOAT2(0.0f, 0.0f), XMFLOAT3(0.0, 0.0, 1.0)),
-		PBRVertex(XMFLOAT3(length, -length, length), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(0.0, 0.0, 1.0)),
-		PBRVertex(XMFLOAT3(length, length, length), XMFLOAT2(1.0f, 1.0f), XMFLOAT3(0.0, 0.0, 1.0)),
 		PBRVertex(XMFLOAT3(-length, length, length), XMFLOAT2(0.0f, 1.0f), XMFLOAT3(0.0, 0.0, 1.0)),
+
 	};
-	outputIndices = { 3, 1, 0, 2, 1, 3, 6, 4, 5, 7, 4, 6, 11, 9, 8, 10, 9, 11, 14, 12, 13, 15, 12, 14, 19, 17, 16, 18, 17, 19, 22, 20, 21, 23, 20, 22 };
+
+	outputIndices = { // Front face
+						0, 1, 2,
+						0, 2, 3,
+
+						// Back face
+						4, 6, 5,
+						4, 7, 6,
+
+						// Left face
+						4, 5, 1,
+						4, 1, 0,
+
+						// Right face
+						3, 2, 6,
+						3, 6, 7,
+
+						// Top face
+						1, 5, 6,
+						1, 6, 2,
+
+						// Bottom face
+						4, 0, 3,
+						4, 3, 7 
+	};
 }
 
 

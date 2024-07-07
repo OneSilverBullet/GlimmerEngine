@@ -18,19 +18,20 @@ public:
 	HDRLoader();
 	~HDRLoader();
 	void Initialize();
-	void Render(D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv,
-		ColorBuffer& backBuffer, DepthBuffer& depthBuffer,
-		D3D12_VIEWPORT viewport, D3D12_RECT scissorrect,
-		XMMATRIX& model, XMMATRIX& view, XMMATRIX& proj);
+	void Render(D3D12_VIEWPORT viewport, D3D12_RECT scissorrect);
 
 private:
 	void InitializeGeometry();
 	void InitializeRootSignature();
 	void InitializePSO();
 	void InitializeHDRmap();
+	void InitializeCubemapRenderTargets();
+
 
 private:
 	std::string m_cubemapName;
+
+	UINT32 m_textureSize = 512;
 
 	//geometry part
 	ByteAddressBuffer m_geometryBuffer;
@@ -48,6 +49,7 @@ private:
 	//cubemap
 	TextureRef m_hdrmap;
 	TextureRef m_cubmapGenerated;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE m_cubemapRTV[6];
 
 	//texture descriptor handles
 	DescriptorHandle m_textureHandle;

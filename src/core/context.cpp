@@ -302,7 +302,7 @@ void Context::BindDescriptorHeaps() {
 		m_graphicsCommandList->SetDescriptorHeaps(nonNullHeaps, heapsToBind);
 }
 
-void GlobalContext::InitializeTexture(GPUResource& dest, UINT numSubresources, D3D12_SUBRESOURCE_DATA subData[])
+void GlobalContext::InitializeTexture(GPUResource& dest, UINT numSubresources, D3D12_SUBRESOURCE_DATA subData[], D3D12_RESOURCE_STATES usage)
 {
 	//copy the texture data to the gpu resource
 	Context& initContext = GRAPHICS_CORE::g_contextManager.GetAvailableContext();
@@ -313,7 +313,7 @@ void GlobalContext::InitializeTexture(GPUResource& dest, UINT numSubresources, D
 	DynamicAlloc uploadBufferMem = initContext.ReserverUploadMemory(uploadBufferSize);
 	UpdateSubresources((ID3D12GraphicsCommandList*)initContext.GetCommandList(), dest.GetResource(), uploadBufferMem.m_resource.GetResource(),
 		0, 0, numSubresources, subData);
-	initContext.TransitionResource(dest, D3D12_RESOURCE_STATE_GENERIC_READ);
+	initContext.TransitionResource(dest, usage);
 
 	initContext.Finish(true);
 }
