@@ -7,6 +7,7 @@
 #include "texturemanager.h"
 #include "staticdecriptorheap.h"
 #include "components/skybox.h"
+#include "components/hdrtocubemap.h"
 
 class RootSignature;
 class GraphicsPSO;
@@ -39,7 +40,7 @@ private:
 
 
 	SkyBox m_skybox;
-	
+	HDRLoader m_hdrLoader;
 
 	DepthBuffer m_depthBuffer;
 	D3D12_VIEWPORT m_viewport;

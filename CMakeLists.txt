@@ -11,15 +11,33 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set( SHADER_FILES
     shaders/default_pixel.hlsl
     shaders/base_vertex.hlsl
+    shaders/equirectangular_pixel.hlsl
+    shaders/equirectangular_vertex.hlsl
 )
 
-set_source_files_properties( shaders/base_vertex.hlsl PROPERTIES 
+set(VERTEX_SHADERS
+    shaders/base_vertex.hlsl
+    shaders/equirectangular_vertex.hlsl
+)
+
+set(PIXEL_SHADERS
+    shaders/default_pixel.hlsl
+    shaders/equirectangular_pixel.hlsl
+)
+
+set_source_files_properties( 
+    ${VERTEX_SHADERS}
+
+PROPERTIES 
     VS_SHADER_TYPE Vertex
     VS_SHADER_ENTRYPOINT VSMain
     VS_SHADER_MODEL 5.1
 )
 
-set_source_files_properties( shaders/default_pixel.hlsl PROPERTIES 
+set_source_files_properties( 
+    ${PIXEL_SHADERS}
+
+PROPERTIES 
     VS_SHADER_TYPE Pixel
     VS_SHADER_ENTRYPOINT PSMain
     VS_SHADER_MODEL 5.1
@@ -65,6 +83,7 @@ FILE(GLOB SRCS_GLIMMER_CORE
 )
 
 FILE(GLOB SRCS_RESOURCES
+   src/core/resources/stb_image.h
    src/core/resources/dds.h
    src/core/resources/DDSTextureLoader.h
    src/core/resources/DDSTextureLoader.cpp
@@ -121,6 +140,8 @@ FILE(GLOB SRCS_TYPES
 FILE(GLOB SRCS_COMPONENTS
    src/core/components/skybox.h
    src/core/components/skybox.cpp
+   src/core/components/hdrtocubemap.h
+   src/core/components/hdrtocubemap.cpp
 )
 
 set(SRCS_MAIN  

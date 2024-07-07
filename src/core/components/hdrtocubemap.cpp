@@ -2,23 +2,91 @@
 #include "graphicscore.h"
 #include "geometry/defaultgeometry.h"
 #include "resources/uploadbuffer.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "resources/stb_image.h"
 #include "rootsignature.h"
 #include "pso.h"
 #include "d3dx12.h"
 #include <wrl/client.h>
+#include "hdrtocubemap.h"
 
-SkyBox::SkyBox()
+
+HDRLoader::HDRLoader() {
+
+}
+
+HDRLoader::~HDRLoader() {
+
+}
+
+void HDRLoader::Initialize() {
+    InitializeGeometry();
+    InitializeRootSignature();
+    InitializePSO();
+    InitializeHDRmap();
+}
+
+void HDRLoader::Render(D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv,
+    ColorBuffer& backBuffer, DepthBuffer& depthBuffer,
+    D3D12_VIEWPORT viewport, D3D12_RECT scissorrect,
+    XMMATRIX& model, XMMATRIX& view, XMMATRIX& proj) {
+
+    GraphicsContext& graphicsContext = GRAPHICS_CORE::g_contextManager.GetAvailableGraphicsContext();
+
+    // Clear the render target.
+    {
+        D3D12_RESOURCE_STATES state = backBuffer.GetUsageState();
+        graphicsContext.TransitionResource(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
+        //FLOAT clearColor[4] = { 0.4f, 0.6f, 0.9f, 1.0f };
+        //graphicsContext.ClearColor(rtv, clearColor);
+        //graphicsContext.ClearDepth(depthBuffer);
+    }
+
+    {
+        graphicsContext.SetPiplelineObject(*m_pso);
+        graphicsContext.SetRootSignature(*m_rootSignature);
+        graphicsContext.SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        graphicsContext.SetVertexBuffer(0, m_vertexBufferView);
+        graphicsContext.SetIndexBuffer(m_indexBufferView);
+        graphicsContext.SetViewportAndScissor(viewport, scissorrect);
+        graphicsContext.SetRenderTargets(1, &rtv, dsv);
+    }
+
+    //set the descriptor heap
+    {
+        graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap());
+        graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap());
+    }
+
+    //bind the shader visible resource
+    {
+        __declspec(align(16)) struct SkyboxCB
+        {
+            XMMATRIX model;
+            XMMATRIX view;
+            XMMATRIX proj;
+        } skyboxcbuffer;
+
+        skyboxcbuffer.model = model;
+        skyboxcbuffer.view = view;
+        skyboxcbuffer.proj = proj;
+
+        graphicsContext.SetDynamicConstantBufferView(0, sizeof(SkyboxCB), &skyboxcbuffer);
+        graphicsContext.SetDescriptorTable(1, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+        graphicsContext.SetDescriptorTable(2, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+        graphicsContext.DrawIndexedInstanced(m_indicies.size(), 1, 0, 0, 0);
+    }
+
+    // execute the sky box render pass
+    {
+        graphicsContext.TransitionResource(backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT, true);
+        uint64_t fenceValue = graphicsContext.Finish(true);
+    }
+}
+
+void HDRLoader::InitializeGeometry()
 {
-
-}
-
-SkyBox::~SkyBox() {
-
-}
-
-void SkyBox::InitializeGeometry() {
-
-    DefaultGeometry::DefaultSphereMesh(40.0f, m_vertices, m_indicies);
+    DefaultGeometry::DefaultBoxMesh(10.0f, m_vertices, m_indicies);
 
     uint32_t vertexOffset = m_vertices.size() * sizeof(PBRVertex);
     uint32_t indexOffset = m_indicies.size() * sizeof(DWORD);
@@ -38,11 +106,13 @@ void SkyBox::InitializeGeometry() {
     m_indexBufferView = m_geometryBuffer.IndexBufferView(vertexOffset, indexOffset, true);
 }
 
-void SkyBox::InitializeRootSignature() {
+void HDRLoader::InitializeRootSignature()
+{
     //Create root signature
     D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
     featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-    if (FAILED(GRAPHICS_CORE::g_device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData)))) {
+    if (FAILED(GRAPHICS_CORE::g_device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE,
+        &featureData, sizeof(featureData)))) {
         featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
     }
 
@@ -59,12 +129,13 @@ void SkyBox::InitializeRootSignature() {
     m_rootSignature->Finalize(L"", rootSignatureFlag);
 }
 
-void SkyBox::InitializePSO() {
+void HDRLoader::InitializePSO()
+{
     //Load Shader
     ComPtr<ID3DBlob> vertexShaderBlob;
-    ThrowIfFailed(D3DReadFileToBlob(L"base_vertex.cso", &vertexShaderBlob));
+    ThrowIfFailed(D3DReadFileToBlob(L"equirectangular_vertex.cso", &vertexShaderBlob));
     ComPtr<ID3DBlob> pixelShaderBlob;
-    ThrowIfFailed(D3DReadFileToBlob(L"default_pixel.cso", &pixelShaderBlob));
+    ThrowIfFailed(D3DReadFileToBlob(L"equirectangular_pixel.cso", &pixelShaderBlob));
 
     //Create RTV
     D3D12_RT_FORMAT_ARRAY rtvFormats = {};
@@ -100,10 +171,18 @@ void SkyBox::InitializePSO() {
     m_pso->Finalize();
 }
 
-void SkyBox::InitializeCubemap() {
-    //generate texture
-    //m_testTextureRef = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("spnza_bricks_a", WhiteOpaque2D, true);
-    m_cubemap = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile(m_cubemapName, BlackCubeMap, true);
+void HDRLoader::InitializeHDRmap()
+{
+    //loading hdr texture
+
+    stbi_set_flip_vertically_on_load(true);
+    int width, height, nrComponents;
+    float* data = stbi_loadf("resource/textures/hdr/hdrsky.hdr", &width, &height, &nrComponents, 0);
+
+
+   
+    m_hdrmap->Create2D(4 * 3 * width, width, height, DXGI_FORMAT_R32G32B32_FLOAT, data);
+
 
     //allocate descriptor handle
     m_textureHandle = GRAPHICS_CORE::g_texturesDescriptorHeap.Alloc(1);
@@ -111,7 +190,7 @@ void SkyBox::InitializeCubemap() {
 
     //texture loading process
     D3D12_CPU_DESCRIPTOR_HANDLE textures[] = {
-        m_cubemap.GetSRV()
+        m_hdrmap.GetSRV()
     };
 
     UINT destNum = 1;
@@ -125,83 +204,4 @@ void SkyBox::InitializeCubemap() {
     };
 
     GRAPHICS_CORE::g_device->CopyDescriptors(1, &m_samplerHandle, &destNum, destNum, samplers, srcNums, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-}
-
-void SkyBox::Initialize(std::string skyboxName) {
-    m_cubemapName = skyboxName;
-    InitializeGeometry();
-    InitializeRootSignature();
-    InitializePSO();
-    InitializeCubemap();
-
-
-
-
-
-
-}
-
-void SkyBox::Render(
-    D3D12_CPU_DESCRIPTOR_HANDLE rtv, 
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv,
-    ColorBuffer& backbuffer,
-    DepthBuffer& depthbuffer,
-    D3D12_VIEWPORT viewport,
-    D3D12_RECT scissorrect,
-    XMMATRIX& model, XMMATRIX& view, XMMATRIX& proj,
-    XMFLOAT3& eyepos) {
-
-    GraphicsContext& graphicsContext = GRAPHICS_CORE::g_contextManager.GetAvailableGraphicsContext();
-
-    // Clear the render target.
-    {
-        D3D12_RESOURCE_STATES state = backbuffer.GetUsageState();
-        graphicsContext.TransitionResource(backbuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
-        FLOAT clearColor[4] = { 0.4f, 0.6f, 0.9f, 1.0f };
-        graphicsContext.ClearColor(rtv, clearColor);
-        graphicsContext.ClearDepth(depthbuffer);
-    }
-
-    {
-        graphicsContext.SetPiplelineObject(*m_pso);
-        graphicsContext.SetRootSignature(*m_rootSignature);
-        graphicsContext.SetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-        graphicsContext.SetVertexBuffer(0, m_vertexBufferView);
-        graphicsContext.SetIndexBuffer(m_indexBufferView);
-        graphicsContext.SetViewportAndScissor(viewport, scissorrect);
-        graphicsContext.SetRenderTargets(1, &rtv, dsv);
-    }
-
-    //set the descriptor heap
-    {
-        graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap());
-        graphicsContext.SetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap());
-    }
-
-    //bind the shader visible resource
-    {
-        __declspec(align(16)) struct SkyboxCB
-        {
-            XMMATRIX model;
-            XMMATRIX view;
-            XMMATRIX proj;
-            XMFLOAT3 eyepos;
-        } skyboxcbuffer;
-        
-        skyboxcbuffer.model = model;
-        skyboxcbuffer.view = view;
-        skyboxcbuffer.proj = proj;
-        skyboxcbuffer.eyepos = eyepos;
-
-        graphicsContext.SetDynamicConstantBufferView(0, sizeof(SkyboxCB), &skyboxcbuffer);
-        graphicsContext.SetDescriptorTable(1, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
-        graphicsContext.SetDescriptorTable(2, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
-        graphicsContext.DrawIndexedInstanced(m_indicies.size(), 1, 0, 0, 0);
-    }
-
-    // execute the sky box render pass
-    {
-        graphicsContext.TransitionResource(backbuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT, true);
-        uint64_t fenceValue = graphicsContext.Finish(true);
-    }
 }

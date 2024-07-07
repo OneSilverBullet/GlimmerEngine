@@ -6,6 +6,7 @@
 #include <shlwapi.h>
 #include <iostream>
 
+
 //Check the object leak
 void ReportLiveObjects() {
 	IDXGIDebug1* dxgiDebug;

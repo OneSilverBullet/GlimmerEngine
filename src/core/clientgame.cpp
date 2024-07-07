@@ -49,7 +49,7 @@ bool ClientGame::LoadContent() {
 
     //initialize the skybox
     m_skybox.Initialize("skybox");
-
+    m_hdrLoader.Initialize();
 
     m_contentLoaded = true;
     ResizeDepthBuffer(GetClientWidth(), GetClientHeight());
@@ -74,6 +74,9 @@ void ClientGame::OnRender(RenderEventArgs& e) {
     //render sky box 
     m_skybox.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect, 
         m_worldMatrix, m_viewMatrix, m_projMatrix, eyepos);
+
+    m_hdrLoader.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect,
+        m_worldMatrix, m_viewMatrix, m_projMatrix);
 
     // Present
     {
