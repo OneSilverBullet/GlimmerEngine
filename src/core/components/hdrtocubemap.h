@@ -18,7 +18,8 @@ public:
 	HDRLoader();
 	~HDRLoader();
 	void Initialize();
-	void Render(D3D12_VIEWPORT viewport, D3D12_RECT scissorrect);
+	void Render();
+	TextureRef GetGeneratedCubemap() { return m_cubmapGenerated; }
 
 private:
 	void InitializeGeometry();
@@ -31,7 +32,10 @@ private:
 private:
 	std::string m_cubemapName;
 
-	UINT32 m_textureSize = 512;
+	UINT32 m_textureSize = 1024;
+
+	//
+	DXGI_FORMAT m_format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; // GL_RGB16F: DXGI_FORMAT_R16G16B16A16_FLOAT;
 
 	//geometry part
 	ByteAddressBuffer m_geometryBuffer;

@@ -22,5 +22,8 @@ float4 PSMain(PixelInputAttributes input) : SV_Target
 {
     float2 uv = SampleSphericalMap(normalize(input.localpos.xyz));
     float3 sampleColor = equirectangularMap.Sample(baseColorSampler, uv).rgb;
+    float3 div = sampleColor + float3(1.0f, 1.0f, 1.0f);
+    sampleColor = sampleColor / div;
+    sampleColor = pow(sampleColor, float3(1.0f / 2.2f, 1.0f / 2.2f, 1.0f / 2.2f));
     return float4(sampleColor, 1.0f);
 }

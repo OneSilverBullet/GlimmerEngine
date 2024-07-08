@@ -27,7 +27,10 @@ void HDRLoader::Initialize() {
     InitializeCubemapRenderTargets();
 }
 
-void HDRLoader::Render(D3D12_VIEWPORT viewport, D3D12_RECT scissorrect) {
+void HDRLoader::Render() {
+
+    D3D12_RECT scissorrect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
+    D3D12_VIEWPORT viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, (float)m_textureSize, (float)m_textureSize);
 
     __declspec(align(16)) struct HDRLoaderCB
     {
@@ -41,18 +44,16 @@ void HDRLoader::Render(D3D12_VIEWPORT viewport, D3D12_RECT scissorrect) {
     XMMATRIX projMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(90.0f), 1.0f, 0.1f, 1000.0f);
     XMMATRIX viewMatrix[] =
     {
-         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(1.0f,  0.0f,  0.0f, 1.0f), XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f)),
-         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(-1.0f,  0.0f,  0.0f, 1.0f), XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f)),
-         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(0.0f,  1.0f,  0.0f, 1.0f), XMVectorSet(0.0f,  0.0f,  1.0f, 0.0f)),
-         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(0.0f,  -1.0f,  0.0f, 1.0f), XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f)),
-         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(0.0f,  0.0f,  1.0f, 1.0f), XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f)),
-         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(0.0f,  0.0f, -1.0f, 1.0f), XMVectorSet(0.0f, -1.0f, 0.0f, 0.0f)),
+         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(1.0f,  0.0f,  0.0f, 1.0f), XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)),
+         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(-1.0f,  0.0f,  0.0f, 1.0f), XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)),
+         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(0.0f,  1.0f,  0.0f, 1.0f), XMVectorSet(0.0f,  0.0f,  -1.0f, 0.0f)),
+         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(0.0f,  -1.0f,  0.0f, 1.0f), XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f)),
+         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(0.0f,  0.0f,  1.0f, 1.0f), XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)),
+         XMMatrixLookAtLH(XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f), XMVectorSet(0.0f,  0.0f, -1.0f, 1.0f), XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f)),
     };
 
     GraphicsContext& graphicsContext = GRAPHICS_CORE::g_contextManager.GetAvailableGraphicsContext();
 
-    //D3D12_RESOURCE_STATES state = backBuffer.GetUsageState();
-    //graphicsContext.TransitionResource(backBuffer, state, D3D12_RESOURCE_STATE_RENDER_TARGET, true);
 
     //initialize the graphics context
     graphicsContext.SetPiplelineObject(*m_pso);
@@ -77,8 +78,12 @@ void HDRLoader::Render(D3D12_VIEWPORT viewport, D3D12_RECT scissorrect) {
         
 
         graphicsContext.SetDynamicConstantBufferView(0, sizeof(HDRLoaderCB), &hdrloadercbuffer);
-        graphicsContext.SetDescriptorTable(1, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
-        graphicsContext.SetDescriptorTable(2, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+        D3D12_GPU_DESCRIPTOR_HANDLE texture_handle;
+        texture_handle.ptr = m_textureHandle.GetGPUPtr();
+        graphicsContext.SetDescriptorTable(1, texture_handle);
+        D3D12_GPU_DESCRIPTOR_HANDLE sampler_handle;
+        sampler_handle.ptr = m_samplerHandle.GetGPUPtr();
+        graphicsContext.SetDescriptorTable(2, sampler_handle);
         graphicsContext.DrawIndexedInstanced(m_indicies.size(), 1, 0, 0, 0);
     }
 
@@ -141,7 +146,7 @@ void HDRLoader::InitializePSO()
     //Create RTV
     D3D12_RT_FORMAT_ARRAY rtvFormats = {};
     rtvFormats.NumRenderTargets = 1;
-    rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    rtvFormats.RTFormats[0] = m_format;
 
     //Create Rasterizer State
     D3D12_RASTERIZER_DESC rasterizerDesc = {};
@@ -177,14 +182,18 @@ void HDRLoader::InitializeCubemapRenderTargets() {
 
     ManagedTexture* texInstance = nullptr;
     texInstance = new ManagedTexture("file");
-    texInstance->CreateCube(4 * m_textureSize, m_textureSize, m_textureSize, DXGI_FORMAT_R8G8B8A8_UNORM, formattedData, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+    UINT formatSize = GRAPHICS_CORE::GetDXGIFormatSize(m_format);
+
+    texInstance->CreateCube(formatSize * m_textureSize, m_textureSize, m_textureSize, m_format,
+        formattedData, D3D12_RESOURCE_STATE_RENDER_TARGET);
     m_cubmapGenerated = TextureRef(texInstance);
 
     D3D12_CPU_DESCRIPTOR_HANDLE cubeRTVHandles = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 6);
 
     D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
     rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-    rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    rtvDesc.Format = m_format;
     rtvDesc.Texture2DArray.MipSlice = 0;
     rtvDesc.Texture2DArray.FirstArraySlice = 0; 
     rtvDesc.Texture2DArray.ArraySize = 1;

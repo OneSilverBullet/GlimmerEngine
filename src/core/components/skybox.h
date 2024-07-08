@@ -7,7 +7,7 @@
 #include "resources/depthbuffer.h"
 #include "descriptortypes.h"
 #include "texturemanager.h"
-
+#include "components/hdrtocubemap.h"
 
 class RootSignature;
 class GraphicsPSO;
@@ -23,6 +23,7 @@ public:
 		D3D12_VIEWPORT viewport, D3D12_RECT scissorrect,
 		XMMATRIX& model, XMMATRIX& view, XMMATRIX& proj, XMFLOAT3& eyepos);
 
+
 private:
 	void InitializeGeometry();
 	void InitializeRootSignature();
@@ -30,6 +31,8 @@ private:
 	void InitializeCubemap();
 
 private:
+	HDRLoader m_hdrLoader;
+
 	std::string m_cubemapName;
 
 	//geometry part

@@ -30,7 +30,7 @@ constexpr const T& clamp(const T& v, const T& lo, const T& hi)
 }
 
 
-ClientGame::ClientGame(const std::wstring& name, int width, int height, bool vSync): 
+ClientGame::ClientGame(const std::wstring& name, int width, int height, bool vSync):
 	super(name, width, height, vSync)	
 {
     m_scissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
@@ -48,8 +48,7 @@ bool ClientGame::LoadContent() {
     auto device = GRAPHICS_CORE::g_device;
 
     //initialize the skybox
-    //m_skybox.Initialize("skybox");
-    m_hdrLoader.Initialize();
+    m_skybox.Initialize("skybox");
 
     m_contentLoaded = true;
     ResizeDepthBuffer(GetClientWidth(), GetClientHeight());
@@ -72,10 +71,9 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 
 
     //render sky box 
-    //m_skybox.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect, 
-    //    m_worldMatrix, m_viewMatrix, m_projMatrix, eyepos);
+    m_skybox.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect, 
+        m_worldMatrix, m_viewMatrix, m_projMatrix, eyepos);
 
-    m_hdrLoader.Render(m_viewport, m_scissorRect);
 
     // Present
     {
@@ -87,7 +85,7 @@ void ClientGame::OnUpdate(UpdateEventArgs& e) {
     super::OnUpdate(e);
 
     //Update the model matrix
-    float angle = static_cast<float>(e.TotalTime * 90.0f);
+    float angle = static_cast<float>(e.TotalTime * 10.0f);
     const XMVECTOR rotationAxis = XMVectorSet(0, 1, 0, 0);
     m_worldMatrix = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
 

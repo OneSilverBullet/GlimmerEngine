@@ -18,7 +18,7 @@ SkyBox::~SkyBox() {
 
 void SkyBox::InitializeGeometry() {
 
-    DefaultGeometry::DefaultSphereMesh(40.0f, m_vertices, m_indicies);
+    DefaultGeometry::DefaultSphereMesh(100.0f, m_vertices, m_indicies);
 
     uint32_t vertexOffset = m_vertices.size() * sizeof(PBRVertex);
     uint32_t indexOffset = m_indicies.size() * sizeof(DWORD);
@@ -101,18 +101,11 @@ void SkyBox::InitializePSO() {
 }
 
 void SkyBox::InitializeCubemap() {
-    //generate texture
-    //m_testTextureRef = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("spnza_bricks_a", WhiteOpaque2D, true);
-    
-    //m_cubemap = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile(m_cubemapName, BlackCubeMap, true);
 
-    uint32_t* formattedData = new uint32_t[512 * 512];
-    //uint32_t blackCubeTexels[96] = { 0x00FFFF80 };
-
-    ManagedTexture* texInstance = nullptr;
-    texInstance = new ManagedTexture("file");
-    texInstance->CreateCube(4 * 512, 512, 512, DXGI_FORMAT_R8G8B8A8_UNORM, formattedData);
-    m_cubemap = TextureRef(texInstance);
+    //loading the hdr texture and change to cubemap
+    m_hdrLoader.Initialize();
+    m_hdrLoader.Render();
+    m_cubemap = m_hdrLoader.GetGeneratedCubemap();
 
     //allocate descriptor handle
     m_textureHandle = GRAPHICS_CORE::g_texturesDescriptorHeap.Alloc(1);
@@ -142,8 +135,6 @@ void SkyBox::Initialize(std::string skyboxName) {
     InitializeRootSignature();
     InitializePSO();
     InitializeCubemap();
-
-
 }
 
 void SkyBox::Render(
@@ -169,7 +160,7 @@ void SkyBox::Render(
 
     {
         graphicsContext.SetPiplelineObject(*m_pso);
-        graphicsContext.SetRootSignature(*m_rootSignature);//D3D12_PRIMITIVE_TOPOLOGY_TRI
+        graphicsContext.SetRootSignature(*m_rootSignature);
         graphicsContext.SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
         graphicsContext.SetVertexBuffer(0, m_vertexBufferView);
         graphicsContext.SetIndexBuffer(m_indexBufferView);
@@ -199,8 +190,12 @@ void SkyBox::Render(
         skyboxcbuffer.eyepos = eyepos;
 
         graphicsContext.SetDynamicConstantBufferView(0, sizeof(SkyboxCB), &skyboxcbuffer);
-        graphicsContext.SetDescriptorTable(1, GRAPHICS_CORE::g_texturesDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
-        graphicsContext.SetDescriptorTable(2, GRAPHICS_CORE::g_samplersDescriptorHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+        D3D12_GPU_DESCRIPTOR_HANDLE gpuTextureHandle;
+        gpuTextureHandle.ptr = m_textureHandle.GetGPUPtr();
+        graphicsContext.SetDescriptorTable(1, gpuTextureHandle);
+        D3D12_GPU_DESCRIPTOR_HANDLE gpuSamplerHandle;
+        gpuSamplerHandle.ptr = m_samplerHandle.GetGPUPtr();
+        graphicsContext.SetDescriptorTable(2, gpuSamplerHandle);
         graphicsContext.DrawIndexedInstanced(m_indicies.size(), 1, 0, 0, 0);
     }
 

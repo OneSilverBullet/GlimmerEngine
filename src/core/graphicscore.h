@@ -34,5 +34,6 @@ namespace GRAPHICS_CORE
 
 	D3D12_CPU_DESCRIPTOR_HANDLE AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE type, UINT count = 1);
 	UINT32 GetDescriptorSize(D3D12_DESCRIPTOR_HEAP_TYPE type);
+	UINT GetDXGIFormatSize(DXGI_FORMAT format);
 
 }
