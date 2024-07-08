@@ -136,7 +136,7 @@ DynamicAlloc DynamicLinearMemoryAllocator::Allocate(size_t size, size_t alignmen
 	}
 
 	if (m_curPage == nullptr) {
-		m_curPage = g_allocator[m_curType].CreateNewPage(); //apply for default memory page
+		m_curPage = g_allocator[m_curType].RequestPage(); //apply for default memory page
 		m_curOffset = 0;
 	}
 
