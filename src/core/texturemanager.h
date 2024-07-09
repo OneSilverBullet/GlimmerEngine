@@ -17,6 +17,7 @@ public:
 
 	void WaitForLoad(void) const;
 	void CreateFromFile(std::wstring filePath, DefaultTextureType fallback, bool sRGB);
+	void CreateFromHDRFile(std::string filePath);
 
 private:
 	bool IsValid(void) const { return m_isValid; }

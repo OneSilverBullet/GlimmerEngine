@@ -32,10 +32,10 @@ private:
 private:
 	std::string m_cubemapName;
 
-	UINT32 m_textureSize = 1024;
+	UINT32 m_textureSize = 2048;
 
 	//
-	DXGI_FORMAT m_format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; // GL_RGB16F: DXGI_FORMAT_R16G16B16A16_FLOAT;
+	DXGI_FORMAT m_format = DXGI_FORMAT_R16G16B16A16_FLOAT; //DXGI_FORMAT_R8G8B8A8_UNORM_SRGB
 
 	//geometry part
 	ByteAddressBuffer m_geometryBuffer;

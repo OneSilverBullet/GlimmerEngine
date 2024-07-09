@@ -4,6 +4,9 @@
 #include "graphicscore.h"
 #include "rootsignature.h"
 #include "resources/DDSTextureLoader.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "resources/stb_image.h"
+#include "mathematics/bitoperation.h"
 #include <thread>
 
 
@@ -63,6 +66,65 @@ void ManagedTexture::CreateFromFile(std::wstring filePath, DefaultTextureType fa
 	}
 
 	m_isLoading = false;
+}
+
+void ManagedTexture::CreateFromHDRFile(std::string filePath) {
+
+	m_hCpuDescriptorHandle = GRAPHICS_CORE::AllocatorDescriptors(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	//load the hdr texture
+	stbi_set_flip_vertically_on_load(true);
+	int width, height, nrComponents;
+	float* data = stbi_loadf(filePath.data(), &width, &height, &nrComponents, 0);
+	unsigned int hdrTexture;
+
+	// Convert 3-channel HDR image to 4-channel (RGB to RGBA)
+	float* rgbaData = new float[width * height * 4];
+	for (int i = 0; i < width * height; ++i) {
+		rgbaData[i * 4 + 0] = data[i * 3 + 0]; // R
+		rgbaData[i * 4 + 1] = data[i * 3 + 1]; // G
+		rgbaData[i * 4 + 2] = data[i * 3 + 2]; // B
+		rgbaData[i * 4 + 3] = 1.0f; // A
+	}
+
+	stbi_image_free(data);
+	
+	D3D12_RESOURCE_DESC textureDesc = {};
+	textureDesc.MipLevels = 1;
+	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	textureDesc.Width = width;
+	textureDesc.Height = height;
+	textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+	textureDesc.DepthOrArraySize = 1;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+
+	CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
+	HRESULT hr = GRAPHICS_CORE::g_device->CreateCommittedResource(
+		&heapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&textureDesc,
+		D3D12_RESOURCE_STATE_COPY_DEST,
+		nullptr,
+		IID_PPV_ARGS(&m_resource));
+
+	D3D12_SUBRESOURCE_DATA textureData = {};
+	textureData.pData = rgbaData;
+	textureData.RowPitch = Mathematics::AlignUpWithMask<size_t>(width * 4 * sizeof(float), 255);
+	textureData.SlicePitch = textureData.RowPitch * height;
+
+	GPUResource DestTexture(m_resource, D3D12_RESOURCE_STATE_COPY_DEST);
+	GlobalContext::InitializeTexture(DestTexture, 1, &textureData);
+
+	//Create Shader View Descriptor
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = textureDesc.Format;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = 1;
+
+	GRAPHICS_CORE::g_device->CreateShaderResourceView(m_resource, &srvDesc, m_hCpuDescriptorHandle);
 }
 
 void ManagedTexture::Unload()
@@ -138,9 +200,12 @@ ManagedTexture* TextureManager::FindOrLoadTexture(const std::string& filename,
 		}
 	}
 
-	std::string filenameLoaded = m_rootPath + filename + ".dds";
+	std::string filenameLoaded = m_rootPath + filename;
 	std::wstring filenameExchanged = String2Wstring(filenameLoaded);
-	tex->CreateFromFile(filenameExchanged, texType, false);
+	if (filenameLoaded.find(".dds") != std::string::npos) //load the dds texture
+		tex->CreateFromFile(filenameExchanged, texType, false);
+	else if (filenameLoaded.find(".hdr") != std::string::npos) //load the hdr texture
+		tex->CreateFromHDRFile(filenameLoaded);
 
 	return tex;
 }

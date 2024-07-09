@@ -50,8 +50,6 @@ public:
 	static void InitializeBuffer(GPUResource& dest, const void* data, size_t numBytes, size_t offset = 0);
 	static void InitializeBuffer(GPUBuffer& dest, const UploadBuffer& src, 
 		size_t srcOffset, size_t numBytes = -1, size_t destOffset = 0);
-
-
 };
 
 //context class limitation

@@ -85,7 +85,7 @@ void ClientGame::OnUpdate(UpdateEventArgs& e) {
     super::OnUpdate(e);
 
     //Update the model matrix
-    float angle = static_cast<float>(e.TotalTime * 10.0f);
+    float angle = static_cast<float>(e.TotalTime * 5.0f);
     const XMVECTOR rotationAxis = XMVectorSet(0, 1, 0, 0);
     m_worldMatrix = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
 

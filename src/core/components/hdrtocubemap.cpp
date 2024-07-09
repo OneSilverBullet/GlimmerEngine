@@ -2,8 +2,7 @@
 #include "graphicscore.h"
 #include "geometry/defaultgeometry.h"
 #include "resources/uploadbuffer.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "resources/stb_image.h"
+
 #include "rootsignature.h"
 #include "pso.h"
 #include "d3dx12.h"
@@ -178,13 +177,14 @@ void HDRLoader::InitializePSO()
 }
 
 void HDRLoader::InitializeCubemapRenderTargets() {
-    uint32_t* formattedData = new uint32_t[m_textureSize * m_textureSize];
+    
 
     ManagedTexture* texInstance = nullptr;
     texInstance = new ManagedTexture("file");
 
     UINT formatSize = GRAPHICS_CORE::GetDXGIFormatSize(m_format);
 
+    uint32_t* formattedData = new uint32_t[formatSize * m_textureSize * m_textureSize];
     texInstance->CreateCube(formatSize * m_textureSize, m_textureSize, m_textureSize, m_format,
         formattedData, D3D12_RESOURCE_STATE_RENDER_TARGET);
     m_cubmapGenerated = TextureRef(texInstance);
@@ -213,7 +213,7 @@ void HDRLoader::InitializeCubemapRenderTargets() {
 void HDRLoader::InitializeHDRmap()
 {
     //loading hdr texture
-    m_hdrmap = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("hdr/hdrsky", BlackCubeMap, true);
+    m_hdrmap = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("hdr/hdrsky.hdr", BlackCubeMap, true);
 
     //allocate descriptor handle
     m_textureHandle = GRAPHICS_CORE::g_texturesDescriptorHeap.Alloc(1);
