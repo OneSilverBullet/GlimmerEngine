@@ -142,6 +142,12 @@ FILE(GLOB SRCS_COMPONENTS
    src/core/components/skybox.cpp
    src/core/components/hdrtocubemap.h
    src/core/components/hdrtocubemap.cpp
+   src/core/components/scene.h
+   src/core/components/scene.cpp
+   src/core/components/camera.h
+   src/core/components/camera.cpp
+   src/core/components/controller.h
+   src/core/components/controller.cpp
 )
 
 set(SRCS_MAIN  

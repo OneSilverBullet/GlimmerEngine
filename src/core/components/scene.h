@@ -8,21 +8,19 @@
 #include "descriptortypes.h"
 #include "texturemanager.h"
 #include "components/hdrtocubemap.h"
-#include "components/camera.h"
 
 class RootSignature;
 class GraphicsPSO;
-
-class SkyBox
+/*
+class RenderScene
 {
 public:
-	SkyBox();
-	~SkyBox();
+	RenderScene();
+	~RenderScene();
 	void Initialize(std::string cubemapName);
 	void Render(D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv,
 		ColorBuffer& backBuffer, DepthBuffer& depthBuffer,
-		D3D12_VIEWPORT viewport, D3D12_RECT scissorrect,
-		Camera* camera);
+		D3D12_VIEWPORT viewport, D3D12_RECT scissorrect);
 
 
 private:
@@ -58,3 +56,4 @@ private:
 
 
 
+*/

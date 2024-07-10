@@ -8,6 +8,8 @@
 #include "staticdecriptorheap.h"
 #include "components/skybox.h"
 #include "components/hdrtocubemap.h"
+#include "components/controller.h"
+#include "components/camera.h"
 
 class RootSignature;
 class GraphicsPSO;
@@ -38,6 +40,9 @@ private:
 
 	SkyBox m_skybox;
 	HDRLoader m_hdrLoader;
+	Controller m_controller;
+	FirstRoleCamera m_camera;
+
 
 	DepthBuffer m_depthBuffer;
 	D3D12_VIEWPORT m_viewport;

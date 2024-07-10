@@ -144,8 +144,7 @@ void SkyBox::Render(
     DepthBuffer& depthbuffer,
     D3D12_VIEWPORT viewport,
     D3D12_RECT scissorrect,
-    XMMATRIX& model, XMMATRIX& view, XMMATRIX& proj,
-    XMFLOAT3& eyepos) {
+    Camera* camera) {
 
     GraphicsContext& graphicsContext = GRAPHICS_CORE::g_contextManager.GetAvailableGraphicsContext();
 
@@ -184,10 +183,10 @@ void SkyBox::Render(
             XMFLOAT3 eyepos;
         } skyboxcbuffer;
         
-        skyboxcbuffer.model = model;
-        skyboxcbuffer.view = view;
-        skyboxcbuffer.proj = proj;
-        skyboxcbuffer.eyepos = eyepos;
+        skyboxcbuffer.model = DirectX::XMMatrixIdentity();
+        skyboxcbuffer.view = camera->GetViewMatrix();
+        skyboxcbuffer.proj = camera->GetProjMatrix();
+        skyboxcbuffer.eyepos = camera->GetPosition();
 
         graphicsContext.SetDynamicConstantBufferView(0, sizeof(SkyboxCB), &skyboxcbuffer);
         D3D12_GPU_DESCRIPTOR_HANDLE gpuTextureHandle;

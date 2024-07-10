@@ -47,6 +47,10 @@ ClientGame::~ClientGame() {
 bool ClientGame::LoadContent() {
     auto device = GRAPHICS_CORE::g_device;
 
+    //binding the camera
+    m_controller.BindCamera(&m_camera);
+    m_camera.InitializeFirstRoleCamera();
+
     //initialize the skybox
     m_skybox.Initialize("skybox");
 
@@ -72,7 +76,7 @@ void ClientGame::OnRender(RenderEventArgs& e) {
 
     //render sky box 
     m_skybox.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect, 
-        m_worldMatrix, m_viewMatrix, m_projMatrix, eyepos);
+        &m_camera);
 
 
     // Present
@@ -112,7 +116,7 @@ void ClientGame::OnKeyReleased(KeyEventArgs& e) {
 }
 
 void ClientGame::OnMouseMoved(MouseMotionEventArgs& e) {
-
+    m_controller.ProcessMouseMoveEvent(e);
 }
 
 void ClientGame::OnMouseWheel(MouseWheelEventArgs& e) {

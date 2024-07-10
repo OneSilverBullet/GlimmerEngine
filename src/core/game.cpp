@@ -2,6 +2,7 @@
 #include "headers.h"
 #include "application.h"
 #include "window.h"
+#include <iostream>
 
 Game::Game(const std::wstring& name, int width, int height, bool vsync):
 	m_name(name), m_clientWidth(width), m_clientHeight(height), m_vsync(vsync)
@@ -73,7 +74,6 @@ void Game::OnKeyReleased(KeyEventArgs& args) {
 }
 
 void Game::OnMouseMoved(MouseMotionEventArgs& args) {
-
 }
 
 void Game::OnMouseButtonPressed(MouseButtonEventArgs& args) {
