@@ -174,10 +174,13 @@ source_group( "source\\core\\geometry" FILES ${SRCS_GEOMETRY} )
 source_group( "source\\core\\components" FILES ${SRCS_COMPONENTS} )
 source_group( "resources\\shaders" FILES ${SHADER_FILES} )
 
+set(LIB_DIR "${PROJECT_SOURCE_DIR}/dependences/lib")
+set(BIN_DIR "${PROJECT_SOURCE_DIR}/dependences/bin")
 
 target_include_directories(Glimmer
     PUBLIC
         ${PROJECT_SOURCE_DIR}/src/core
+        ${PROJECT_SOURCE_DIR}/dependences/include
 )
 
 target_link_libraries(Glimmer 
@@ -186,8 +189,13 @@ target_link_libraries(Glimmer
    d3dcompiler.lib
    Shlwapi.lib
    dxguid.lib
+   ${LIB_DIR}/assimp/assimp-vc143-mt.lib
 )
 
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${BIN_DIR}/assimp/assimp-vc143-mt.dll"
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>)
 
 
 
