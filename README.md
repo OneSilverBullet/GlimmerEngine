@@ -26,38 +26,38 @@ TODO
 
 #### 4.1 Software Architecture
 
-(1) Dynamic Descriptor Heap
+[(1) Dynamic Descriptor Heap](https://onesilverbullet.github.io/silvergamer.github.io/DirectX12-Encapsulation/)
 
 This paper discuss about the implementation detail of the dynamic descriptor heap.
 
-[Dynamic Descriptor Design](https://onesilverbullet.github.io/silvergamer.github.io/DirectX12-Encapsulation/)
 
 
-(2) Memory Allocator 
+
+ [(2) Memory Allocator](https://onesilverbullet.github.io/silvergamer.github.io/Memory-Allocator/)
 
 This paper discuss the design of the uniform upload memory allocator.
 
-[Memory Allocator](https://onesilverbullet.github.io/silvergamer.github.io/Memory-Allocator/)
+
 
 #### 4.2 Graphics Theories
 
-(1) Image based Lightings
+[(1) Image based Lightings](https://onesilverbullet.github.io/silvergamer.github.io/Imaged-based-Lighting/)
 
 This paper discuss about the implementation detail of the Image based Lighting.
 
-[IBL](https://onesilverbullet.github.io/silvergamer.github.io/Imaged-based-Lighting/)
 
 
-(2) The Mathematics behind the IBL
+
+[(2) The Mathematics behind the IBL](https://onesilverbullet.github.io/silvergamer.github.io/rendering-mathematics-basis/)
 
 This paper explore the mathematics knowledge behind the IBL.
 
-[Mathematics](https://onesilverbullet.github.io/silvergamer.github.io/rendering-mathematics-basis/)
 
 
-(3) Spherical Harmonics Lighting
+
+[(3) Spherical Harmonics Lighting](https://onesilverbullet.github.io/silvergamer.github.io/spherical-harmonics/)
 
 This paper is a survey of *Stupid Harmonics*.
 
-[Mathematics](https://onesilverbullet.github.io/silvergamer.github.io/spherical-harmonics/)
+
 
