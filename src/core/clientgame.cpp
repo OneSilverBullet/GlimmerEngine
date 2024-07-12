@@ -17,31 +17,6 @@
 #include <iostream>
 #include <string>
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
-int LoadModelTest() {
-    // 创建Assimp Importer实例
-    Assimp::Importer importer;
-
-    // 尝试导入一个模型文件
-    const aiScene* scene = importer.ReadFile("G:/EngineDevelopment/GlimmerEngine/resource/models/Cerberus.obj",
-        aiProcess_Triangulate |
-        aiProcess_FlipUVs |
-        aiProcess_JoinIdenticalVertices |
-        aiProcess_SortByPType);
-
-    // 检查是否导入成功
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        std::cerr << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
-        return -1;
-    }
-
-    // 输出导入成功信息
-    std::cout << "Model imported successfully!" << std::endl;
-    return 0;
-}
 
 using namespace DirectX;
 
@@ -72,10 +47,6 @@ ClientGame::~ClientGame() {
 
 bool ClientGame::LoadContent() {
     auto device = GRAPHICS_CORE::g_device;
-
-    //assimp model loading test
-    LoadModelTest();
-
 
     //binding the camera
     m_controller.BindCamera(&m_camera);
