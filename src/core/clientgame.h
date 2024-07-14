@@ -30,7 +30,7 @@ protected:
 	virtual void OnRender(RenderEventArgs& e) override;
 	virtual void OnKeyPressed(KeyEventArgs& e) override;
 	virtual void OnKeyReleased(KeyEventArgs& e) override;
-	virtual void OnMouseMoved(MouseMotionEventArgs& e) override;
+	
 	virtual void OnMouseWheel(MouseWheelEventArgs& e) override;
 	virtual void OnResize(ResizeEventArgs& e) override;
 	virtual void OnWindowDestroy() override;

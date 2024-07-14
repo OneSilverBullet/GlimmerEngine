@@ -33,12 +33,6 @@ private:
 
 private:
 	//geometry part
-	ByteAddressBuffer m_geometryBuffer;
-	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-	D3D12_INDEX_BUFFER_VIEW m_indexBufferView;
-
-	//models
-	std::vector<Model> m_models;
 
 	//todo: materials loading; materials manager
 

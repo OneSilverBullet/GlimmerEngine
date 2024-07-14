@@ -13,6 +13,8 @@ namespace GRAPHICS_CORE
 	//the following two descriptor heaps will be binded into related context 
 	StaticDescriptorHeap g_texturesDescriptorHeap;
 	StaticDescriptorHeap g_samplersDescriptorHeap;
+	ModelManager g_staticModelsManager;
+
 	ID3D12Device* g_device = nullptr;
 	bool g_tearingSupport;
 
@@ -165,7 +167,9 @@ namespace GRAPHICS_CORE
 			//Create the descriptor heap for textures and samplers
 			GRAPHICS_CORE::g_texturesDescriptorHeap.Initialize(L"TextureDescriptorHeap", D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 4096);
 			GRAPHICS_CORE::g_samplersDescriptorHeap.Initialize(L"SamplerDescriptorHeap", D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, 2048);
-
+			
+			//Initialize the static model loading
+			GRAPHICS_CORE::g_staticModelsManager.Initialize();
 
 			g_tearingSupport = CheckTearingSupport();
 		}

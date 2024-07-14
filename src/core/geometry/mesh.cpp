@@ -14,6 +14,13 @@ Mesh::~Mesh() {
 	m_indices.clear();
 }
 
+MeshInfo Mesh::GetMeshInfor() {
+	MeshInfo res;
+	res.m_verticesSize = m_vertices.size() * sizeof(GeometryVertex);
+	res.m_indicesSize = m_indices.size() * sizeof(UINT32);
+	return res;
+}
+
 void Mesh::LoadMeshData(const aiScene* scene, aiMesh* mesh)
 {
 	// process vertex position, normal, tangent, texture coordinates

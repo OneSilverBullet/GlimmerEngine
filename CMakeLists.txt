@@ -135,6 +135,7 @@ FILE(GLOB SRCS_MATH
 FILE(GLOB SRCS_TYPES
    src/core/types/color.h
    src/core/types/commontypes.h
+   src/core/types/uuid.h
 )
 
 FILE(GLOB SRCS_COMPONENTS

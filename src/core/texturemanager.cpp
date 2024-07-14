@@ -6,6 +6,7 @@
 #include "resources/DDSTextureLoader.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "resources/stb_image.h"
+#include "types/commontypes.h"
 #include "mathematics/bitoperation.h"
 #include <thread>
 
@@ -22,23 +23,6 @@ void ManagedTexture::WaitForLoad(void) const
 		std::this_thread::yield();
 }
 
-std::wstring String2Wstring(std::string wstr)
-{
-	std::wstring res;
-	int len = MultiByteToWideChar(CP_ACP, 0, wstr.c_str(), wstr.size(), nullptr, 0);
-	if (len < 0) {
-		return res;
-	}
-	wchar_t* buffer = new wchar_t[len + 1];
-	if (buffer == nullptr) {
-		return res;
-	}
-	MultiByteToWideChar(CP_ACP, 0, wstr.c_str(), wstr.size(), buffer, len);
-	buffer[len] = '\0';
-	res.append(buffer);
-	delete[] buffer;
-	return res;
-}
 
 void ManagedTexture::CreateFromFile(std::wstring filePath, DefaultTextureType fallback, bool sRGB) {
 	if (filePath.size() == 0)
@@ -201,7 +185,7 @@ ManagedTexture* TextureManager::FindOrLoadTexture(const std::string& filename,
 	}
 
 	std::string filenameLoaded = m_rootPath + filename;
-	std::wstring filenameExchanged = String2Wstring(filenameLoaded);
+	std::wstring filenameExchanged = StringToWstring(filenameLoaded);
 	if (filenameLoaded.find(".dds") != std::string::npos) //load the dds texture
 		tex->CreateFromFile(filenameExchanged, texType, false);
 	else if (filenameLoaded.find(".hdr") != std::string::npos) //load the hdr texture

@@ -108,7 +108,7 @@ void HDRLoader::InitializeGeometry()
     m_geometryBuffer.Create(L"Geometry Buffer", uploadBufferSize, 1, uploadBuffer);
 
     m_vertexBufferView = m_geometryBuffer.VertexBufferView(0, vertexOffset, sizeof(PBRVertex));
-    m_indexBufferView = m_geometryBuffer.IndexBufferView(vertexOffset, indexOffset, true);
+    m_indexBufferView =  m_geometryBuffer.IndexBufferView(vertexOffset, indexOffset, true);
 }
 
 void HDRLoader::InitializeRootSignature()
