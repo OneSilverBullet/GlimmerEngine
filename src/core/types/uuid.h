@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -6,9 +7,11 @@
 #include <cstring>
 #include <cstdint>
 
-class UUID {
+
+
+class GUUID {
 public:
-    UUID(const std::string& name) {
+    GUUID(const std::string& name) {
         generateUUID(name);
     }
 

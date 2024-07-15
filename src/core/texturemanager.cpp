@@ -185,7 +185,7 @@ ManagedTexture* TextureManager::FindOrLoadTexture(const std::string& filename,
 	}
 
 	std::string filenameLoaded = m_rootPath + filename;
-	std::wstring filenameExchanged = StringToWstring(filenameLoaded);
+	std::wstring filenameExchanged = TypeUtiles::StringToWstring(filenameLoaded);
 	if (filenameLoaded.find(".dds") != std::string::npos) //load the dds texture
 		tex->CreateFromFile(filenameExchanged, texType, false);
 	else if (filenameLoaded.find(".hdr") != std::string::npos) //load the hdr texture

@@ -134,13 +134,13 @@ void ModelManager::Initialize()
 {
 	const std::string modelFilePath = "resource\\models";
 	
-	std::vector<std::string> objNames = ListFilesInDirectory(modelFilePath);
+	std::vector<std::string> objNames =	TypeUtiles::ListFilesInDirectory(modelFilePath);
 
 	UINT32 verticesOffset = 0;
 	UINT32 indicesOffset = 0;
 	for (int i = 0; i < objNames.size(); ++i) {
 		std::string modelPath = modelFilePath + "\\" + objNames[i];
-		UUID uuid(modelPath);
+		GUUID uuid(modelPath);
 		//build up the connection between uuid and name 
 		m_nameUUIDMapping[modelPath] = uuid.toString();
 
@@ -202,7 +202,7 @@ void ModelManager::BuildupGeometryBuffer() {
 		std::string modelUUID = item.first;
 		ModelInfor modelInfo = item.second;
 		UINT32 modelVerticesStart = modelInfo.verticesOffset;
-		UINT32 modelIndicesStart = modelInfo.indicesOffset;
+		UINT32 modelIndicesStart = m_verticesSize + modelInfo.indicesOffset;
 		for (int i = 0; i < modelInfo.meshesInfor.size(); ++i) {
 			MeshInfo meshInfo = modelInfo.meshesInfor[i];
 			UINT32 meshVerticesSize = meshInfo.m_verticesSize;
@@ -213,6 +213,7 @@ void ModelManager::BuildupGeometryBuffer() {
 
 			m_modelVBV[modelUUID].push_back(meshVBV);
 			m_modelIBV[modelUUID].push_back(meshIBV);
+			m_modelIndicesSize[modelUUID].push_back(meshIndicesSize / sizeof(UINT32));
 
 			modelVerticesStart += meshVerticesSize;
 			modelIndicesStart += meshIndicesSize;
@@ -224,7 +225,8 @@ ModelRef ModelManager::GetModelRef(const std::string& modelPath) {
 	std::string UUID = m_nameUUIDMapping[modelPath];
 	std::vector<D3D12_VERTEX_BUFFER_VIEW> vertices = m_modelVBV[UUID];
 	std::vector<D3D12_INDEX_BUFFER_VIEW> indices = m_modelIBV[UUID];
-	return ModelRef(vertices, indices);
+	std::vector<UINT32> indicesSizes = m_modelIndicesSize[UUID];
+	return ModelRef(vertices, indices, indicesSizes);
 }
 
 

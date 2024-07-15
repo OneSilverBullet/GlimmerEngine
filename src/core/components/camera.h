@@ -6,7 +6,7 @@
 class Camera
 {
 public:
-	Camera() : camera_fov(DirectX::XM_PIDIV4), camera_aspect(1.33), camera_nearZ(0.1f), camera_farZ(100.0f) {}
+	Camera() : camera_fov(DirectX::XM_PIDIV4), camera_aspect(1.33), camera_nearZ(0.1f), camera_farZ(3000.0f) {}
 	virtual DirectX::XMMATRIX GetViewMatrix() = 0;
 	virtual DirectX::XMMATRIX GetViewMatrixForSkybox() = 0;
 	virtual void RotateCamera(float xoffset, float yoffset) = 0;

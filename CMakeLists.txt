@@ -9,20 +9,24 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 
 set( SHADER_FILES
-    shaders/default_pixel.hlsl
-    shaders/base_vertex.hlsl
+    shaders/skybox_pixel.hlsl
+    shaders/skybox_vertex.hlsl
     shaders/equirectangular_pixel.hlsl
     shaders/equirectangular_vertex.hlsl
+    shaders/geometry_vertex.hlsl
+    shaders/geometry_pixel.hlsl
 )
 
 set(VERTEX_SHADERS
-    shaders/base_vertex.hlsl
+    shaders/skybox_vertex.hlsl
     shaders/equirectangular_vertex.hlsl
+    shaders/geometry_vertex.hlsl
 )
 
 set(PIXEL_SHADERS
-    shaders/default_pixel.hlsl
+    shaders/skybox_pixel.hlsl
     shaders/equirectangular_pixel.hlsl
+    shaders/geometry_pixel.hlsl
 )
 
 set_source_files_properties( 

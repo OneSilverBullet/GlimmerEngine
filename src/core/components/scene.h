@@ -10,10 +10,13 @@
 #include "texturemanager.h"
 #include "components/hdrtocubemap.h"
 
+
+
 class RootSignature;
 class GraphicsPSO;
+class Camera;
 
-
+//todo: to build up render pass structure
 class RenderScene
 {
 public:
@@ -23,6 +26,7 @@ public:
 	void Render(D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv,
 		ColorBuffer& backBuffer, DepthBuffer& depthBuffer,
 		D3D12_VIEWPORT viewport, D3D12_RECT scissorrect);
+	void SetCamera(Camera* camera);
 
 private:
 	void InitializeModels();
@@ -30,9 +34,10 @@ private:
 	void InitializeRootSignature();
 	void InitializePSO();
 
-
 private:
 	//geometry part
+	//todo: to build up render item structure
+	std::vector<ModelRef> m_renderItems;
 
 	//todo: materials loading; materials manager
 
@@ -41,4 +46,7 @@ private:
 
 	//pso
 	GraphicsPSO* m_pso;
+
+	//current camera
+	Camera* m_camera = nullptr;
 };

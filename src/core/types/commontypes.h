@@ -22,7 +22,16 @@ public:
 	};
 };
 
-std::wstring StringToWstring(std::string wstr)
+class TypeUtiles
+{
+public:
+	static std::wstring StringToWstring(std::string wstr);
+	static std::string WStringToString(const std::wstring& wstr);
+	static std::vector<std::string> ListFilesInDirectory(const std::string& path);
+};
+
+
+inline std::wstring TypeUtiles::StringToWstring(std::string wstr)
 {
 	std::wstring res;
 	int len = MultiByteToWideChar(CP_ACP, 0, wstr.c_str(), wstr.size(), nullptr, 0);
@@ -40,13 +49,13 @@ std::wstring StringToWstring(std::string wstr)
 	return res;
 }
 
-std::string WStringToString(const std::wstring& wstr) {
+inline std::string TypeUtiles::WStringToString(const std::wstring& wstr) {
 	std::vector<char> buffer(wstr.size() * 4); // UTF-8 characters can take up to 4 bytes
 	wcstombs(buffer.data(), wstr.c_str(), buffer.size());
 	return std::string(buffer.data());
 }
 
-std::vector<std::string> ListFilesInDirectory(const std::string& path) {
+inline std::vector<std::string> TypeUtiles::ListFilesInDirectory(const std::string& path) {
 	std::string searchPath = path + "\\*";
 	std::vector<std::string> results;
 	WIN32_FIND_DATA findFileData;
@@ -63,6 +72,7 @@ std::vector<std::string> ListFilesInDirectory(const std::string& path) {
 		} while (FindNextFile(hFind, &findFileData) != 0);
 		FindClose(hFind);
 	}
+	return results;
 }
 
 

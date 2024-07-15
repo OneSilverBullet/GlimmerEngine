@@ -51,9 +51,15 @@ bool ClientGame::LoadContent() {
     //binding the camera
     m_controller.BindCamera(&m_camera);
     m_camera.InitializeFirstRoleCamera();
+    m_camera.SetTarget(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
 
     //initialize the skybox
     m_skybox.Initialize("skybox");
+
+    //initialize the render scene
+    m_scene.Initialize();
+    m_scene.SetCamera(&m_camera);
+
 
     m_contentLoaded = true;
     ResizeDepthBuffer(GetClientWidth(), GetClientHeight());
@@ -78,6 +84,9 @@ void ClientGame::OnRender(RenderEventArgs& e) {
     //render sky box 
     m_skybox.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect, 
         &m_camera);
+
+    //render the scene, make sure the scene is rendered after the skybox
+    m_scene.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect);
 
 
     // Present

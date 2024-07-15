@@ -62,9 +62,9 @@ void SkyBox::InitializeRootSignature() {
 void SkyBox::InitializePSO() {
     //Load Shader
     ComPtr<ID3DBlob> vertexShaderBlob;
-    ThrowIfFailed(D3DReadFileToBlob(L"base_vertex.cso", &vertexShaderBlob));
+    ThrowIfFailed(D3DReadFileToBlob(L"skybox_vertex.cso", &vertexShaderBlob));
     ComPtr<ID3DBlob> pixelShaderBlob;
-    ThrowIfFailed(D3DReadFileToBlob(L"default_pixel.cso", &pixelShaderBlob));
+    ThrowIfFailed(D3DReadFileToBlob(L"skybox_pixel.cso", &pixelShaderBlob));
 
     //Create RTV
     D3D12_RT_FORMAT_ARRAY rtvFormats = {};

@@ -47,11 +47,13 @@ private:
 	//todo: material vector
 };
 
+
+//todo: add object instance
 class ModelRef
 {
 public:
-	ModelRef(std::vector<D3D12_VERTEX_BUFFER_VIEW>& vbv, std::vector<D3D12_INDEX_BUFFER_VIEW>& ibv)
-		: m_vertices(vbv), m_indices(ibv)
+	ModelRef(std::vector<D3D12_VERTEX_BUFFER_VIEW>& vbv, std::vector<D3D12_INDEX_BUFFER_VIEW>& ibv, std::vector<UINT32>& indicesSizes)
+		: m_vertices(vbv), m_indices(ibv), m_indicesSizes(indicesSizes)
 	{}
 
 	ModelRef(const ModelRef& v) {
@@ -60,6 +62,7 @@ public:
 
 	std::vector<D3D12_VERTEX_BUFFER_VIEW>& GetMeshVertexBufferView() { return m_vertices; }
 	std::vector<D3D12_INDEX_BUFFER_VIEW>& GetIndicesVertexBufferView() { return m_indices; }
+	std::vector<UINT32>& GetIndicesSizes() { return m_indicesSizes; }
 
 	ModelRef& operator=(const ModelRef& modelInstance) {
 		m_vertices.reserve(modelInstance.m_vertices.size());
@@ -70,11 +73,17 @@ public:
 		for (int i = 0; i < modelInstance.m_indices.size(); ++i) {
 			m_indices.push_back(modelInstance.m_indices[i]);
 		}
+		m_indicesSizes.reserve(modelInstance.m_indicesSizes.size());
+		for (int i = 0; i < modelInstance.m_indicesSizes.size(); ++i) {
+			m_indicesSizes.push_back(modelInstance.m_indicesSizes[i]);
+		}
+		return *this;
 	}
 
 private:
 	std::vector<D3D12_VERTEX_BUFFER_VIEW> m_vertices;
 	std::vector<D3D12_INDEX_BUFFER_VIEW> m_indices;
+	std::vector<UINT32> m_indicesSizes;
 
 };
 
@@ -98,6 +107,7 @@ private:
 	std::map<std::string, std::string> m_nameUUIDMapping; //name mapping UUID
 	std::map<std::string, std::vector<D3D12_VERTEX_BUFFER_VIEW>> m_modelVBV;
 	std::map<std::string, std::vector<D3D12_INDEX_BUFFER_VIEW>> m_modelIBV;
+	std::map<std::string, std::vector<UINT32>> m_modelIndicesSize;
 
 	UINT32 m_verticesSize;
 	UINT32 m_indicesSize;

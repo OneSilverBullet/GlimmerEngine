@@ -5,7 +5,7 @@ using namespace DirectX;
 void FirstRoleCamera::InitializeFirstRoleCamera()
 {
 	XMFLOAT3 target = XMFLOAT3(0.0F, 0.0F, 0.0F);
-	firstcamera_position = XMFLOAT3(3.0f, 3.0f, 3.0f);
+	firstcamera_position = XMFLOAT3(0.0f, 0.0f, -2500.0f);
 	XMStoreFloat3(&firstcamera_forward, XMVector3Normalize(XMLoadFloat3(&target) - XMLoadFloat3(&firstcamera_position)));
 	firstcamera_up = XMFLOAT3(0.0f, 1.0f, 0.0f);
 
