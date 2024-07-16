@@ -51,7 +51,7 @@ bool ClientGame::LoadContent() {
     //binding the camera
     m_controller.BindCamera(&m_camera);
     m_camera.InitializeFirstRoleCamera();
-    m_camera.SetTarget(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+    m_camera.SetPosition(DirectX::XMFLOAT3(0.0f, 0.0f, -200.0f));
 
     //initialize the skybox
     m_skybox.Initialize("skybox");
@@ -86,7 +86,7 @@ void ClientGame::OnRender(RenderEventArgs& e) {
         &m_camera);
 
     //render the scene, make sure the scene is rendered after the skybox
-    m_scene.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect);
+    m_scene.Render(rtv, dsv, currentBackbuffer, m_depthBuffer, m_viewport, m_scissorRect, m_worldMatrix);
 
 
     // Present
@@ -99,7 +99,7 @@ void ClientGame::OnUpdate(UpdateEventArgs& e) {
     super::OnUpdate(e);
 
     //Update the model matrix
-    float angle = static_cast<float>(e.TotalTime * 5.0f);
+    float angle = static_cast<float>(e.TotalTime * 10.0f);
     const XMVECTOR rotationAxis = XMVectorSet(0, 1, 0, 0);
     m_worldMatrix = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
 

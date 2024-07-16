@@ -52,6 +52,8 @@ private:
 class ModelRef
 {
 public:
+	ModelRef(){}
+
 	ModelRef(std::vector<D3D12_VERTEX_BUFFER_VIEW>& vbv, std::vector<D3D12_INDEX_BUFFER_VIEW>& ibv, std::vector<UINT32>& indicesSizes)
 		: m_vertices(vbv), m_indices(ibv), m_indicesSizes(indicesSizes)
 	{}

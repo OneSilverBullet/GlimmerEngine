@@ -25,7 +25,7 @@ public:
 	void Initialize();
 	void Render(D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv,
 		ColorBuffer& backBuffer, DepthBuffer& depthBuffer,
-		D3D12_VIEWPORT viewport, D3D12_RECT scissorrect);
+		D3D12_VIEWPORT viewport, D3D12_RECT scissorrect, DirectX::XMMATRIX& modelMat);
 	void SetCamera(Camera* camera);
 
 private:
@@ -39,7 +39,13 @@ private:
 	//todo: to build up render item structure
 	std::vector<ModelRef> m_renderItems;
 
+	ByteAddressBuffer m_geometryBuffer;
+
 	//todo: materials loading; materials manager
+	TextureRef m_testTexture;
+	DescriptorHandle m_textureHandle;
+	DescriptorHandle m_samplerHandle;
+
 
 	//root signature
 	RootSignature* m_rootSignature;

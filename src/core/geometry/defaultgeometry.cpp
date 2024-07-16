@@ -43,6 +43,50 @@ void DefaultGeometry::DefaultSphereMesh(float radius, std::vector<BaseVertex>& o
 	}
 }
 
+void DefaultGeometry::DefaultSphereMesh(float radius, std::vector<GeometryVertex>& outputVertices, 
+	std::vector<DWORD>& outputIndices) {
+	int x_segment_num = 16;
+	int y_segment_num = 16;
+	float pi = 3.14159265359;
+	//创建vertex
+	for (int y = 0; y <= y_segment_num; ++y)
+	{
+		for (int x = 0; x <= x_segment_num; ++x)
+		{
+			float x_segment = (float)x / (float)x_segment_num;
+			float y_segment = (float)y / (float)y_segment_num;
+			float yaw = x_segment * 2.0f * pi; //球体纬度360
+			float pitch = y_segment * pi; //球体精度180
+			float xpos = cos(yaw) * sin(pitch) * radius;
+			float ypos = cos(pitch) * radius;
+			float zpos = sin(yaw) * sin(pitch) * radius;
+			//position , uv, normal
+			GeometryVertex geometryVertex(XMFLOAT3(xpos, ypos, zpos), XMFLOAT3(xpos, ypos, zpos), XMFLOAT3(xpos, ypos, zpos), XMFLOAT2(x_segment, y_segment));
+			outputVertices.push_back(geometryVertex);
+		}
+	}
+	//创建indices
+	bool odd = false;
+	for (int y = 0; y < y_segment_num; ++y)
+	{
+		if (!odd) {
+			for (int x = 0; x <= x_segment_num; ++x)
+			{
+				outputIndices.push_back(y * (x_segment_num + 1) + x);
+				outputIndices.push_back((y + 1) * (x_segment_num + 1) + x);
+			}
+		}
+		else {
+			for (int x = x_segment_num; x >= 0; --x) {
+				outputIndices.push_back((y + 1) * (x_segment_num + 1) + x);
+				outputIndices.push_back(y * (x_segment_num + 1) + x);
+
+			}
+		}
+		odd = !odd;
+	}
+}
+
 void DefaultGeometry::DefaultSphereMesh(float radius, std::vector<PBRVertex>& outputVertices, std::vector<DWORD>& outputIndices)
 {
 	int x_segment_num = 16;

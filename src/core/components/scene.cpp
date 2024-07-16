@@ -2,6 +2,7 @@
 #include "graphicscore.h"
 #include "resources/colorbuffer.h"
 #include "resources/depthbuffer.h"
+#include "geometry/defaultgeometry.h"
 #include "camera.h"
 
 RenderScene::RenderScene() {
@@ -25,7 +26,7 @@ void RenderScene::SetCamera(Camera* camera) {
 
 void RenderScene::Render(D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_HANDLE dsv,
 	ColorBuffer& backBuffer, DepthBuffer& depthBuffer,
-	D3D12_VIEWPORT viewport, D3D12_RECT scissorrect) {
+	D3D12_VIEWPORT viewport, D3D12_RECT scissorrect, DirectX::XMMATRIX& modelMat) {
 
     assert(m_camera != nullptr);
 
@@ -61,12 +62,18 @@ void RenderScene::Render(D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_H
             XMFLOAT3 eyepos;
         } commoninforcb;
 
-        commoninforcb.model = DirectX::XMMatrixIdentity();
+        commoninforcb.model = modelMat;
         commoninforcb.view = m_camera->GetViewMatrix();
         commoninforcb.proj = m_camera->GetProjMatrix();
         commoninforcb.eyepos = m_camera->GetPosition();
 
         graphicsContext.SetDynamicConstantBufferView(0, sizeof(CommonInfor), &commoninforcb);
+        D3D12_GPU_DESCRIPTOR_HANDLE texture_handle;
+        texture_handle.ptr = m_textureHandle.GetGPUPtr();
+        graphicsContext.SetDescriptorTable(1, texture_handle);
+        D3D12_GPU_DESCRIPTOR_HANDLE sampler_handle;
+        sampler_handle.ptr = m_samplerHandle.GetGPUPtr();
+        graphicsContext.SetDescriptorTable(2, sampler_handle);
 
         for (int i = 0; i < m_renderItems.size(); ++i) {
 
@@ -103,8 +110,30 @@ void RenderScene::InitializeModels() {
 }
 
 void RenderScene::InitializeMaterials() {
+    //loading texture
+    m_testTexture = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("Cerberus/Cerberus_A.dds", BlackCubeMap, true);
 
+    //allocate descriptor handle
+    m_textureHandle = GRAPHICS_CORE::g_texturesDescriptorHeap.Alloc(1);
+    m_samplerHandle = GRAPHICS_CORE::g_samplersDescriptorHeap.Alloc(1);
 
+    //texture loading process
+    D3D12_CPU_DESCRIPTOR_HANDLE textures[] = {
+        m_testTexture.GetSRV()
+    };
+
+    UINT destNum = 1;
+    UINT srcNums[] = { 1 };
+
+    GRAPHICS_CORE::g_device->CopyDescriptors(1, &m_textureHandle, &destNum, destNum, textures, srcNums, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    //sampler loading process
+    D3D12_CPU_DESCRIPTOR_HANDLE samplers[] = {
+        GRAPHICS_CORE::g_samplerLinearWrap
+    };
+
+    GRAPHICS_CORE::g_device->CopyDescriptors(1, &m_samplerHandle, &destNum, destNum, 
+        samplers, srcNums, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 }
 
 void RenderScene::InitializeRootSignature() {
@@ -121,10 +150,10 @@ void RenderScene::InitializeRootSignature() {
         D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
         D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
 
-    m_rootSignature = new RootSignature(1, 0);
+    m_rootSignature = new RootSignature(3, 0);
     (*m_rootSignature)[0].InitAsConstantBuffer(0, D3D12_SHADER_VISIBILITY_VERTEX);
-    //(*m_rootSignature)[1].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 1, D3D12_SHADER_VISIBILITY_ALL);
-    //(*m_rootSignature)[2].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 0, 1, D3D12_SHADER_VISIBILITY_ALL);
+    (*m_rootSignature)[1].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 1, D3D12_SHADER_VISIBILITY_ALL);
+    (*m_rootSignature)[2].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 0, 1, D3D12_SHADER_VISIBILITY_ALL);
     m_rootSignature->Finalize(L"", rootSignatureFlag);
 }
 
@@ -150,14 +179,23 @@ void RenderScene::InitializePSO() {
     rasterizerDesc.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
     rasterizerDesc.DepthClipEnable = TRUE;
 
+
     //Create Blend State
     D3D12_BLEND_DESC blendDesc = {};
     blendDesc.RenderTarget[0].BlendEnable = FALSE;
     blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
+    //Depth Stencil State
+    D3D12_DEPTH_STENCIL_DESC depthStencilDesc = {};
+    depthStencilDesc.DepthEnable = TRUE;
+    depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+    depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+    depthStencilDesc.StencilEnable = FALSE;
+
     //Create PSO
     m_pso = new GraphicsPSO();
     m_pso->SetNodeMask(0);
+    m_pso->SetDepthStencilState(depthStencilDesc);
     m_pso->SetRasterizerState(rasterizerDesc);
     m_pso->SetBlendState(blendDesc);
     m_pso->SetRootSignature(m_rootSignature);

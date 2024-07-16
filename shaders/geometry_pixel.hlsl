@@ -1,4 +1,4 @@
-TextureCube<float4> baseColorTexture : register(t0);
+Texture2D<float3> baseColorTexture : register(t0);
 SamplerState baseColorSampler : register(s0);
 
 struct PixelInputAttributes
@@ -11,6 +11,6 @@ struct PixelInputAttributes
 
 float4 PSMain(PixelInputAttributes input) : SV_Target
 {
-    float3 sampleColor = float3(1.0f, 1.0f, 1.0f);
+    float3 sampleColor = baseColorTexture.Sample(baseColorSampler, input.uv).rgb;
     return float4(sampleColor, 1.0f);
 }

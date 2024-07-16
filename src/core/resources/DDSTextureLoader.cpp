@@ -26,7 +26,7 @@
 #include "gpuresource.h"
 #include "graphicscore.h"
 #include "context.h"
-
+#include "mathematics/bitoperation.h"
 
 struct handle_closer { void operator()(HANDLE h) { if (h) CloseHandle(h); } };
 typedef public std::unique_ptr<void, handle_closer> ScopedHandle;
@@ -816,8 +816,8 @@ static HRESULT CreateD3DResources( _In_ ID3D12Device* d3dDevice,
 
     D3D12_RESOURCE_DESC ResourceDesc;
     ResourceDesc.Alignment = 0;
-    ResourceDesc.Width = static_cast<UINT64>( width );
-    ResourceDesc.Height = static_cast<UINT>( height );
+    ResourceDesc.Width = static_cast<UINT64>(Mathematics::AlignUp(width, 4));
+    ResourceDesc.Height = static_cast<UINT>(Mathematics::AlignUp(height, 4));
     ResourceDesc.DepthOrArraySize = static_cast<UINT16>( arraySize );
     ResourceDesc.MipLevels = static_cast<UINT16>( mipCount );
     ResourceDesc.Format = format;

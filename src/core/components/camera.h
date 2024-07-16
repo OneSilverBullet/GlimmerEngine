@@ -6,12 +6,12 @@
 class Camera
 {
 public:
-	Camera() : camera_fov(DirectX::XM_PIDIV4), camera_aspect(1.33), camera_nearZ(0.1f), camera_farZ(3000.0f) {}
+	Camera() : camera_fov(DirectX::XM_PIDIV4), camera_aspect(1.33), camera_nearZ(0.1f), camera_farZ(1000.0f) {}
 	virtual DirectX::XMMATRIX GetViewMatrix() = 0;
 	virtual DirectX::XMMATRIX GetViewMatrixForSkybox() = 0;
 	virtual void RotateCamera(float xoffset, float yoffset) = 0;
 	virtual ~Camera() {}
-	virtual void SetTarget(DirectX::XMFLOAT3) {}
+	virtual void SetPosition(DirectX::XMFLOAT3) {}
 	virtual void AddDistance(float dt) {}
 	virtual void DecDistance(float dt) {}
 	virtual DirectX::XMFLOAT3 GetPosition() = 0;
@@ -48,7 +48,7 @@ public:
 	DirectX::XMMATRIX GetViewMatrix();
 	DirectX::XMMATRIX GetViewMatrixForSkybox();
 
-	void SetTarget(DirectX::XMFLOAT3 tar) { thirdcamera_target = tar; }
+	void SetPosition(DirectX::XMFLOAT3 tar) { thirdcamera_target = tar; }
 public:
 	DirectX::XMFLOAT3 GetForward() {
 		DirectX::XMFLOAT3 position = GetPosition();
@@ -91,7 +91,7 @@ public:
 	DirectX::XMMATRIX GetViewMatrixForSkybox();
 
 public:
-	void SetTarget(DirectX::XMFLOAT3 pos) { firstcamera_position = pos; }
+	void SetPosition(DirectX::XMFLOAT3 pos) { firstcamera_position = pos; }
 	DirectX::XMFLOAT3 GetPosition() { return firstcamera_position; }
 	DirectX::XMFLOAT3 GetForward() { return firstcamera_forward; }
 private:
