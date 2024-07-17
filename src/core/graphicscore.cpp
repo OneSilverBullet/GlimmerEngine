@@ -18,6 +18,12 @@ namespace GRAPHICS_CORE
 	ID3D12Device* g_device = nullptr;
 	bool g_tearingSupport;
 
+	std::string g_texturePath = "resource/textures/";
+	std::string g_pbrmaterialTextureName[5] = {
+		"alebdo", "normal", "roughness", "metalness", "ao"
+	};
+
+
 	SamplerDesc g_samplerLinearWrapDesc;
 	D3D12_CPU_DESCRIPTOR_HANDLE g_samplerLinearWrap;
 	SamplerDesc g_samplerAnisoWrapDesc;
@@ -161,7 +167,7 @@ namespace GRAPHICS_CORE
 		if (GRAPHICS_CORE::g_device) {
 			//Update essential d3d12 device
 			GRAPHICS_CORE::g_commandManager.Initialize(GRAPHICS_CORE::g_device);
-			GRAPHICS_CORE::g_textureManager.Initialize("resource/textures/");
+			GRAPHICS_CORE::g_textureManager.Initialize(g_texturePath);
 			SamplersInitialize();
 
 			//Create the descriptor heap for textures and samplers

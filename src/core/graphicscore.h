@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include "commandmanager.h"
 #include "context.h"
 #include "descriptorheapallocator.h"
@@ -21,6 +22,11 @@ namespace GRAPHICS_CORE
 	extern bool g_tearingSupport;
 
 	extern DescriptorAllocator g_descriptorHeapAllocator[];
+
+
+	//resource pathes
+	extern std::string g_texturePath;
+	extern std::string g_pbrmaterialTextureName[5];
 
 
 	//global default sampler descriptor handle

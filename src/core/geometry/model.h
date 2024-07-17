@@ -4,7 +4,7 @@
 #include <map>
 #include "mesh.h"
 #include "resources/byteaddressbuffer.h"
-
+#include "material.h"
 struct aiScene;
 struct aiNode;
 
@@ -39,6 +39,7 @@ private:
 
 private:
 	std::vector<Mesh> m_meshes;
+	std::vector<Material*> m_materials; //the number of the materials is same as meshes
 	std::vector<GeometryVertex> m_batchVertices;
 	std::vector<UINT32> m_batchIndices;
 

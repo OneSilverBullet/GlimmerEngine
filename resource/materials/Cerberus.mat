@@ -1,0 +1,12 @@
+{
+    "materials": [
+        {
+            "name": "CerberusMaterial",
+            "ambient": "resource\\textures\\Cerberus\\Cerberus_A.dds",
+            "normal": "resource\\textures\\Cerberus\\Cerberus_N.dds",
+            "metalness": "resource\\textures\\Cerberus\\Cerberus_M.dds",
+            "roughness": "resource\\textures\\Cerberus\\Cerberus_R.dds",
+            "ao": "resource\\textures\\Cerberus\\Cerberus_AO.dds"
+        }
+    ]
+}
