@@ -24,11 +24,11 @@ public:
 
 	UINT64 GetTexturesGPUPtr() { return m_materialHandle.GetGPUPtr(); }
 	UINT64 GetSamplersGPUPtr() { return m_samplerHandle.GetGPUPtr(); }
-
 protected:
 	void ParseMaterial() override;
 	void ResourceLoading() override;
 	void ResourceInitialize() override;
+
 
 private:
 	std::string m_materialPath;
@@ -47,6 +47,7 @@ public:
 
 
 	void Initialize();
+
 
 
 

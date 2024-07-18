@@ -1,6 +1,10 @@
 #include "material.h"
 #include "texturemanager.h"
 #include "graphicscore.h"
+#include <nlohmann/json.hpp>
+#include <fstream>
+#include <iostream>
+
 
 PBRMaterial::PBRMaterial(std::string materialPath)
 	: m_materialPath(materialPath)
@@ -12,18 +16,18 @@ PBRMaterial::PBRMaterial(std::string materialPath)
 
 void PBRMaterial::ParseMaterial()
 {
-    std::ifstream file("material.json");
-    json j;
+    std::ifstream file(m_materialPath);
+    nlohmann::json j;
     file >> j;
 
-    // Vector to hold materials
+    //vector to hold material
     std::vector<Material> materials;
 
     // Parse and populate the materials
     for (const auto& item : j["materials"]) {
         Material material;
-        material.name = item["name"];
-        std::copy(item["ambient"].begin(), item["ambient"].end(), material.ambient);
+        material = item["name"];
+        std::copy(item["ambient"].begin(), item["ambient"].end(), );
         std::copy(item["diffuse"].begin(), item["diffuse"].end(), material.diffuse);
         std::copy(item["specular"].begin(), item["specular"].end(), material.specular);
         material.shininess = item["shininess"];
