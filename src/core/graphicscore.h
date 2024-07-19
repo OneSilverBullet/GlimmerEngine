@@ -7,6 +7,7 @@
 #include "texturemanager.h"
 #include "resources/samplerdesc.h"
 #include "geometry/model.h"
+#include "geometry/material.h"
 #include "staticdecriptorheap.h"
 
 namespace GRAPHICS_CORE
@@ -17,6 +18,7 @@ namespace GRAPHICS_CORE
 	extern StaticDescriptorHeap g_texturesDescriptorHeap;
 	extern StaticDescriptorHeap g_samplersDescriptorHeap;
 	extern ModelManager g_staticModelsManager;
+	extern MaterialManager g_materialManager;
 
 	extern ID3D12Device* g_device;
 	extern bool g_tearingSupport;

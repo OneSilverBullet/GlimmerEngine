@@ -130,6 +130,8 @@ FILE(GLOB SRCS_GEOMETRY
    src/core/geometry/material.cpp
    src/core/geometry/model.h
    src/core/geometry/model.cpp
+   src/core/geometry/light.h
+   src/core/geometry/light.cpp
 )
 
 FILE(GLOB SRCS_MATH

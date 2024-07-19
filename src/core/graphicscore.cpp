@@ -10,6 +10,8 @@ namespace GRAPHICS_CORE
 	TextureManager g_textureManager;
 	CommandManager g_commandManager;
 	ContextManager g_contextManager;
+	MaterialManager g_materialManager;
+
 	//the following two descriptor heaps will be binded into related context 
 	StaticDescriptorHeap g_texturesDescriptorHeap;
 	StaticDescriptorHeap g_samplersDescriptorHeap;
@@ -176,6 +178,9 @@ namespace GRAPHICS_CORE
 			
 			//Initialize the static model loading
 			GRAPHICS_CORE::g_staticModelsManager.Initialize();
+
+			//Initialize the static material
+			GRAPHICS_CORE::g_materialManager.Initialize();
 
 			g_tearingSupport = CheckTearingSupport();
 		}

@@ -8,35 +8,40 @@ class Material
 {
 public:
 
-
 protected:
-	virtual void ParseMaterial() = 0;
 	virtual void ResourceLoading() = 0;
 	virtual void ResourceInitialize() = 0;
-
 };
 
 //material structure for PBR rendering
 class PBRMaterial : public Material
 {
 public:
-	PBRMaterial(std::string materialPath);
+	PBRMaterial(const std::string& albedo, const std::string& normal, const std::string& metalness, const std::string& roughness, const std::string& ao);
 
 	UINT64 GetTexturesGPUPtr() { return m_materialHandle.GetGPUPtr(); }
 	UINT64 GetSamplersGPUPtr() { return m_samplerHandle.GetGPUPtr(); }
+
 protected:
-	void ParseMaterial() override;
 	void ResourceLoading() override;
 	void ResourceInitialize() override;
 
-
 private:
-	std::string m_materialPath;
+	//texture path
+	std::string m_albedoPath;
+	std::string m_normalPath;
+	std::string m_roughnessPath;
+	std::string m_metalnessPath;
+	std::string m_aoPath;
+
+	//texture ref
 	TextureRef m_albedoTexture;
 	TextureRef m_normalTexture;
 	TextureRef m_roughnessTexture;
 	TextureRef m_metalnessTexture;
 	TextureRef m_aoTexture;
+
+	//the descriptor handle 
 	DescriptorHandle m_materialHandle;
 	DescriptorHandle m_samplerHandle;
 };
@@ -44,15 +49,12 @@ private:
 class MaterialManager
 {
 public:
-
-
+	MaterialManager(){}
+	~MaterialManager();
 	void Initialize();
-
-
-
+	Material* GetMaterial(const std::string& matName) { return m_materialContainer[matName]; }
 
 private:
-	std::map<std::string, Material*> m_materials; //UUID mapping material
-	std::map<std::string, std::string> m_pathMappingUUID; //path mapping UUID
+	std::map<std::string, Material*> m_materialContainer; //name mapping material
 };
 
