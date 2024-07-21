@@ -13,14 +13,7 @@ struct VertexOutputAttributes
     float3 normal : NORMAL0;
     float3 tangent : TANGENT0;
     float2 uv : TEXCOORD0;
-};
-
-struct CommonInfo
-{
-    matrix model;
-    matrix view;
-    matrix proj;
-    float3 eyepos;
+	float3 worldposition : TEXCOORD1;
 };
 
 ConstantBuffer<CommonInfo> CommonCB : register(b0);
@@ -28,10 +21,10 @@ ConstantBuffer<CommonInfo> CommonCB : register(b0);
 VertexOutputAttributes VSMain(VertexInputAttributes input)
 {
     VertexOutputAttributes output;
+	output.worldposition = mul(CommonCB.model,
+    float4(input.position, 1.0f)).xyz;
     output.position = mul(CommonCB.proj,
-    mul(CommonCB.view,
-    mul(CommonCB.model,
-    float4(input.position, 1.0f))));
+    mul(CommonCB.view, output.worldposition));
     output.normal = input.normal;
     output.tangent = input.tangent;
     output.uv = input.uv;
