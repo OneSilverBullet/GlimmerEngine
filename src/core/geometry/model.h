@@ -86,10 +86,10 @@ public:
 	int GetMeshCount() { return m_vertices.size(); }
 
 private:
+	//the vector size is similar as the meshes size
 	std::vector<D3D12_VERTEX_BUFFER_VIEW> m_vertices;
 	std::vector<D3D12_INDEX_BUFFER_VIEW> m_indices;
 	std::vector<UINT32> m_indicesSizes;
-
 };
 
 //model manager

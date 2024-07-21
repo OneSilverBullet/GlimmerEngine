@@ -1,3 +1,4 @@
+#include "commontypes.hlsli"
 
 struct VertexInputAttributes
 {
@@ -24,7 +25,7 @@ VertexOutputAttributes VSMain(VertexInputAttributes input)
 	output.worldposition = mul(CommonCB.model,
     float4(input.position, 1.0f)).xyz;
     output.position = mul(CommonCB.proj,
-    mul(CommonCB.view, output.worldposition));
+    mul(CommonCB.view, float4(output.worldposition, 1.0f)));
     output.normal = input.normal;
     output.tangent = input.tangent;
     output.uv = input.uv;

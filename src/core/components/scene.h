@@ -44,15 +44,6 @@ private:
 	std::vector<RenderItem> m_renderItems;
 	//std::vector<ModelRef> m_renderItems;
 
-	ByteAddressBuffer m_geometryBuffer;
-
-
-	DescriptorHandle m_textureHandle;
-	DescriptorHandle m_samplerHandle;
-
-
-
-
 
 	DirectionLight m_dirLight;
 

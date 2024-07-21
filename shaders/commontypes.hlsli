@@ -1,5 +1,4 @@
 
-
 struct CommonInfo
 {
     matrix model;
@@ -33,7 +32,8 @@ struct FragmentProperties
 
 struct LightProperties
 {
-	float3 L;
+    float3 L;
+    float3 H;
 	float NdotL;
 	float LdotH;
 	float NdotH;

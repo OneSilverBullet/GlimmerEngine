@@ -184,7 +184,7 @@ ManagedTexture* TextureManager::FindOrLoadTexture(const std::string& filename,
 		}
 	}
 
-	std::string filenameLoaded = m_rootPath + filename;
+	std::string filenameLoaded = filename;
 	std::wstring filenameExchanged = TypeUtiles::StringToWstring(filenameLoaded);
 	if (filenameLoaded.find(".dds") != std::string::npos) //load the dds texture
 		tex->CreateFromFile(filenameExchanged, texType, false);

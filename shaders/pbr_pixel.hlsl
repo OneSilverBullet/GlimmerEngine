@@ -1,6 +1,5 @@
-#include "commontypes.hlsli"
 #include "pbrmathematics.hlsli"
-#include "commondata.hlsli"
+
 
 //the pbr texture properties
 Texture2D<float3> baseColorTexture : register(t0);
@@ -29,19 +28,19 @@ struct PixelInputAttributes
 
 
 //the direct lighting calculation
-float3 DirectLighting(FragmentProperties frag, float3 L, float3 lightcolor)
+float3 DirectLighting(FragmentProperties frag, float3 L, float3 lightcolor, float3 albedo, float3 metal)
 {
 	LightProperties d_light;
 	d_light.L = L;
 	d_light.H = normalize(L + frag.V);
 	d_light.NdotL = saturate(dot(frag.N, L));
-    d_light.LdotH = saturate(dot(L, H));
-    d_light.NdotH = saturate(dot(frag.N, H));
+    d_light.LdotH = saturate(dot(L, d_light.H));
+    d_light.NdotH = saturate(dot(frag.N, d_light.H));
 	
-	float3 diffuse = Diffuse_Burley(frag, d_light);
-	float3 specular = Specular_BRDF(frag, d_light);
+    float3 diffuse = d_light.NdotL * float3(1.0f, 1.0f, 1.0f) * frag.diffuse;
+    float3 specular = SpecularBRDF(frag, d_light, albedo, metal);
 	
-	return d_light.NdotL * lightcolor * (diffuse + specular);
+    return (diffuse + specular);
 }
 
 //the indirect lighting calculation
@@ -50,11 +49,25 @@ float3 IndirectLighting()
 	return float3(0.0f, 0.0f, 0.0f);
 }
 
+float3 ComputeNormal(PixelInputAttributes vsOutput, float3 rawnormal)
+{
+    float3 normal = normalize(vsOutput.normal);
+    float3 tangent = normalize(vsOutput.tangent.xyz);
+    float3 bitangent = normalize(cross(normal, tangent));
+    float3x3 tangentFrame = float3x3(tangent, bitangent, normal);
+
+    // Read normal map and convert to SNORM (TODO:  convert all normal maps to R8G8B8A8_SNORM?)
+    normal = rawnormal * 2.0 - 1.0;
+	
+    return mul(normal, tangentFrame);
+}
+
 float4 PSMain(PixelInputAttributes input) : SV_Target
 {	
 	//loading fragment PBR values
 	float3 albedo = baseColorTexture.Sample(baseColorSampler, input.uv).rgb;
 	float3 normal = normalTexture.Sample(normalSampler, input.uv).rgb;
+    normal = ComputeNormal(input, normal);
 	float3 metalness = roughnessTexture.Sample(metalnessSampler, input.uv).rgb;
 	float3 roughness = metalnessTexture.Sample(roughnessSampler, input.uv).rgb;
 	float3 ao = aoTexture.Sample(aoSampler, input.uv).rgb;
@@ -63,15 +76,23 @@ float4 PSMain(PixelInputAttributes input) : SV_Target
 	FragmentProperties frag;
 	frag.N = normal;
 	frag.V = normalize(CommonCB.eyepos - input.worldposition);
-	frag.NdotV = saturate(dot(Surface.N, Surface.V));
-	frag.roughness = roughness;
-	frag.r2 = roughness * roughness;
+    frag.NdotV = saturate(dot(frag.N, frag.V));
+	frag.roughness = roughness.x;
+    frag.r2 = frag.roughness * frag.roughness;
 	frag.r4 = frag.r2 * frag.r2;
 	frag.diffuse = albedo * (1 - kDielectricSpecular) * (1 - kDielectricSpecular) * ao;
 	frag.specular = lerp(kDielectricSpecular, albedo.rgb, metalness.x) * ao;
 	
+	
+    float3 L = normalize(CommonCB.sundirection - input.position.xyz);
+	
+    float3 directLightingRes = DirectLighting(frag, L, CommonCB.sunintensity, albedo, metalness);
+	
+    return float4(directLightingRes, 1.0f);
+	
+	/*
 	//calculate the direct lighting
-	float3 directLightingRes = DirectLighting(frag, CommonCB.sundirection, CommonCB.sunintensity);
+	
 	
 	//todo: calculate the indirect lighting
 	float3 indirectLightingRes = IndirectLighting();
@@ -81,4 +102,5 @@ float4 PSMain(PixelInputAttributes input) : SV_Target
 	
 	
     return float4(lightingRes, 1.0f);
+	*/
 }

@@ -7,53 +7,47 @@ project(
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+
+
+#Shader Initialize
 set(SHADER_SOURCE_DIR ${CMAKE_SOURCE_DIR}/shaders)
-set(SHADER_BINARY_DIR ${CMAKE_BINARY_DIR}/shaders)
 file(GLOB_RECURSE SHADER_FILES ${SHADER_SOURCE_DIR}/*)
-file(MAKE_DIRECTORY ${SHADER_BINARY_DIR})
-
-function(compile_hlsl_shader SHADER_FILE ENTRY_POINT TARGET_PROFILE)
-    get_filename_component(SHADER_NAME ${SHADER_FILE} NAME_WE)
-    set(SHADER_OUTPUT ${SHADER_BINARY_DIR}/${SHADER_NAME}.cso)
-
-    add_custom_command(
-        OUTPUT ${SHADER_OUTPUT}
-        COMMAND dxc -T ${TARGET_PROFILE} -E ${ENTRY_POINT} -Fo ${SHADER_OUTPUT} ${SHADER_FILE}
-        DEPENDS ${HLSLI_FILES}
-        WORKING_DIRECTORY ${SHADER_SOURCE_DIR}
-        COMMENT "Compiling ${SHADER_FILE}"
-    )
-
-    set(SHADER_OUTPUTS ${SHADER_OUTPUTS} ${SHADER_OUTPUT} PARENT_SCOPE)
-endfunction()
-
 
 set(VERTEX_SHADERS
-    "skybox_vertex.hlsl"
-    "equirectangular_vertex.hlsl"
-    "pbr_vertex.hlsl"
+    shaders/skybox_vertex.hlsl
+    shaders/equirectangular_vertex.hlsl
+    shaders/pbr_vertex.hlsl
 )
 
 set(PIXEL_SHADERS
-    "skybox_pixel.hlsl"
-    "equirectangular_pixel.hlsl"
-    "pbr_pixel.hlsl"
+    shaders/skybox_pixel.hlsl
+    shaders/equirectangular_pixel.hlsl
+    shaders/pbr_pixel.hlsl
 )
 
-foreach(SHADER_INFO ${VERTEX_SHADERS})
-    compile_hlsl_shader(${SHADER_SOURCE_DIR}/${SHADER_INFO} VSMain vs_5_1)
-endforeach()
+set_source_files_properties( 
+    ${VERTEX_SHADERS}
 
-foreach(SHADER_INFO ${PIXEL_SHADERS})
-    compile_hlsl_shader(${SHADER_SOURCE_DIR}/${SHADER_INFO} PSMain ps_5_1)
-endforeach()
+PROPERTIES 
+    VS_SHADER_TYPE Vertex
+    VS_SHADER_ENTRYPOINT VSMain
+    VS_SHADER_MODEL 5.1
+)
 
+set_source_files_properties( 
+    ${PIXEL_SHADERS}
+
+PROPERTIES 
+    VS_SHADER_TYPE Pixel
+    VS_SHADER_ENTRYPOINT PSMain
+    VS_SHADER_MODEL 5.1
+)
 
 message("Generating Shader Files: ${SHADER_FILES}")
 
 
 
-
+# Source Code Initialize
 FILE(GLOB SRCS_GLIMMER_CORE
    src/core/commandqueue.h
    src/core/commandqueue.cpp
@@ -183,6 +177,8 @@ ${SRCS_COMPONENTS}
 ${SRCS_RENDERELEMENTS} 
 ${SHADER_FILES})
 
+
+
 source_group("source" FILES ${SRCS_MAIN})
 source_group("source\\core" FILES ${SRCS_GLIMMER_CORE})
 source_group("source\\core\\resources" FILES ${SRCS_RESOURCES})
@@ -194,6 +190,9 @@ source_group( "source\\core\\components" FILES ${SRCS_COMPONENTS} )
 source_group( "source\\core\\renderelements" FILES ${SRCS_RENDERELEMENTS} )
 source_group( "resources\\shaders" FILES ${SHADER_FILES} )
 
+
+
+#dependences intialize
 set(LIB_DIR "${PROJECT_SOURCE_DIR}/dependences/lib")
 set(BIN_DIR "${PROJECT_SOURCE_DIR}/dependences/bin")
 
@@ -219,3 +218,15 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 
 
 
+#resources files initialize
+set(RESOURCE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/resource)
+set(RESOURCE_DEST_DIR ${CMAKE_BINARY_DIR}/Debug/resource)
+
+add_custom_target(copy_data
+	COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different 
+        "${RESOURCE_SOURCE_DIR}/"
+        "${RESOURCE_DEST_DIR}/"
+    COMMENT "Copying data"
+)
+
+add_dependencies(Glimmer copy_data)

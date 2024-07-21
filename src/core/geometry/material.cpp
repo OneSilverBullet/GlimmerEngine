@@ -14,9 +14,29 @@ PBRMaterial::PBRMaterial(const std::string& albedo, const std::string& normal,
 {
     m_matType = MATERIAL_TYPE::PBR;
     ResourceLoading();
-    ResourceInitialize();
+    //ResourceInitialize();
 }
 
+std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> PBRMaterial::GetSamplerSRVArray() {
+    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> srvArray;
+    srvArray.push_back(GRAPHICS_CORE::g_samplerLinearWrap);
+    srvArray.push_back(GRAPHICS_CORE::g_samplerLinearWrap);
+    srvArray.push_back(GRAPHICS_CORE::g_samplerLinearWrap);
+    srvArray.push_back(GRAPHICS_CORE::g_samplerLinearWrap);
+    srvArray.push_back(GRAPHICS_CORE::g_samplerLinearWrap);
+    return srvArray;
+}
+
+std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> PBRMaterial::GetTextureSRVArray()
+{
+    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> srvArray;
+    srvArray.push_back(m_albedoTexture.GetSRV());
+    srvArray.push_back(m_normalTexture.GetSRV());
+    srvArray.push_back(m_roughnessTexture.GetSRV());
+    srvArray.push_back(m_metalnessTexture.GetSRV());
+    srvArray.push_back(m_aoTexture.GetSRV());
+    return srvArray;
+}
 
 void PBRMaterial::ResourceLoading() {
     m_albedoTexture = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile(m_albedoPath, BlackOpaque2D, true);
@@ -74,7 +94,7 @@ void MaterialManager::Initialize()
     UINT32 verticesOffset = 0;
     UINT32 indicesOffset = 0;
     for (int i = 0; i < objNames.size(); ++i) {
-        std::string modelPath = materialFilePath + "\\" + objNames[i];
+        std::string modelPath = ".\\" + materialFilePath + "\\" + objNames[i];
         std::ifstream file(modelPath);
         nlohmann::json j;
         file >> j;
@@ -94,7 +114,7 @@ void MaterialManager::Initialize()
                 Material* newMat = new PBRMaterial(albedoMatPath, normalMatPath, 
                     metalnessMatPath, roughnessMatPath, aoMatPath);
 
-                char delimiter = ',';
+                char delimiter = '.';
                 size_t pos = objNames[i].find(delimiter);
                 if (pos != std::string::npos) {
                     // Split the string into two parts

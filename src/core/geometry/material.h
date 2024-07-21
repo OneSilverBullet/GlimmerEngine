@@ -16,6 +16,8 @@ class Material
 {
 public:
 	MATERIAL_TYPE GetMatType() { return m_matType; }
+	virtual std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> GetTextureSRVArray() = 0;
+	virtual std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> GetSamplerSRVArray() = 0;
 
 protected:
 	virtual void ResourceLoading() = 0;
@@ -34,6 +36,9 @@ public:
 
 	UINT64 GetTexturesGPUPtr() { return m_materialHandle.GetGPUPtr(); }
 	UINT64 GetSamplersGPUPtr() { return m_samplerHandle.GetGPUPtr(); }
+
+	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> GetTextureSRVArray() override;
+	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> GetSamplerSRVArray() override;
 
 protected:
 	void ResourceLoading() override;

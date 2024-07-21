@@ -222,7 +222,7 @@ void ModelManager::BuildupGeometryBuffer() {
 }
 
 ModelRef ModelManager::GetModelRef(const std::string& modelName) {
-	std::string modelPath = modelName + ".obj";
+	std::string modelPath = modelFilePath + "\\" + modelName + ".obj";
 	std::string UUID = m_nameUUIDMapping[modelPath];
 	std::vector<D3D12_VERTEX_BUFFER_VIEW> vertices = m_modelVBV[UUID];
 	std::vector<D3D12_INDEX_BUFFER_VIEW> indices = m_modelIBV[UUID];

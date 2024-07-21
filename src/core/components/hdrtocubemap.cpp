@@ -213,7 +213,7 @@ void HDRLoader::InitializeCubemapRenderTargets() {
 void HDRLoader::InitializeHDRmap()
 {
     //loading hdr texture
-    m_hdrmap = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("hdr/hdrsky.hdr", BlackCubeMap, true);
+    m_hdrmap = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("resource/textures/hdr/hdrsky.hdr", BlackCubeMap, true);
 
     //allocate descriptor handle
     m_textureHandle = GRAPHICS_CORE::g_texturesDescriptorHeap.Alloc(1);
