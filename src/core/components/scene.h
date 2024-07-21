@@ -9,7 +9,8 @@
 #include "descriptortypes.h"
 #include "texturemanager.h"
 #include "components/hdrtocubemap.h"
-
+#include "geometry/light.h"
+#include "renderelement/renderitem.h"
 
 
 class RootSignature;
@@ -29,22 +30,31 @@ public:
 	void SetCamera(Camera* camera);
 
 private:
-	void InitializeModels();
+	void InitializeRenderItems();
 	void InitializeMaterials();
 	void InitializeRootSignature();
 	void InitializePSO();
+	void InitializeLights();
+
 
 private:
 	//geometry part
 	//todo: to build up render item structure
-	std::vector<ModelRef> m_renderItems;
+
+	std::vector<RenderItem> m_renderItems;
+	//std::vector<ModelRef> m_renderItems;
 
 	ByteAddressBuffer m_geometryBuffer;
 
-	//todo: materials loading; materials manager
-	TextureRef m_testTexture;
+
 	DescriptorHandle m_textureHandle;
 	DescriptorHandle m_samplerHandle;
+
+
+
+
+
+	DirectionLight m_dirLight;
 
 
 	//root signature

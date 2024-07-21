@@ -3,14 +3,27 @@
 #include <string>
 #include "texturemanager.h"
 #include "descriptortypes.h"
+#include <map>
+
+
+enum class MATERIAL_TYPE {
+	PBR = 0,
+	MAT_TYPE_NUM = 1,
+};
+
 
 class Material
 {
 public:
+	MATERIAL_TYPE GetMatType() { return m_matType; }
 
 protected:
 	virtual void ResourceLoading() = 0;
 	virtual void ResourceInitialize() = 0;
+
+
+protected:
+	MATERIAL_TYPE m_matType;
 };
 
 //material structure for PBR rendering
@@ -52,7 +65,8 @@ public:
 	MaterialManager(){}
 	~MaterialManager();
 	void Initialize();
-	Material* GetMaterial(const std::string& matName) { return m_materialContainer[matName]; }
+	Material* GetMaterial(const std::string& modelName, const std::string& meshName);
+	UINT32 GetMaterialTypeDescriptorNum(MATERIAL_TYPE matType);
 
 private:
 	std::map<std::string, Material*> m_materialContainer; //name mapping material

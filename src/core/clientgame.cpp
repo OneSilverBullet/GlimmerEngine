@@ -48,6 +48,7 @@ ClientGame::~ClientGame() {
 bool ClientGame::LoadContent() {
     auto device = GRAPHICS_CORE::g_device;
 
+
     //binding the camera
     m_controller.BindCamera(&m_camera);
     m_camera.InitializeFirstRoleCamera();

@@ -14,10 +14,11 @@ RenderScene::~RenderScene() {
 }
 
 void RenderScene::Initialize() {
-    InitializeModels();
+    InitializeRenderItems();
     InitializeMaterials();
     InitializeRootSignature();
     InitializePSO();
+    InitializeLights();
 }
 
 void RenderScene::SetCamera(Camera* camera) {
@@ -60,14 +61,19 @@ void RenderScene::Render(D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_H
             XMMATRIX view;
             XMMATRIX proj;
             XMFLOAT3 eyepos;
+            XMFLOAT3 sundirection;
+            XMFLOAT3 sunintensity;
+            XMFLOAT2 iblparameter; //[0] is ibl range, [1] is ibl bias
         } commoninforcb;
 
         commoninforcb.model = modelMat;
         commoninforcb.view = m_camera->GetViewMatrix();
         commoninforcb.proj = m_camera->GetProjMatrix();
         commoninforcb.eyepos = m_camera->GetPosition();
-
+        commoninforcb.sundirection = m_dirLight.GetDirection();
+        commoninforcb.sunintensity = m_dirLight.GetColor();
         graphicsContext.SetDynamicConstantBufferView(0, sizeof(CommonInfor), &commoninforcb);
+
         D3D12_GPU_DESCRIPTOR_HANDLE texture_handle;
         texture_handle.ptr = m_textureHandle.GetGPUPtr();
         graphicsContext.SetDescriptorTable(1, texture_handle);
@@ -77,11 +83,11 @@ void RenderScene::Render(D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_H
 
         for (int i = 0; i < m_renderItems.size(); ++i) {
 
-            ModelRef modelRef = m_renderItems[i];
+            RenderItem renderItem = m_renderItems[i];
             
-            std::vector<D3D12_VERTEX_BUFFER_VIEW>& submeshesVertices = modelRef.GetMeshVertexBufferView();
-            std::vector<D3D12_INDEX_BUFFER_VIEW>& submeshesIndices = modelRef.GetIndicesVertexBufferView();
-            std::vector<UINT32>& submeshesIndicesSizes = modelRef.GetIndicesSizes();
+            std::vector<D3D12_VERTEX_BUFFER_VIEW>& submeshesVertices = renderItem.GetMeshVertexBufferView();
+            std::vector<D3D12_INDEX_BUFFER_VIEW>& submeshesIndices = renderItem.GetIndicesVertexBufferView();
+            std::vector<UINT32>& submeshesIndicesSizes = renderItem.GetIndicesSizes();
 
             for (int submeshIndex = 0; submeshIndex < submeshesVertices.size(); ++submeshIndex) {
                 D3D12_VERTEX_BUFFER_VIEW subvertexView = submeshesVertices[submeshIndex];
@@ -103,19 +109,31 @@ void RenderScene::Render(D3D12_CPU_DESCRIPTOR_HANDLE rtv, D3D12_CPU_DESCRIPTOR_H
 
 }
 
-void RenderScene::InitializeModels() {
-	std::string loadingModelPath = "resource\\models\\Cerberus.obj";
-	ModelRef loadingModel = GRAPHICS_CORE::g_staticModelsManager.GetModelRef(loadingModelPath);
-	m_renderItems.push_back(loadingModel);
+void RenderScene::InitializeRenderItems() {
+    //todo: merge the same render items and merge batch algorithm
+    
+    RenderItem renderItem;
+    renderItem.Initialize("Cerberus");
+
+    m_renderItems.push_back(renderItem);
 }
 
 void RenderScene::InitializeMaterials() {
+    int textureDescriptorsNum = 0;
+    for (int i = 0; i < (int)m_renderItems.size(); ++i) {
+        std::vector<Material*> renderItemMaterials = m_renderItems[i].GetMaterials();
+        for (int j = 0; j < (int)renderItemMaterials.size(); ++j) {
+            MATERIAL_TYPE matType = renderItemMaterials[j]->GetMatType();
+            textureDescriptorsNum += GRAPHICS_CORE::g_materialManager.GetMaterialTypeDescriptorNum(matType);
+        }
+    }
+
     //loading texture
-    m_testTexture = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("Cerberus/Cerberus_A.dds", BlackCubeMap, true);
+    //m_testTexture = GRAPHICS_CORE::g_textureManager.LoadDDSFromFile("Cerberus/Cerberus_A.dds", BlackCubeMap, true);
 
     //allocate descriptor handle
-    m_textureHandle = GRAPHICS_CORE::g_texturesDescriptorHeap.Alloc(1);
-    m_samplerHandle = GRAPHICS_CORE::g_samplersDescriptorHeap.Alloc(1);
+    m_textureHandle = GRAPHICS_CORE::g_texturesDescriptorHeap.Alloc(textureDescriptorsNum);
+    m_samplerHandle = GRAPHICS_CORE::g_samplersDescriptorHeap.Alloc(5);
 
     //texture loading process
     D3D12_CPU_DESCRIPTOR_HANDLE textures[] = {
@@ -155,6 +173,12 @@ void RenderScene::InitializeRootSignature() {
     (*m_rootSignature)[1].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 0, 1, D3D12_SHADER_VISIBILITY_ALL);
     (*m_rootSignature)[2].InitAsDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 0, 1, D3D12_SHADER_VISIBILITY_ALL);
     m_rootSignature->Finalize(L"", rootSignatureFlag);
+}
+
+void RenderScene::InitializeLights() {
+    DirectX::XMFLOAT3 direction = { -1.0f, -1.0f, -1.0f };
+    DirectX::XMFLOAT3 color = { 1.0f, 1.0f, 1.0f };
+    m_dirLight.InitializeLight(direction, color);
 }
 
 void RenderScene::InitializePSO() {

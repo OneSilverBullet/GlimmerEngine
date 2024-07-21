@@ -12,6 +12,9 @@
 #include "components/camera.h"
 #include "components/scene.h"
 
+
+
+
 class RootSignature;
 class GraphicsPSO;
 
@@ -25,6 +28,7 @@ public:
 	virtual ~ClientGame();
 	virtual bool LoadContent() override;
 	virtual void UnloadContent() override;
+
 
 protected:
 	virtual void OnUpdate(UpdateEventArgs& e) override;
@@ -45,6 +49,7 @@ private:
 
 	Controller m_controller;
 	FirstRoleCamera m_camera;
+	
 
 
 	DepthBuffer m_depthBuffer;

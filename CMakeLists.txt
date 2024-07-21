@@ -163,6 +163,11 @@ FILE(GLOB SRCS_COMPONENTS
    src/core/components/controller.cpp
 )
 
+FILE(GLOB SRCS_RENDERELEMENTS
+   src/core/renderelement/renderitem.h
+   src/core/renderelement/renderitem.cpp
+)
+
 set(SRCS_MAIN  
    src/main.cpp
 )
@@ -175,6 +180,7 @@ ${SRCS_MATH}
 ${SRCS_RESOURCES} 
 ${SRCS_GEOMETRY} 
 ${SRCS_COMPONENTS} 
+${SRCS_RENDERELEMENTS} 
 ${SHADER_FILES})
 
 source_group("source" FILES ${SRCS_MAIN})
@@ -185,13 +191,11 @@ source_group( "source\\core\\types" FILES ${SRCS_TYPES} )
 source_group( "source\\core\\mathematics" FILES ${SRCS_MATH} )
 source_group( "source\\core\\geometry" FILES ${SRCS_GEOMETRY} )
 source_group( "source\\core\\components" FILES ${SRCS_COMPONENTS} )
+source_group( "source\\core\\renderelements" FILES ${SRCS_RENDERELEMENTS} )
 source_group( "resources\\shaders" FILES ${SHADER_FILES} )
 
 set(LIB_DIR "${PROJECT_SOURCE_DIR}/dependences/lib")
 set(BIN_DIR "${PROJECT_SOURCE_DIR}/dependences/bin")
-
-
-
 
 target_include_directories(Glimmer
     PUBLIC

@@ -1,7 +1,7 @@
 {
     "materials": [
         {
-            "name": "CerberusMaterial",
+            "name": "0",
 			"type": "PBR",
             "albedo": "resource\\textures\\Cerberus\\Cerberus_A.dds",
             "normal": "resource\\textures\\Cerberus\\Cerberus_N.dds",

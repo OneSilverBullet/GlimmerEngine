@@ -83,6 +83,8 @@ public:
 		return *this;
 	}
 
+	int GetMeshCount() { return m_vertices.size(); }
+
 private:
 	std::vector<D3D12_VERTEX_BUFFER_VIEW> m_vertices;
 	std::vector<D3D12_INDEX_BUFFER_VIEW> m_indices;
@@ -97,7 +99,7 @@ public:
 	//only load models once
 	void Initialize();
 	
-	ModelRef GetModelRef(const std::string& modelPath);
+	ModelRef GetModelRef(const std::string& modelName);
 
 
 

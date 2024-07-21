@@ -8,8 +8,7 @@ struct CommonInfo
     float3 eyepos;
 	float3 sundirection;
 	float3 sunintensity;
-	float iblrange;
-	float iblbias;
+	float2 iblparameters;
 };
 
 struct MaterialInfo

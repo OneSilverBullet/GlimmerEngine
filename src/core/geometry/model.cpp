@@ -7,6 +7,8 @@
 #include "types/commontypes.h"
 #include "types/uuid.h"
 
+const std::string modelFilePath = "resource\\models";
+
 Model::Model() {
 	m_meshes.reserve(100);
 }
@@ -132,15 +134,13 @@ std::vector<UINT32>& Model::GetBatchIndices() {
 
 void ModelManager::Initialize()
 {
-	const std::string modelFilePath = "resource\\models";
-	
 	std::vector<std::string> objNames =	TypeUtiles::ListFilesInDirectory(modelFilePath);
 
 	UINT32 verticesOffset = 0;
 	UINT32 indicesOffset = 0;
 	for (int i = 0; i < objNames.size(); ++i) {
 		std::string modelPath = modelFilePath + "\\" + objNames[i];
-		GUUID uuid(modelPath);
+		GUUID uuid(objNames[i]);
 		//build up the connection between uuid and name 
 		m_nameUUIDMapping[modelPath] = uuid.toString();
 
@@ -221,7 +221,8 @@ void ModelManager::BuildupGeometryBuffer() {
 	}
 }
 
-ModelRef ModelManager::GetModelRef(const std::string& modelPath) {
+ModelRef ModelManager::GetModelRef(const std::string& modelName) {
+	std::string modelPath = modelName + ".obj";
 	std::string UUID = m_nameUUIDMapping[modelPath];
 	std::vector<D3D12_VERTEX_BUFFER_VIEW> vertices = m_modelVBV[UUID];
 	std::vector<D3D12_INDEX_BUFFER_VIEW> indices = m_modelIBV[UUID];

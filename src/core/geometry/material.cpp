@@ -9,8 +9,10 @@
 
 PBRMaterial::PBRMaterial(const std::string& albedo, const std::string& normal, 
     const std::string& metalness, const std::string& roughness, const std::string& ao)
-	: m_albedoPath(albedo), m_normalPath(normal), m_metalnessPath(metalness), m_roughnessPath(roughness), m_aoPath(ao)
+	: m_albedoPath(albedo), m_normalPath(normal), m_metalnessPath(metalness), 
+    m_roughnessPath(roughness), m_aoPath(ao)
 {
+    m_matType = MATERIAL_TYPE::PBR;
     ResourceLoading();
     ResourceInitialize();
 }
@@ -92,10 +94,27 @@ void MaterialManager::Initialize()
                 Material* newMat = new PBRMaterial(albedoMatPath, normalMatPath, 
                     metalnessMatPath, roughnessMatPath, aoMatPath);
 
-                std::string subMatName = objNames[i] + "-" + submaterialName;
-                
-                m_materialContainer[subMatName] = newMat;
+                char delimiter = ',';
+                size_t pos = objNames[i].find(delimiter);
+                if (pos != std::string::npos) {
+                    // Split the string into two parts
+                    std::string purModelName = objNames[i].substr(0, pos);
+                    std::string subMatName = purModelName + "-" + submaterialName;
+                    m_materialContainer[subMatName] = newMat;
+                }
             }
         }
     }
+}
+
+Material* MaterialManager::GetMaterial(const std::string& modelName, const std::string& meshName)
+{
+    std::string matName = modelName + "-" + meshName;
+    return m_materialContainer[matName];
+}
+
+UINT32 MaterialManager::GetMaterialTypeDescriptorNum(MATERIAL_TYPE matType) {
+    if (matType == MATERIAL_TYPE::PBR)
+        return 5;
+    return 0;
 }
