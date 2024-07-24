@@ -52,7 +52,7 @@ bool ClientGame::LoadContent() {
     //binding the camera
     m_controller.BindCamera(&m_camera);
     m_camera.InitializeFirstRoleCamera();
-    m_camera.SetPosition(DirectX::XMFLOAT3(0.0f, 0.0f, -200.0f));
+    m_camera.SetPosition(DirectX::XMFLOAT3(0.0f, 0.0f, -150.0f));
 
     //initialize the skybox
     m_skybox.Initialize("skybox");

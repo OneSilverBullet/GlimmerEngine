@@ -62,6 +62,7 @@ float3 ComputeNormal(PixelInputAttributes vsOutput, float3 rawnormal)
     return mul(normal, tangentFrame);
 }
 
+
 float4 PSMain(PixelInputAttributes input) : SV_Target
 {	
 	//loading fragment PBR values
@@ -75,7 +76,7 @@ float4 PSMain(PixelInputAttributes input) : SV_Target
 	//initialize the fragment information
 	FragmentProperties frag;
 	frag.N = normal;
-	frag.V = normalize(CommonCB.eyepos - input.worldposition);
+	frag.V = normalize(CommonCB.eyepos - input.worldposition);	
     frag.NdotV = saturate(dot(frag.N, frag.V));
 	frag.roughness = roughness.x;
     frag.r2 = frag.roughness * frag.roughness;

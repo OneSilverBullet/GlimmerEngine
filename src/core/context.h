@@ -31,6 +31,7 @@ public:
 	Context* AllocateContext(D3D12_COMMAND_LIST_TYPE type);
 	Context& GetAvailableContext();
 	GraphicsContext& GetAvailableGraphicsContext();
+	ComputeContext& GetAvailableComputeContext();
 
 	void FreeContext(Context*);
 	void DestroyAllContexts();
@@ -224,7 +225,33 @@ public:
 //the context for GPU computing
 class ComputeContext : public Context
 {
+public:
+	
+	void ClearUAV(GPUBuffer& buffer);
+	void ClearUAV(ColorBuffer& target);
+	void SetRootSignature(const RootSignature& rootSig);
 
+
+	void SetConstantArray(UINT rootIndex, UINT numConstants, const void* pConstants);
+	void SetConstant(UINT rootIndex, UINT offset, DWParam val);
+	void SetConstants(UINT rootIndex, DWParam X);
+	void SetConstants(UINT rootIndex, DWParam X, DWParam Y);
+	void SetConstants(UINT rootIndex, DWParam X, DWParam Y, DWParam Z);
+	void SetConstants(UINT rootIndex, DWParam X, DWParam Y, DWParam Z, DWParam W);
+	void SetConstantBuffer(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS cbv);
+
+	void SetDescriptorTable(UINT rootIndex, D3D12_GPU_DESCRIPTOR_HANDLE firstHandle);
+	void SetDynamicDescriptor(UINT rootIndex, UINT offset, D3D12_CPU_DESCRIPTOR_HANDLE handle);
+	void SetDynamicDescriptors(UINT rootIndex, UINT offset, UINT count, const D3D12_CPU_DESCRIPTOR_HANDLE handles[]);
+	void SetDynamicSampler(UINT rootIndex, UINT offset, D3D12_CPU_DESCRIPTOR_HANDLE handle);
+	void SetDynamicSamplers(UINT rootIndex, UINT offset, UINT count, const D3D12_CPU_DESCRIPTOR_HANDLE handles[]);
+
+	void Dispatch(size_t groupCountX = 1, size_t groupCountY = 1, size_t groupCountZ = 1);
+	void Dispatch1D(size_t threadCountX, size_t groupSizeX = 64);
+	void Dispatch2D(size_t threadCountX, size_t threadCountY,
+		size_t groupSizeX = 8, size_t groupSizeY = 8);
+	void Dispatch3D(size_t threadCountX, size_t threadCountY, size_t threadCountZ,
+		size_t groupSizeX, size_t groupSizeY, size_t groupSizeZ);
 
 };
 

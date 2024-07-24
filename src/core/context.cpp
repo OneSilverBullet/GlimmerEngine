@@ -42,6 +42,11 @@ GraphicsContext& ContextManager::GetAvailableGraphicsContext() {
 	return newContext->GetGraphicsContext();
 }
 
+ComputeContext& ContextManager::GetAvailableComputeContext() {
+	Context* newContext = AllocateContext(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+	return newContext->GetComputeContext();
+}
+
 void ContextManager::FreeContext(Context* usedContext)
 {
 	std::lock_guard<std::mutex> lockGuard(sm_contextAllocatorMutex);
@@ -664,3 +669,71 @@ void GraphicsContext::DrawIndexedInstanced(UINT indexCountPerInstance, UINT Inst
 	m_graphicsCommandList->DrawIndexedInstanced(indexCountPerInstance, InstanceCount,
 		startIndexLocation, startVertexLocation, startInstanceLocation);
 }
+
+void ComputeContext::ClearUAV(GPUBuffer& buffer)
+{
+	FlushResourceBarrier();
+	D3D12_GPU_DESCRIPTOR_HANDLE GpuVisibleHandle = m_dynamicViewDescriptorHeap.UploadDirect(buffer.GetUAV());
+	const UINT clearColor[4] = { 0, 0, 0, 0 };
+	m_graphicsCommandList->ClearUnorderedAccessViewUint(GpuVisibleHandle, buffer.GetUAV(), 
+		buffer.GetResource(), clearColor, 0, nullptr);
+}
+
+void ComputeContext::ClearUAV(ColorBuffer& buffer)
+{
+	FlushResourceBarrier();
+	D3D12_GPU_DESCRIPTOR_HANDLE GpuVisibleHandle = m_dynamicViewDescriptorHeap.UploadDirect(buffer.GetUAV());
+	Color clearColor = buffer.GetClearColor();
+	m_graphicsCommandList->ClearUnorderedAccessViewFloat(GpuVisibleHandle, 
+		buffer.GetUAV(),
+		buffer.GetResource(), 
+		clearColor.GetPtr(), 0, nullptr);
+}
+
+/*
+* ComputeContext
+*/
+void ComputeContext::SetRootSignature(const RootSignature& rootSig)
+{
+	if (rootSig.GetSignature() == m_computeSignature)
+		return;
+	m_graphicsCommandList->SetComputeRootSignature(rootSig.GetSignature());
+	m_dynamicViewDescriptorHeap.ParseComputeRootSignature(rootSig);
+	m_dynamicSamplerDescriptorHeap.ParseComputeRootSignature(rootSig);
+}
+
+void ComputeContext::Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ)
+{
+	FlushResourceBarrier();
+	m_dynamicViewDescriptorHeap.CommitComputeDescriptorTablesOfRootSignature(m_graphicsCommandList);
+	m_dynamicSamplerDescriptorHeap.CommitComputeDescriptorTablesOfRootSignature(m_graphicsCommandList);
+	m_graphicsCommandList->Dispatch(groupCountX, groupCountY, groupCountZ);
+}
+
+void ComputeContext::Dispatch1D(size_t threadCountX, size_t groupSizeX)
+{
+	Dispatch(
+		Mathematics::DivideByMultiple(threadCountX, groupSizeX),
+		1,
+		1
+	);
+}
+
+void ComputeContext::Dispatch2D(size_t threadCountX, size_t threadCountY, size_t groupSizeX, size_t groupSizeY)
+{
+	Dispatch(
+		Mathematics::DivideByMultiple(threadCountX, groupSizeX),
+		Mathematics::DivideByMultiple(threadCountY, groupSizeY),
+		1
+	);
+}
+
+void ComputeContext::Dispatch3D(size_t threadCountX, size_t threadCountY, size_t threadCountZ, size_t groupSizeX, size_t groupSizeY, size_t groupSizeZ)
+{
+	Dispatch(
+		Mathematics::DivideByMultiple(threadCountX, groupSizeX),
+		Mathematics::DivideByMultiple(threadCountY, groupSizeY),
+		Mathematics::DivideByMultiple(threadCountZ, groupSizeZ)
+	);
+}
+

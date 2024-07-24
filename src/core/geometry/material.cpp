@@ -19,11 +19,11 @@ PBRMaterial::PBRMaterial(const std::string& albedo, const std::string& normal,
 
 std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> PBRMaterial::GetSamplerSRVArray() {
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> srvArray;
-    srvArray.push_back(GRAPHICS_CORE::g_samplerLinearWrap);
-    srvArray.push_back(GRAPHICS_CORE::g_samplerLinearWrap);
-    srvArray.push_back(GRAPHICS_CORE::g_samplerLinearWrap);
-    srvArray.push_back(GRAPHICS_CORE::g_samplerLinearWrap);
-    srvArray.push_back(GRAPHICS_CORE::g_samplerLinearWrap);
+    srvArray.push_back(GRAPHICS_CORE::g_samplerAnisoWrap);
+    srvArray.push_back(GRAPHICS_CORE::g_samplerAnisoWrap);
+    srvArray.push_back(GRAPHICS_CORE::g_samplerAnisoWrap);
+    srvArray.push_back(GRAPHICS_CORE::g_samplerAnisoWrap);
+    srvArray.push_back(GRAPHICS_CORE::g_samplerAnisoWrap);
     return srvArray;
 }
 

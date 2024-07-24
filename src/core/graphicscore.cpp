@@ -152,7 +152,11 @@ namespace GRAPHICS_CORE
 		g_samplerLinearWrapDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 		g_samplerLinearWrap = g_samplerLinearWrapDesc.CreateSamplerDescHandle();
 
-		g_samplerAnisoWrapDesc.MaxAnisotropy = 4;
+		g_samplerAnisoWrapDesc.Filter = D3D12_FILTER_ANISOTROPIC;
+		g_samplerAnisoWrapDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		g_samplerAnisoWrapDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		g_samplerAnisoWrapDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+		g_samplerAnisoWrapDesc.MaxAnisotropy = 16;
 		g_samplerAnisoWrap = g_samplerAnisoWrapDesc.CreateSamplerDescHandle();
 	}
 
