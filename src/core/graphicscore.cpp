@@ -30,8 +30,12 @@ namespace GRAPHICS_CORE
 	D3D12_CPU_DESCRIPTOR_HANDLE g_samplerLinearWrap;
 	SamplerDesc g_samplerAnisoWrapDesc;
 	D3D12_CPU_DESCRIPTOR_HANDLE g_samplerAnisoWrap;
-
-
+	SamplerDesc g_samplerPointClampDesc;
+	D3D12_CPU_DESCRIPTOR_HANDLE g_samplerPointClamp;
+	SamplerDesc g_samplerLinearBorderDesc;
+	D3D12_CPU_DESCRIPTOR_HANDLE g_samplerLinearBorder;
+	SamplerDesc g_samplerPointBorderDesc;
+	D3D12_CPU_DESCRIPTOR_HANDLE g_samplerPointBorder;
 
 	DescriptorAllocator g_descriptorHeapAllocator[D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES] = {
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
@@ -158,6 +162,23 @@ namespace GRAPHICS_CORE
 		g_samplerAnisoWrapDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 		g_samplerAnisoWrapDesc.MaxAnisotropy = 16;
 		g_samplerAnisoWrap = g_samplerAnisoWrapDesc.CreateSamplerDescHandle();
+	
+		//point clamp sampler
+		g_samplerPointClampDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+		g_samplerPointClampDesc.SetAddressMode(D3D12_TEXTURE_ADDRESS_MODE_CLAMP);
+		g_samplerPointClamp = g_samplerPointClampDesc.CreateSamplerDescHandle();
+
+		//linear border sampler
+		g_samplerLinearBorderDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+		g_samplerLinearBorderDesc.SetAddressMode(D3D12_TEXTURE_ADDRESS_MODE_BORDER);
+		g_samplerLinearBorder = g_samplerLinearBorderDesc.CreateSamplerDescHandle();
+
+		//point border sampler
+		g_samplerPointBorderDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+		g_samplerPointBorderDesc.SetAddressMode(D3D12_TEXTURE_ADDRESS_MODE_BORDER);
+		g_samplerPointBorder = g_samplerPointBorderDesc.CreateSamplerDescHandle();
+
+	
 	}
 
 	void GraphicsCoreInitialize()

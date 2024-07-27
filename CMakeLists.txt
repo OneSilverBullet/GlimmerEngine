@@ -19,11 +19,7 @@ set(VERTEX_SHADERS
     shaders/pbr_vertex.hlsl
 )
 
-set(PIXEL_SHADERS
-    shaders/skybox_pixel.hlsl
-    shaders/equirectangular_pixel.hlsl
-    shaders/pbr_pixel.hlsl
-)
+
 
 set_source_files_properties( 
     ${VERTEX_SHADERS}
@@ -34,12 +30,31 @@ PROPERTIES
     VS_SHADER_MODEL 5.1
 )
 
+set(PIXEL_SHADERS
+    shaders/skybox_pixel.hlsl
+    shaders/equirectangular_pixel.hlsl
+    shaders/pbr_pixel.hlsl
+)
+
 set_source_files_properties( 
     ${PIXEL_SHADERS}
 
 PROPERTIES 
     VS_SHADER_TYPE Pixel
     VS_SHADER_ENTRYPOINT PSMain
+    VS_SHADER_MODEL 5.1
+)
+
+set(COMPUTE_SHADERS
+    shaders/mipmapcs.hlsl
+)
+
+set_source_files_properties(
+    ${COMPUTE_SHADERS}
+
+PROPERTIES
+    VS_SHADER_TYPE Compute
+    VS_SHADER_ENTRYPOINT CSMain
     VS_SHADER_MODEL 5.1
 )
 
@@ -155,6 +170,8 @@ FILE(GLOB SRCS_COMPONENTS
    src/core/components/camera.cpp
    src/core/components/controller.h
    src/core/components/controller.cpp
+   src/core/components/mipmapgenerator.h
+   src/core/components/mipmapgenerator.cpp
 )
 
 FILE(GLOB SRCS_RENDERELEMENTS

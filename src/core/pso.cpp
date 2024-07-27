@@ -105,4 +105,9 @@ ComputePSO::ComputePSO(const wchar_t* name) :PSO(name) {
 
 void ComputePSO::Finalize()
 {
+	m_psoDesc.pRootSignature = m_rootSignature->GetSignature();
+	assert(m_psoDesc.pRootSignature != nullptr);
+	ThrowIfFailed(GRAPHICS_CORE::g_device->CreateComputePipelineState(&m_psoDesc, 
+		IID_PPV_ARGS(&m_pso)));
+	m_pso->SetName(m_name);
 }

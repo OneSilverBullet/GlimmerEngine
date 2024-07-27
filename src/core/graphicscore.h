@@ -37,7 +37,12 @@ namespace GRAPHICS_CORE
 	extern D3D12_CPU_DESCRIPTOR_HANDLE g_samplerLinearWrap;
 	extern SamplerDesc g_samplerAnisoWrapDesc;
 	extern D3D12_CPU_DESCRIPTOR_HANDLE g_samplerAnisoWrap;
-
+	extern SamplerDesc g_samplerPointClampDesc;
+	extern D3D12_CPU_DESCRIPTOR_HANDLE g_samplerPointClamp;
+	extern SamplerDesc g_samplerLinearBorderDesc;
+	extern D3D12_CPU_DESCRIPTOR_HANDLE g_samplerLinearBorder;
+	extern SamplerDesc g_samplerPointBorderDesc;
+	extern D3D12_CPU_DESCRIPTOR_HANDLE g_samplerPointBorder;
 
 	void GraphicsCoreInitialize();
 	void GraphicsCoreRelease();

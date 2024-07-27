@@ -226,11 +226,9 @@ public:
 class ComputeContext : public Context
 {
 public:
-	
 	void ClearUAV(GPUBuffer& buffer);
 	void ClearUAV(ColorBuffer& target);
 	void SetRootSignature(const RootSignature& rootSig);
-
 
 	void SetConstantArray(UINT rootIndex, UINT numConstants, const void* pConstants);
 	void SetConstant(UINT rootIndex, UINT offset, DWParam val);
@@ -252,7 +250,6 @@ public:
 		size_t groupSizeX = 8, size_t groupSizeY = 8);
 	void Dispatch3D(size_t threadCountX, size_t threadCountY, size_t threadCountZ,
 		size_t groupSizeX, size_t groupSizeY, size_t groupSizeZ);
-
 };
 
 

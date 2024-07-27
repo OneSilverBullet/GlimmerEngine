@@ -19,6 +19,7 @@ public:
 	const D3D12_CPU_DESCRIPTOR_HANDLE& GetSRV() const { return m_srvHandle; }
 	const D3D12_CPU_DESCRIPTOR_HANDLE& GetRTV() const { return m_rtvHandle; }
 	const D3D12_CPU_DESCRIPTOR_HANDLE& GetUAV() const { return m_uavHandle[0]; }
+	const uint32_t GetMipsMap() const { return m_mips; }
 
 	void SetClearColor(Color clearColor) { m_clearColor = clearColor; }
 	Color GetClearColor() { return m_clearColor; }
@@ -31,7 +32,6 @@ public:
 
 	Color GetClearColor() const { return m_clearColor; }
 
-	//void GenerateMipMaps(CommandContext& Context);
 
 protected:
 	D3D12_RESOURCE_FLAGS CombineResourceFlag() const {

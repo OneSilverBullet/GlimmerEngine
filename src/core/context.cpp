@@ -702,6 +702,72 @@ void ComputeContext::SetRootSignature(const RootSignature& rootSig)
 	m_dynamicSamplerDescriptorHeap.ParseComputeRootSignature(rootSig);
 }
 
+void ComputeContext::SetConstantArray(UINT rootIndex, UINT numConstants, const void* pConstants)
+{
+	m_graphicsCommandList->SetComputeRoot32BitConstants(rootIndex, numConstants, pConstants, 0);
+}
+
+void ComputeContext::SetConstant(UINT rootIndex, UINT offset, DWParam val)
+{
+	m_graphicsCommandList->SetComputeRoot32BitConstant(rootIndex, val.Uint, offset);
+}
+
+void ComputeContext::SetConstants(UINT rootIndex, DWParam X)
+{
+	m_graphicsCommandList->SetComputeRoot32BitConstant(rootIndex, X.Uint, 0);
+}
+
+void ComputeContext::SetConstants(UINT rootIndex, DWParam X, DWParam Y)
+{
+	m_graphicsCommandList->SetComputeRoot32BitConstant(rootIndex, X.Uint, 0);
+	m_graphicsCommandList->SetComputeRoot32BitConstant(rootIndex, Y.Uint, 1);
+}
+
+void ComputeContext::SetConstants(UINT rootIndex, DWParam X, DWParam Y, DWParam Z)
+{
+	m_graphicsCommandList->SetComputeRoot32BitConstant(rootIndex, X.Uint, 0);
+	m_graphicsCommandList->SetComputeRoot32BitConstant(rootIndex, Y.Uint, 1);
+	m_graphicsCommandList->SetComputeRoot32BitConstant(rootIndex, Z.Uint, 2);
+}
+
+void ComputeContext::SetConstants(UINT rootIndex, DWParam X, DWParam Y, DWParam Z, DWParam W)
+{
+	m_graphicsCommandList->SetComputeRoot32BitConstant(rootIndex, X.Uint, 0);
+	m_graphicsCommandList->SetComputeRoot32BitConstant(rootIndex, Y.Uint, 1);
+	m_graphicsCommandList->SetComputeRoot32BitConstant(rootIndex, Z.Uint, 2);
+	m_graphicsCommandList->SetComputeRoot32BitConstant(rootIndex, W.Uint, 3);
+}
+
+void ComputeContext::SetConstantBuffer(UINT rootIndex, D3D12_GPU_VIRTUAL_ADDRESS cbv)
+{
+	m_graphicsCommandList->SetComputeRootConstantBufferView(rootIndex, cbv);
+}
+
+void ComputeContext::SetDescriptorTable(UINT rootIndex, D3D12_GPU_DESCRIPTOR_HANDLE firstHandle)
+{
+	m_graphicsCommandList->SetComputeRootDescriptorTable(rootIndex, firstHandle);
+}
+
+void ComputeContext::SetDynamicDescriptor(UINT rootIndex, UINT offset, D3D12_CPU_DESCRIPTOR_HANDLE handle)
+{
+	SetDynamicDescriptors(rootIndex, offset, 1, &handle);
+}
+
+void ComputeContext::SetDynamicDescriptors(UINT rootIndex, UINT offset, UINT count, const D3D12_CPU_DESCRIPTOR_HANDLE handles[])
+{
+	m_dynamicViewDescriptorHeap.SetComputeDescriptorHandles(rootIndex, offset, count, handles);
+}
+
+void ComputeContext::SetDynamicSampler(UINT rootIndex, UINT offset, D3D12_CPU_DESCRIPTOR_HANDLE handle)
+{
+	SetDynamicSamplers(rootIndex, offset, 1, &handle);
+}
+
+void ComputeContext::SetDynamicSamplers(UINT rootIndex, UINT offset, UINT count, const D3D12_CPU_DESCRIPTOR_HANDLE handles[])
+{
+	m_dynamicSamplerDescriptorHeap.SetComputeDescriptorHandles(rootIndex, offset, count, handles);
+}
+
 void ComputeContext::Dispatch(size_t groupCountX, size_t groupCountY, size_t groupCountZ)
 {
 	FlushResourceBarrier();
