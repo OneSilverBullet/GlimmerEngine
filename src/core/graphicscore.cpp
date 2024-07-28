@@ -11,6 +11,7 @@ namespace GRAPHICS_CORE
 	CommandManager g_commandManager;
 	ContextManager g_contextManager;
 	MaterialManager g_materialManager;
+	MipmapGenerator g_mipmapGenerator;
 
 	//the following two descriptor heaps will be binded into related context 
 	StaticDescriptorHeap g_texturesDescriptorHeap;
@@ -177,8 +178,6 @@ namespace GRAPHICS_CORE
 		g_samplerPointBorderDesc.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
 		g_samplerPointBorderDesc.SetAddressMode(D3D12_TEXTURE_ADDRESS_MODE_BORDER);
 		g_samplerPointBorder = g_samplerPointBorderDesc.CreateSamplerDescHandle();
-
-	
 	}
 
 	void GraphicsCoreInitialize()
@@ -206,6 +205,9 @@ namespace GRAPHICS_CORE
 
 			//Initialize the static material
 			GRAPHICS_CORE::g_materialManager.Initialize();
+
+			//Initialize the mipmap generator
+			GRAPHICS_CORE::g_mipmapGenerator.Initialize();
 
 			g_tearingSupport = CheckTearingSupport();
 		}

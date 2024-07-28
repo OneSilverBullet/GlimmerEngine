@@ -7,8 +7,6 @@ project(
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-
-
 #Shader Initialize
 set(SHADER_SOURCE_DIR ${CMAKE_SOURCE_DIR}/shaders)
 file(GLOB_RECURSE SHADER_FILES ${SHADER_SOURCE_DIR}/*)
@@ -18,8 +16,6 @@ set(VERTEX_SHADERS
     shaders/equirectangular_vertex.hlsl
     shaders/pbr_vertex.hlsl
 )
-
-
 
 set_source_files_properties( 
     ${VERTEX_SHADERS}
@@ -46,7 +42,10 @@ PROPERTIES
 )
 
 set(COMPUTE_SHADERS
-    shaders/mipmapcs.hlsl
+    shaders/mipmapcs_xodd.hlsl
+    shaders/mipmapcs_xyeven.hlsl
+    shaders/mipmapcs_xyodd.hlsl
+    shaders/mipmapcs_yodd.hlsl
 )
 
 set_source_files_properties(
@@ -59,8 +58,6 @@ PROPERTIES
 )
 
 message("Generating Shader Files: ${SHADER_FILES}")
-
-
 
 # Source Code Initialize
 FILE(GLOB SRCS_GLIMMER_CORE

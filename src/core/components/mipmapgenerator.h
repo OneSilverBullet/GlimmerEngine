@@ -19,14 +19,14 @@ public:
 
 
 public:
+	void Initialize();
 
 	void GenerateMipmap(ColorBuffer* colorbuffer);
 
 
 private:
 	void InitializeRS();
-	 
-
+	void InitializePSO();
 
 private:
 	RootSignature m_rootSig;

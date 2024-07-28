@@ -12,19 +12,6 @@ cbuffer CB0 : register(b0)
     float2 TexelSize;	// 1.0 / OutMip1.Dimensions
 }
 
-void StoreColor( uint Index, float4 Color )
-{
-    gs_R[Index] = Color.r;
-    gs_G[Index] = Color.g;
-    gs_B[Index] = Color.b;
-    gs_A[Index] = Color.a;
-}
-
-float4 LoadColor( uint Index )
-{
-    return float4( gs_R[Index], gs_G[Index], gs_B[Index], gs_A[Index]);
-}
-
 float3 ApplySRGBCurve(float3 x)
 {
     // This is exactly the sRGB curve
@@ -43,9 +30,8 @@ float4 PackColor(float4 Linear)
 #endif
 }
 
-[RootSignature(Common_RootSig)]
 [numthreads( 8, 8, 1 )]
-void main( uint GI : SV_GroupIndex, uint3 DTid : SV_DispatchThreadID )
+void CSMain( uint GI : SV_GroupIndex, uint3 DTid : SV_DispatchThreadID )
 {
 #if NON_POWER_OF_TWO == 0
     float2 UV = TexelSize * (DTid.xy + 0.5);

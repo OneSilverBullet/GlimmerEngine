@@ -19,6 +19,7 @@ public:
 	const D3D12_CPU_DESCRIPTOR_HANDLE& GetSRV() const { return m_srvHandle; }
 	const D3D12_CPU_DESCRIPTOR_HANDLE& GetRTV() const { return m_rtvHandle; }
 	const D3D12_CPU_DESCRIPTOR_HANDLE& GetUAV() const { return m_uavHandle[0]; }
+	D3D12_CPU_DESCRIPTOR_HANDLE GetUAV(uint32_t i) { return m_uavHandle[i]; }
 	const uint32_t GetMipsMap() const { return m_mips; }
 
 	void SetClearColor(Color clearColor) { m_clearColor = clearColor; }

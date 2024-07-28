@@ -138,7 +138,7 @@ public:
 
 	void InitSamplerDesc(UINT registerSlot,
 		const D3D12_SAMPLER_DESC& nonStaticSamplerDesc,
-		D3D12_SHADER_VISIBILITY visibility);
+		D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL);
 
 	RootParameter& operator[](size_t index) {
 		assert(index < m_parametersNum);
