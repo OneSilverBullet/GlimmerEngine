@@ -1,63 +1,45 @@
-![LOGO](https://raw.githubusercontent.com/OneSilverBullet/GlimmerEngine/master/document/textures/logo.png)
+![Glimmer Engine Logo](https://raw.githubusercontent.com/OneSilverBullet/GlimmerEngine/master/document/textures/logo.png)
 
+# Glimmer Engine
 
+## 🚀 About Glimmer
 
-## Glimmer Engine
+Glimmer Engine is an experimental DirectX12 rendering platform designed for innovation in computer graphics. Whether you're developing cutting-edge rendering techniques or testing new graphics algorithms, Glimmer provides a solid, flexible foundation to push the boundaries of real-time rendering.
 
-### 1. About
+## ✨ Features
 
-Welcome to the future of computer graphics development with the DirectX12 render engine: Glimmer. Glimmer is a versatile experimental computer graphics platform, which can help you test new computer graphics algorithms. Glimmer provides a robust and flexible foundation for implementing the computer graphics.
+- **Comprehensive DirectX12 Encapsulation** – Simplifies DirectX12 development with structured, high-level abstractions.
+- **Efficient Memory Allocation** – Includes a well-optimized memory allocator tailored for graphics workloads.
+- **User-Friendly Rendering Pipeline** – Streamlined workflow for easy rendering setup and execution.
+- **HDR Texture Support** – Enables high dynamic range texture loading for stunning visuals.
 
-### 2. Features
+## 📖 API Documentation
 
-* Solid encapsulation of DirectX12 components
-* Reasonable Memory Allocator
-* Easy-to-use Rendering Pipeline
-* HDR texture loading 
+_🚧 Coming Soon: A detailed API reference is in progress! Stay tuned._
 
+## 📚 Technical Documentation
 
-### 3. API Introduction
+### 🔹 Software Architecture
 
+- **[Dynamic Descriptor Heap](https://onesilverbullet.github.io/silvergamer.github.io/DirectX12-Encapsulation/)**  
+  _An in-depth look at the implementation of a dynamic descriptor heap for efficient resource management in DirectX12._
 
-TODO
+- **[Memory Allocator](https://onesilverbullet.github.io/silvergamer.github.io/Memory-Allocator/)**  
+  _Exploring the design and optimization of a uniform upload memory allocator tailored for GPU workloads._
 
+### 🔹 Graphics Theories
 
-### 4. Related Document
+- **[Image-Based Lighting (IBL)](https://onesilverbullet.github.io/silvergamer.github.io/Imaged-based-Lighting/)**  
+  _A breakdown of the implementation and optimization techniques for image-based lighting._
 
-#### 4.1 Software Architecture
+- **[Mathematics Behind IBL](https://onesilverbullet.github.io/silvergamer.github.io/rendering-mathematics-basis/)**  
+  _A deep dive into the mathematical foundations of image-based lighting._
 
-[(1) Dynamic Descriptor Heap](https://onesilverbullet.github.io/silvergamer.github.io/DirectX12-Encapsulation/)
+- **[Spherical Harmonics Lighting](https://onesilverbullet.github.io/silvergamer.github.io/spherical-harmonics/)**  
+  _A comprehensive survey of spherical harmonics lighting techniques and their applications._
 
-This paper discuss about the implementation detail of the dynamic descriptor heap.
+## 💡 Get Involved
 
+Glimmer Engine is a passion project aimed at advancing real-time rendering. Contributions, discussions, and feedback are welcome! Join us in pushing the limits of graphics technology.
 
-
-
- [(2) Memory Allocator](https://onesilverbullet.github.io/silvergamer.github.io/Memory-Allocator/)
-
-This paper discuss the design of the uniform upload memory allocator.
-
-
-
-#### 4.2 Graphics Theories
-
-[(1) Image based Lightings](https://onesilverbullet.github.io/silvergamer.github.io/Imaged-based-Lighting/)
-
-This paper discuss about the implementation detail of the Image based Lighting.
-
-
-
-
-[(2) The Mathematics behind the IBL](https://onesilverbullet.github.io/silvergamer.github.io/rendering-mathematics-basis/)
-
-This paper explore the mathematics knowledge behind the IBL.
-
-
-
-
-[(3) Spherical Harmonics Lighting](https://onesilverbullet.github.io/silvergamer.github.io/spherical-harmonics/)
-
-This paper is a survey of *Stupid Harmonics*.
-
-
-
+---
